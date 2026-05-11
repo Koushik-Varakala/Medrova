@@ -13,6 +13,7 @@ export default function DoctorPaymentsPage() {
   const router = useRouter();
   const [payments, setPayments] = useState<DoctorPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<{name: string, verificationStatus: string} | undefined>(undefined);
 
   useEffect(() => {
     let isMounted = true;
@@ -23,27 +24,47 @@ export default function DoctorPaymentsPage() {
       if (!user) { router.push("/sign-in"); return; }
 
       const { data: doctorRow } = await supabase
-        .from("doctors").select("id").eq("user_id", user.id).maybeSingle();
+        .from("doctors").select("id, name, verification_status").eq("user_id", user.id).maybeSingle();
       if (!doctorRow) { router.push("/onboarding/doctor"); return; }
 
       const doctorId = (doctorRow as { id: string }).id;
+      if (isMounted) {
+        setUserProfile({
+          name: (doctorRow as { name: string }).name,
+          verificationStatus: (doctorRow as { verification_status: string }).verification_status,
+        });
+      }
 
+      // Fetch payouts and their associated shifts (for clinic names)
       const { data: rows } = await supabase
         .from("doctor_payouts")
-        .select("*")
+        .select("*, shift:shifts(clinic_id, clinics(name))")
         .eq("doctor_id", doctorId)
         .order("created_at", { ascending: false });
 
-      const mapped: DoctorPayment[] = (rows ?? []).map((r: Record<string, unknown>) => ({
-        id: getStringValue(r, "id"),
-        doctorId: getStringValue(r, "doctor_id"),
-        shiftId: getStringValue(r, "shift_id"),
-        amount: getNumberValue(r, "amount"),
-        upiId: getStringValue(r, "upi_id"),
-        status: getStringValue(r, "status") as DoctorPayment["status"],
-        paidAt: getStringValue(r, "paid_at") || undefined,
-        createdAt: getStringValue(r, "created_at"),
-      }));
+      const mapped: DoctorPayment[] = (rows ?? []).map((r: Record<string, any>) => {
+        // Extract clinic name if available
+        let clinicName = undefined;
+        if (r.shift) {
+          const shiftObj = Array.isArray(r.shift) ? r.shift[0] : r.shift;
+          if (shiftObj && shiftObj.clinics) {
+            const clinicObj = Array.isArray(shiftObj.clinics) ? shiftObj.clinics[0] : shiftObj.clinics;
+            clinicName = clinicObj?.name;
+          }
+        }
+
+        return {
+          id: getStringValue(r, "id"),
+          doctorId: getStringValue(r, "doctor_id"),
+          shiftId: getStringValue(r, "shift_id"),
+          amount: getNumberValue(r, "amount"),
+          upiId: getStringValue(r, "upi_id"),
+          status: getStringValue(r, "status") as DoctorPayment["status"],
+          paidAt: getStringValue(r, "paid_at") || undefined,
+          createdAt: getStringValue(r, "created_at"),
+          clinicName // Note: this adds a non-standard property to DoctorPayment, but we can use it in PaymentList
+        };
+      });
 
       if (!isMounted) return;
       setPayments(mapped);
@@ -54,15 +75,19 @@ export default function DoctorPaymentsPage() {
   }, [router]);
 
   return (
-    <DashboardShell items={doctorNavigation}>
+    <DashboardShell items={doctorNavigation} userProfile={userProfile}>
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">Payments</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-[#0F172A]">Payments</h1>
         <p className="mt-2 text-sm leading-6 text-[#64748B]">Completed shift payouts and UPI transfer status.</p>
       </div>
+      
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">Loading payments...</p>
-      ) : payments.length === 0 ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">No payouts yet.</p>
+        <div className="space-y-4">
+          <div className="h-[120px] w-full animate-pulse rounded-2xl bg-slate-200"></div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 w-full animate-pulse rounded-xl bg-slate-200"></div>
+          ))}
+        </div>
       ) : (
         <PaymentList payments={payments} />
       )}

@@ -52,13 +52,23 @@ export default function DoctorProfilePage() {
   }, [router]);
 
   return (
-    <DashboardShell items={doctorNavigation}>
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">Profile</h1>
-        <p className="mt-2 text-sm leading-6 text-[#64748B]">Edit your personal, professional, availability, and payment details.</p>
+    <DashboardShell 
+      items={doctorNavigation}
+      userProfile={doctor ? { name: doctor.name, verificationStatus: doctor.verificationStatus } : undefined}
+    >
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[#0F172A]">Profile</h1>
+          <p className="mt-2 text-sm leading-6 text-[#64748B]">Manage your professional details, availability, and payments.</p>
+        </div>
       </div>
+      
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">Loading profile...</p>
+        <div className="space-y-6">
+          <div className="h-40 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+          <div className="h-64 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+          <div className="h-64 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+        </div>
       ) : doctor ? (
         <DoctorProfileForm doctor={doctor} />
       ) : null}
