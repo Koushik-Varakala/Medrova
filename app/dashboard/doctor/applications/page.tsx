@@ -120,7 +120,7 @@ export default function DoctorApplicationsPage() {
           </div>
           <h3 className="text-xl font-bold text-[#0F172A]">No applications yet</h3>
           <p className="mt-2 max-w-sm text-sm text-[#64748B]">
-            You haven't applied to any shifts or jobs. Browse the available listings to get started.
+            You haven&apos;t applied to any shifts or jobs. Browse the available listings to get started.
           </p>
         </div>
       ) : (

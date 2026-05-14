@@ -72,7 +72,7 @@ export function DoctorDashboardHome({
                 {greeting}, Dr. {doctor.name.split(" ")[0]}
               </h1>
               <p className="mt-2 text-sm text-blue-100 sm:text-base">
-                Here's your activity overview
+                Here&apos;s your activity overview
               </p>
             </div>
             
@@ -98,7 +98,7 @@ export function DoctorDashboardHome({
         {doctor.verificationStatus !== "verified" && (
           <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
             <AlertCircle className="h-5 w-5 shrink-0 text-amber-500" />
-            <p>Your profile is under review. You'll be notified once verified and can then apply to shifts.</p>
+            <p>Your profile is under review. You&apos;ll be notified once verified and can then apply to shifts.</p>
           </div>
         )}
       </motion.div>
@@ -171,7 +171,7 @@ export function DoctorDashboardHome({
             </div>
             <h3 className="text-lg font-bold text-[#0F172A]">No shifts yet</h3>
             <p className="mt-1 max-w-sm text-sm text-[#64748B]">
-              You haven't completed any shifts yet. Browse available shifts in Hyderabad to get started.
+              You haven&apos;t completed any shifts yet. Browse available shifts in Hyderabad to get started.
             </p>
             <Link 
               href="/dashboard/doctor/shifts" 

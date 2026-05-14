@@ -429,7 +429,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="mb-8 text-lg font-medium leading-relaxed text-[#0F172A] relative z-10">
-                  "{testimonial.quote}"
+                  &quot;{testimonial.quote}&quot;
                 </p>
                 <div>
                   <p className="font-bold text-[#1E40AF]">{testimonial.name}</p>
@@ -498,7 +498,7 @@ export default function LandingPage() {
                 />
               </Link>
               <p className="text-slate-500 leading-relaxed max-w-xs">
-                India's trusted locum recruitment marketplace. Building the future of healthcare staffing in Hyderabad.
+                India&apos;s trusted locum recruitment marketplace. Building the future of healthcare staffing in Hyderabad.
               </p>
             </div>
             

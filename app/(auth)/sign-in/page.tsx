@@ -176,7 +176,7 @@ export default function SignInPage() {
               Welcome back to Medrova
             </h1>
             <p className="mt-4 text-lg text-slate-300">
-              India's most trusted doctor staffing platform
+              India&apos;s most trusted doctor staffing platform
             </p>
 
             <div className="mt-12 space-y-6">
