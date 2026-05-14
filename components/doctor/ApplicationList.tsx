@@ -32,7 +32,7 @@ export function ApplicationList({ applications, isHistory = false }: Application
 
   const item = {
     hidden: { opacity: 0, x: -20 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    show: { opacity: 1, x: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
   };
 
   return (
@@ -50,8 +50,8 @@ export function ApplicationList({ applications, isHistory = false }: Application
         const isConfirmed = application.status === "confirmed";
         const isCompleted = application.status === "completed";
 
-        const formattedDate = details?.date 
-          ? new Date(details.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+        const formattedDate = application.shift?.date 
+          ? new Date(application.shift.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
           : "TBD";
 
         return (

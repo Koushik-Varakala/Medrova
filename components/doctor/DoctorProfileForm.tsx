@@ -14,7 +14,8 @@ import {
   XCircle,
   Loader2,
   Edit3,
-  X
+  X,
+  Clock
 } from "lucide-react";
 import { employmentStatuses, hyderabadAreas, specialties } from "@/lib/constants";
 import type { Doctor } from "@/types";
