@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   Briefcase,
   FileText,
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
