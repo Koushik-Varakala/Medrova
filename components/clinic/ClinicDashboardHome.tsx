@@ -14,7 +14,7 @@ import {
   Calendar,
   MapPin
 } from "lucide-react";
-import type { Clinic } from "@/types";
+import type { Clinic, Shift } from "@/types";
 import { cn, formatDate } from "@/lib/utils";
 
 interface ClinicDashboardHomeProps {
@@ -24,7 +24,7 @@ interface ClinicDashboardHomeProps {
     filledShifts: number;
     pendingApplications: number;
   };
-  recentShifts: any[];
+  recentShifts: Shift[];
 }
 
 export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashboardHomeProps) {
@@ -66,7 +66,7 @@ export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashb
                 {greeting}, {clinic.name}
               </h1>
               <p className="mt-2 text-sm text-blue-100 sm:text-base">
-                Manage your shifts and find verified doctors
+                Manage your shifts and find verified professionals
               </p>
             </div>
             
@@ -129,7 +129,7 @@ export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashb
               </div>
               <div>
                 <h3 className="font-bold text-[#0F172A] group-hover:text-blue-700 transition-colors">Post a Shift</h3>
-                <p className="mt-1 text-sm text-[#64748B]">Find verified doctors</p>
+                <p className="mt-1 text-sm text-[#64748B]">Find verified professionals</p>
               </div>
               <ChevronRight className="absolute bottom-6 right-6 h-5 w-5 text-blue-400 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
             </div>
@@ -219,7 +219,7 @@ export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashb
             </div>
             <h3 className="text-lg font-bold text-[#0F172A]">No shifts posted yet</h3>
             <p className="mt-1 max-w-sm text-sm text-[#64748B]">
-              You haven&apos;t posted any shifts yet. Create your first shift to hire verified doctors.
+              You haven&apos;t posted any shifts yet. Create your first shift to hire verified professionals.
             </p>
             <Link 
               href="/dashboard/clinic/post-shift" 

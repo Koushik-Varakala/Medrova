@@ -6,12 +6,15 @@ import { PaymentList } from "@/components/doctor/PaymentList";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { doctorNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { toDbRecord } from "@/lib/mappers";
 import { getStringValue, getNumberValue } from "@/lib/utils";
 import type { DoctorPayment } from "@/types";
 
+type DoctorPaymentWithClinic = DoctorPayment & { clinicName?: string };
+
 export default function DoctorPaymentsPage() {
   const router = useRouter();
-  const [payments, setPayments] = useState<DoctorPayment[]>([]);
+  const [payments, setPayments] = useState<DoctorPaymentWithClinic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<{name: string, verificationStatus: string} | undefined>(undefined);
 
@@ -42,14 +45,14 @@ export default function DoctorPaymentsPage() {
         .eq("doctor_id", doctorId)
         .order("created_at", { ascending: false });
 
-      const mapped: DoctorPayment[] = (rows ?? []).map((r: Record<string, any>) => {
-        // Extract clinic name if available
+      const mapped: DoctorPaymentWithClinic[] = (rows ?? []).map((row) => {
+        const r = toDbRecord(row);
         let clinicName = undefined;
         if (r.shift) {
-          const shiftObj = Array.isArray(r.shift) ? r.shift[0] : r.shift;
-          if (shiftObj && shiftObj.clinics) {
-            const clinicObj = Array.isArray(shiftObj.clinics) ? shiftObj.clinics[0] : shiftObj.clinics;
-            clinicName = clinicObj?.name;
+          const shiftObj = toDbRecord(Array.isArray(r.shift) ? r.shift[0] : r.shift);
+          if (shiftObj.clinics) {
+            const clinicObj = toDbRecord(Array.isArray(shiftObj.clinics) ? shiftObj.clinics[0] : shiftObj.clinics);
+            clinicName = getStringValue(clinicObj, "name") || undefined;
           }
         }
 
@@ -62,7 +65,7 @@ export default function DoctorPaymentsPage() {
           status: getStringValue(r, "status") as DoctorPayment["status"],
           paidAt: getStringValue(r, "paid_at") || undefined,
           createdAt: getStringValue(r, "created_at"),
-          clinicName // Note: this adds a non-standard property to DoctorPayment, but we can use it in PaymentList
+          clinicName
         };
       });
 

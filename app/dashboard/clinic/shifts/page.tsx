@@ -6,7 +6,8 @@ import { ClinicShiftManager } from "@/components/clinic/ClinicShiftManager";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { clinicNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
-import { getBooleanValue, getStringValue, getNumberValue } from "@/lib/utils";
+import { mapShiftRow, toDbRecord } from "@/lib/mappers";
+import { getStringValue, getNumberValue } from "@/lib/utils";
 import type { Application, Shift } from "@/types";
 import { Calendar, CalendarPlus } from "lucide-react";
 import Link from "next/link";
@@ -35,16 +36,7 @@ export default function ClinicShiftsPage() {
       const { data: shiftRows } = await supabase
         .from("shifts").select("*").eq("clinic_id", clinicId).order("date", { ascending: false });
 
-      const mappedShifts: Shift[] = (shiftRows ?? []).map((s: Record<string, unknown>) => ({
-        id: getStringValue(s, "id"), clinicId: getStringValue(s, "clinic_id"),
-        specialty: getStringValue(s, "specialty"), date: getStringValue(s, "date"),
-        startTime: getStringValue(s, "start_time"), endTime: getStringValue(s, "end_time"),
-        pay: getNumberValue(s, "pay"), area: getStringValue(s, "area"),
-        notes: getStringValue(s, "notes") || undefined,
-        isUrgent: getBooleanValue(s, "is_urgent"),
-        status: getStringValue(s, "status") as Shift["status"],
-        createdAt: getStringValue(s, "created_at"),
-      }));
+      const mappedShifts: Shift[] = (shiftRows ?? []).map((shift) => mapShiftRow(toDbRecord(shift)));
 
       const shiftIds = mappedShifts.map((s) => s.id);
       let mappedApplications: Application[] = [];
@@ -54,11 +46,12 @@ export default function ClinicShiftsPage() {
           const appsJson = (await appsRes.json()) as { applications?: Record<string, unknown>[] };
           const apps = appsJson.applications ?? [];
 
-          mappedApplications = apps.map((r: Record<string, unknown>) => {
+          mappedApplications = apps.map((row) => {
+            const r = toDbRecord(row);
             const rawData = r["doctor"] || r["doctors"];
-            const rawDoc = Array.isArray(rawData) ? rawData[0] : rawData;
+            const rawDoc = toDbRecord(Array.isArray(rawData) ? rawData[0] : rawData);
             
-            const doctorObj = rawDoc ? {
+            const doctorObj = getStringValue(rawDoc, "id") ? {
               id: getStringValue(rawDoc, "id"),
               name: getStringValue(rawDoc, "name"),
               specialty: getStringValue(rawDoc, "specialty"),

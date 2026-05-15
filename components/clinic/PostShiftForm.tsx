@@ -11,15 +11,18 @@ import {
   FileText,
   AlertCircle,
   CheckCircle2,
-  Zap
+  Zap,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { hyderabadAreas, specialties } from "@/lib/constants";
+import { hyderabadAreas, professionalRoleConfig } from "@/lib/constants";
 import { cn, formatCurrencyInr } from "@/lib/utils";
+import type { ProfessionalRole } from "@/types";
 
 const postShiftSchema = z.object({
+  professionalType: z.enum(["doctor", "nurse", "technician"]),
   specialty: z.string().min(1, "Select a specialty"),
   date: z.string().min(1, "Select a date"),
   startTime: z.string().min(1, "Select start time"),
@@ -40,12 +43,8 @@ interface RazorpayCheckoutOptions {
   description: string;
   order_id: string;
   handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void;
-  theme: {
-    color: string;
-  };
-  modal?: {
-    ondismiss?: () => void;
-  };
+  theme: { color: string; };
+  modal?: { ondismiss?: () => void; };
 }
 
 interface RazorpayInstance {
@@ -73,26 +72,24 @@ export function PostShiftForm() {
   } = useForm<PostShiftValues>({
     resolver: zodResolver(postShiftSchema),
     defaultValues: {
+      professionalType: "doctor",
       isUrgent: false,
       notes: ""
     }
   });
 
-  // Watch values for live calculations
   const payValue = useWatch({ control, name: "pay" }) || 0;
   const isUrgent = useWatch({ control, name: "isUrgent" });
   const notesValue = useWatch({ control, name: "notes" }) || "";
   const startTime = useWatch({ control, name: "startTime" });
   const endTime = useWatch({ control, name: "endTime" });
+  const professionalType = useWatch({ control, name: "professionalType" });
 
-  // Calculate duration
   useEffect(() => {
     if (startTime && endTime) {
       const start = new Date(`2000-01-01T${startTime}`);
       const end = new Date(`2000-01-01T${endTime}`);
-      if (end < start) {
-        end.setDate(end.getDate() + 1); // handle overnight shifts
-      }
+      if (end < start) end.setDate(end.getDate() + 1);
       const diffHrs = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       setDuration(`${diffHrs.toFixed(1)} hours`);
     } else {
@@ -100,14 +97,16 @@ export function PostShiftForm() {
     }
   }, [startTime, endTime]);
 
+  // Reset specialty when professional type changes
+  useEffect(() => {
+    setValue("specialty", "", { shouldValidate: false });
+  }, [professionalType, setValue]);
+
   const platformFee = Math.round(Number(payValue) * 0.10);
   const totalPayable = Number(payValue) + platformFee;
 
   async function loadRazorpayCheckout() {
-    if (window.Razorpay) {
-      return true;
-    }
-
+    if (window.Razorpay) return true;
     return new Promise<boolean>((resolve) => {
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -143,10 +142,7 @@ export function PostShiftForm() {
       });
 
       const orderResult = (await orderResponse.json()) as {
-        orderId?: string;
-        amount?: number;
-        currency?: string;
-        error?: string;
+        orderId?: string; amount?: number; currency?: string; error?: string;
       };
 
       if (!orderResponse.ok || !orderResult.orderId || !orderResult.amount) {
@@ -169,10 +165,9 @@ export function PostShiftForm() {
         amount: orderResult.amount,
         currency: orderResult.currency ?? "INR",
         name: "Medrova",
-        description: "Locum shift payment",
+        description: `Locum shift payment (${values.professionalType})`,
         order_id: orderResult.orderId,
         handler: async (response) => {
-          // Activate shift directly after payment success (test mode — no webhook needed)
           await fetch(`/api/shifts/${shiftIdForPayment}/activate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -181,16 +176,14 @@ export function PostShiftForm() {
               razorpayOrderId: response.razorpay_order_id,
             })
           });
-          setNotice("✅ Payment successful! Your shift is now live and visible to doctors.");
+          setNotice(`✅ Payment successful! Your shift is now live and visible to ${values.professionalType}s.`);
         },
         modal: {
           ondismiss: () => {
             setNotice("Payment cancelled. Your shift is saved as draft — you can pay later from My Shifts.");
           }
         },
-        theme: {
-          color: "#1E40AF"
-        }
+        theme: { color: "#1E40AF" }
       });
 
       checkout.open();
@@ -199,9 +192,34 @@ export function PostShiftForm() {
     }
   }
 
+  const currentSpecialties = professionalType 
+    ? professionalRoleConfig[professionalType].specialties 
+    : [];
+
   return (
     <form className="mx-auto max-w-3xl space-y-8 pb-24" onSubmit={handleSubmit(onSubmit)}>
       
+      {/* PROFESSIONAL TYPE */}
+      <section className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
+        <div className="mb-6 flex items-center gap-3 border-b border-[#E2E8F0] pb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+            <Users className="h-5 w-5" />
+          </div>
+          <h3 className="text-lg font-bold text-[#0F172A]">Who do you need?</h3>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          {(["doctor", "nurse", "technician"] as ProfessionalRole[]).map((role) => (
+            <label key={role} className="relative cursor-pointer">
+              <input type="radio" value={role} className="peer sr-only" {...register("professionalType")} />
+              <div className="rounded-xl border-2 border-slate-200 bg-white p-4 text-center font-bold text-slate-600 transition-all hover:border-blue-200 peer-checked:border-[#1E40AF] peer-checked:bg-blue-50 peer-checked:text-[#1E40AF]">
+                {professionalRoleConfig[role].label}
+              </div>
+            </label>
+          ))}
+        </div>
+      </section>
+
       {/* SHIFT DETAILS */}
       <section className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm sm:p-8">
         <div className="mb-6 flex items-center gap-3 border-b border-[#E2E8F0] pb-4">
@@ -214,7 +232,7 @@ export function PostShiftForm() {
         <div className="grid gap-6 sm:grid-cols-2">
           <Select 
             label="Specialty Needed" 
-            options={specialties} 
+            options={currentSpecialties} 
             registration={register("specialty")} 
             error={errors.specialty?.message} 
             icon={<div className="h-2 w-2 rounded-full bg-blue-500"></div>}
@@ -254,7 +272,7 @@ export function PostShiftForm() {
                 />
               </div>
               {duration && (
-                <div className="flex h-[46px] items-center justify-center rounded-xl bg-slate-100 px-6 font-bold text-slate-600 sm:w-32 sm:mb-0 mb-4">
+                <div className="mb-4 flex h-[46px] items-center justify-center rounded-xl bg-slate-100 px-6 font-bold text-slate-600 sm:mb-0 sm:w-32">
                   {duration}
                 </div>
               )}
@@ -274,7 +292,7 @@ export function PostShiftForm() {
 
         <div className="grid gap-8 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-bold text-[#0F172A]">Pay (to Doctor)</label>
+            <label className="mb-2 block text-sm font-bold text-[#0F172A]">Pay (to Professional)</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-slate-400">₹</span>
               <input
@@ -292,7 +310,7 @@ export function PostShiftForm() {
 
           <div className="flex flex-col justify-center rounded-xl bg-slate-50 p-5">
             <div className="flex items-center justify-between text-sm font-medium text-slate-600">
-              <span>Doctor receives:</span>
+              <span className="capitalize">{professionalType} receives:</span>
               <span className="font-bold text-slate-900">{formatCurrencyInr(Number(payValue) || 0)}</span>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm font-medium text-slate-600">
@@ -309,7 +327,7 @@ export function PostShiftForm() {
         <div className="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
           <p className="text-sm font-medium text-emerald-900">
-            Doctor guaranteed payment within 24 hours of shift completion.
+            Professional guaranteed payment within 24 hours of shift completion.
           </p>
         </div>
       </section>
@@ -331,7 +349,7 @@ export function PostShiftForm() {
             </div>
             <textarea
               className="min-h-[120px] w-full rounded-xl border border-[#E2E8F0] p-4 text-sm font-medium text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-2 focus:ring-[#1E40AF]/20"
-              placeholder="Any specific requirements or instructions for the doctor?"
+              placeholder="Any specific requirements or instructions?"
               maxLength={500}
               {...register("notes")}
             />
@@ -359,8 +377,8 @@ export function PostShiftForm() {
             </div>
             
             {isUrgent && (
-              <p className="mt-4 text-sm font-bold text-red-600 animate-in fade-in slide-in-from-top-2">
-                ⚡ This shift will be marked urgent and highlighted to doctors.
+              <p className="mt-4 animate-in fade-in slide-in-from-top-2 text-sm font-bold text-red-600">
+                ⚡ This shift will be marked urgent and highlighted.
               </p>
             )}
           </div>
@@ -368,19 +386,19 @@ export function PostShiftForm() {
       </section>
 
       {/* MESSAGES */}
-      {formError ? (
+      {formError && (
         <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800 shadow-sm">
           <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
           <p>{formError}</p>
         </div>
-      ) : null}
+      )}
       
-      {notice ? (
+      {notice && (
         <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 shadow-sm">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
           <p>{notice}</p>
         </div>
-      ) : null}
+      )}
 
       {/* SUBMIT BUTTON */}
       <div className="sticky bottom-0 z-10 -mx-4 border-t border-[#E2E8F0] bg-white/90 p-4 backdrop-blur-md sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0">
@@ -411,20 +429,14 @@ interface FieldProps {
   icon?: React.ReactNode;
 }
 
-function registerPlaceholder() {
-  return {};
-}
+function registerPlaceholder() { return {}; }
 
 function Input({ label, error, registration, type = "text", icon }: FieldProps) {
   return (
     <div>
       <label className="mb-2 block text-sm font-bold text-[#0F172A]">{label}</label>
       <div className="relative">
-        {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2">
-            {icon}
-          </div>
-        )}
+        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2">{icon}</div>}
         <input
           className={cn(
             "w-full rounded-xl border px-4 py-3 text-sm font-medium text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-2 focus:ring-[#1E40AF]/20",
@@ -445,11 +457,7 @@ function Select({ label, error, registration, options, icon }: FieldProps & { op
     <div>
       <label className="mb-2 block text-sm font-bold text-[#0F172A]">{label}</label>
       <div className="relative">
-        {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-            {icon}
-          </div>
-        )}
+        {icon && <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">{icon}</div>}
         <select
           className={cn(
             "w-full appearance-none rounded-xl border bg-white px-4 py-3 text-sm font-medium text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-2 focus:ring-[#1E40AF]/20",
@@ -460,9 +468,7 @@ function Select({ label, error, registration, options, icon }: FieldProps & { op
         >
           <option value="" disabled>Select {label.toLowerCase()}</option>
           {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
+            <option key={option} value={option}>{option}</option>
           ))}
         </select>
       </div>

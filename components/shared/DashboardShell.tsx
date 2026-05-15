@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LogOut, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,13 +52,17 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden w-[260px] flex-col border-r border-[#E2E8F0] bg-white lg:flex">
         <div className="flex h-20 items-center px-6">
-          <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-md shadow-blue-600/20">
-              <Activity className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-xl font-black tracking-tight text-[#0F172A]">Medrova</span>
+          <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Medrova Logo"
+              width={140}
+              height={45}
+              className="object-contain"
+              priority
+            />
             {pathname.startsWith("/dashboard/admin") && (
-              <span className="ml-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black tracking-wider text-red-600 border border-red-200 uppercase">Admin</span>
+              <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black tracking-wider text-red-600 border border-red-200 uppercase">Admin</span>
             )}
           </Link>
         </div>

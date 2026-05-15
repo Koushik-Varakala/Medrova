@@ -7,7 +7,8 @@ import { ApplicationList, ApplicationSkeletonList } from "@/components/doctor/Ap
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { doctorNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
-import { getStringValue } from "@/lib/utils";
+import { toDbRecord } from "@/lib/mappers";
+import { getNumberValue, getStringValue } from "@/lib/utils";
 import type { Application } from "@/types";
 
 export default function DoctorApplicationsPage() {
@@ -37,18 +38,19 @@ export default function DoctorApplicationsPage() {
       }
 
       const res = await fetch("/api/doctor/applications");
-      const json = await res.json();
+      const json = (await res.json()) as { applications?: Record<string, unknown>[] };
       const apps = json.applications ?? [];
 
-      const mapped: Application[] = apps.map((r: Record<string, unknown>) => {
+      const mapped: Application[] = apps.map((row) => {
+        const r = toDbRecord(row);
         const rawShiftData = r["shift"] || r["shifts"];
         const rawJobData = r["job"] || r["jobs"];
-        const rawShift = Array.isArray(rawShiftData) ? rawShiftData[0] : rawShiftData;
-        const rawJob = Array.isArray(rawJobData) ? rawJobData[0] : rawJobData;
+        const rawShift = toDbRecord(Array.isArray(rawShiftData) ? rawShiftData[0] : rawShiftData);
+        const rawJob = toDbRecord(Array.isArray(rawJobData) ? rawJobData[0] : rawJobData);
 
-        const mapClinic = (rawClinic: any) => {
-          if (!rawClinic) return undefined;
-          const c = Array.isArray(rawClinic) ? rawClinic[0] : rawClinic;
+        const mapClinic = (rawClinic: unknown) => {
+          const c = toDbRecord(Array.isArray(rawClinic) ? rawClinic[0] : rawClinic);
+          if (!getStringValue(c, "id") && !getStringValue(c, "name")) return undefined;
           return {
             name: getStringValue(c, "name"),
             contactPerson: getStringValue(c, "contact_person"),
@@ -58,20 +60,20 @@ export default function DoctorApplicationsPage() {
           };
         };
 
-        const shiftObj = rawShift ? {
+        const shiftObj = getStringValue(rawShift, "id") ? {
           specialty: getStringValue(rawShift, "specialty"),
           date: getStringValue(rawShift, "date"),
           startTime: getStringValue(rawShift, "start_time"),
           endTime: getStringValue(rawShift, "end_time"),
-          pay: Number(rawShift.pay),
+          pay: getNumberValue(rawShift, "pay"),
           clinic: mapClinic(rawShift.clinic || rawShift.clinics)
         } : undefined;
 
-        const jobObj = rawJob ? {
+        const jobObj = getStringValue(rawJob, "id") ? {
           specialty: getStringValue(rawJob, "specialty"),
           jobType: getStringValue(rawJob, "job_type"),
-          salaryMin: Number(rawJob.salary_min),
-          salaryMax: Number(rawJob.salary_max),
+          salaryMin: getNumberValue(rawJob, "salary_min"),
+          salaryMax: getNumberValue(rawJob, "salary_max"),
           clinic: mapClinic(rawJob.clinic || rawJob.clinics)
         } : undefined;
 

@@ -29,9 +29,18 @@ export async function POST(
       return auth.error;
     }
 
+    const url = new URL(request.url);
+    const tableParam = url.searchParams.get("table") || "doctors";
+    const table =
+      tableParam === "professionals" ? "healthcare_professionals" : tableParam;
+
+    if (table !== "doctors" && table !== "healthcare_professionals") {
+      return jsonError("Invalid table provided.", 400);
+    }
+
     const values = await parseJsonWithSchema(request, verifyDoctorSchema);
     const { data, error } = await auth.service
-      .from("doctors")
+      .from(table)
       .update({
         verification_status: values.status,
         verification_note: values.note
@@ -41,10 +50,10 @@ export async function POST(
       .single();
 
     if (error || !data) {
-      return jsonError(error?.message ?? "Doctor not found.", 404);
+      return jsonError("Professional not found.", 404);
     }
 
-    return NextResponse.json({ doctor: data });
+    return NextResponse.json({ professional: data });
   } catch (error) {
     return validationError(error);
   }

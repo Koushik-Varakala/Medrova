@@ -11,7 +11,8 @@ import {
   Clock, 
   Search, 
   Wallet,
-  AlertCircle
+  AlertCircle,
+  type LucideIcon
 } from "lucide-react";
 import type { Doctor, Shift } from "@/types";
 import { formatCurrencyInr } from "@/lib/utils";
@@ -187,7 +188,7 @@ export function DoctorDashboardHome({
   );
 }
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: "blue" | "green" | "amber" }) {
+function StatCard({ icon: Icon, label, value, accent }: { icon: LucideIcon; label: string; value: string; accent: "blue" | "green" | "amber" }) {
   const accentColors = {
     blue: "border-l-blue-500 text-blue-500 bg-blue-50",
     green: "border-l-emerald-500 text-emerald-500 bg-emerald-50",
@@ -209,7 +210,7 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
   );
 }
 
-function ActionCard({ href, icon: Icon, title, color }: { href: string; icon: any; title: string; color: string }) {
+function ActionCard({ href, icon: Icon, title, color }: { href: string; icon: LucideIcon; title: string; color: string }) {
   return (
     <Link 
       href={href}

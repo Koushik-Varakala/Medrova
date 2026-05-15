@@ -8,7 +8,7 @@ export default function ClinicPostJobPage() {
   return (
     <DashboardShell items={clinicNavigation}>
       <Header
-        description="Publish a permanent opening for verified doctors to apply."
+        description="Publish a permanent opening for verified healthcare professionals to apply."
         title="Post a permanent job"
       />
       <PostJobForm />

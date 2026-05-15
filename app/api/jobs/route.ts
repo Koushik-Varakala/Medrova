@@ -7,15 +7,22 @@ import {
   parseJsonWithSchema,
   validationError
 } from "@/lib/api-utils";
+import { mapJobRow, toDbRecord } from "@/lib/mappers";
 import { createSupabaseServiceClient } from "@/lib/supabase-server";
 
 const createJobSchema = z.object({
+  professionalType: z.enum(["doctor", "nurse", "technician"]),
   specialty: z.string().min(1),
   experienceMin: z.coerce.number().int().min(0),
   jobType: z.enum(["full_time", "part_time"]),
   salaryMin: z.coerce.number().int().positive(),
   salaryMax: z.coerce.number().int().positive(),
-  description: z.string().min(20)
+  description: z.string().min(20),
+  locationLat: z.number().optional(),
+  locationLng: z.number().optional(),
+  locationDisplayName: z.string().optional(),
+  contactEmail: z.string().email().optional().or(z.literal("")),
+  contactPhone: z.string().min(10).optional().or(z.literal(""))
 });
 
 export async function GET(request: Request) {
@@ -28,6 +35,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const specialty = url.searchParams.get("specialty");
   const jobType = url.searchParams.get("jobType");
+  const professionalType = url.searchParams.get("professionalType");
 
   let query = service
     .from("jobs")
@@ -43,13 +51,20 @@ export async function GET(request: Request) {
     query = query.eq("job_type", jobType);
   }
 
+  if (professionalType) {
+    if (!["doctor", "nurse", "technician"].includes(professionalType)) {
+      return jsonError("Invalid professionalType filter.", 422);
+    }
+    query = query.eq("professional_type", professionalType);
+  }
+
   const { data, error } = await query;
 
   if (error) {
     return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ jobs: data ?? [] });
+  return NextResponse.json({ jobs: (data ?? []).map((row) => mapJobRow(toDbRecord(row))) });
 }
 
 export async function POST(request: Request) {
@@ -81,22 +96,29 @@ export async function POST(request: Request) {
       .from("jobs")
       .insert({
         clinic_id: clinic.id,
+        professional_type: values.professionalType,
         specialty: values.specialty,
         experience_min: values.experienceMin,
         job_type: values.jobType,
         salary_min: values.salaryMin,
         salary_max: values.salaryMax,
         description: values.description,
-        status: "active"
+        status: "active",
+        location_lat: values.locationLat ?? null,
+        location_lng: values.locationLng ?? null,
+        location_display_name: values.locationDisplayName || null,
+        is_free_posting: true,
+        contact_email: values.contactEmail || null,
+        contact_phone: values.contactPhone || null
       })
-      .select("id")
+      .select("*, clinic:clinics(*)")
       .single();
 
     if (error || !data) {
       return jsonError(error?.message ?? "Unable to create job.", 500);
     }
 
-    return NextResponse.json({ job: data }, { status: 201 });
+    return NextResponse.json({ job: mapJobRow(toDbRecord(data)) }, { status: 201 });
   } catch (error) {
     return validationError(error);
   }

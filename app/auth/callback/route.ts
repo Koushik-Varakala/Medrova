@@ -15,10 +15,8 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if user has a role
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Try getting role from db
         const { data: roleRow } = await supabase
           .from("user_roles")
           .select("role")
@@ -28,9 +26,24 @@ export async function GET(request: Request) {
         const role = roleRow?.role || user.user_metadata?.role;
 
         if (role) {
-          return NextResponse.redirect(`${origin}/dashboard/${role}`);
+          // Existing user with known role — send to their dashboard
+          if (role === "clinic") return NextResponse.redirect(`${origin}/dashboard/clinic`);
+          if (role === "admin") return NextResponse.redirect(`${origin}/dashboard/admin`);
+          if (role === "doctor") {
+            const { data: professionalProfile } = await supabase
+              .from("healthcare_professionals")
+              .select("id")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            return NextResponse.redirect(
+              `${origin}${professionalProfile ? "/dashboard/professional" : "/onboarding/professional?role=doctor"}`
+            );
+          }
+          // nurse / technician — they always use the unified professional dashboard
+          return NextResponse.redirect(`${origin}/dashboard/professional`);
         } else {
-          // New Google user — send them to pick their role
+          // New user via Google OAuth — they haven't picked a role yet
+          // Send them to role-select so they can choose before onboarding
           return NextResponse.redirect(`${origin}/auth/role-select`);
         }
       }

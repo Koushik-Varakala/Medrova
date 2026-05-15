@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/shared/LogoutButton";
@@ -21,8 +22,15 @@ export function Sidebar({ items }: SidebarProps) {
 
   return (
     <aside className="hidden min-h-screen w-64 flex-col border-r border-[#E2E8F0] bg-white p-6 lg:flex">
-      <Link className="text-xl font-semibold text-[#1E40AF]" href="/">
-        Medrova
+      <Link href="/" className="flex items-center transition-transform hover:scale-105">
+        <Image
+          src="/logo.png"
+          alt="Medrova Logo"
+          width={120}
+          height={38}
+          className="object-contain"
+          priority
+        />
       </Link>
       <nav className="mt-8 flex-1 space-y-2">
         {items.map((item) => {

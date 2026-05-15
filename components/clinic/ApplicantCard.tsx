@@ -49,7 +49,7 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-bold text-[#0F172A] sm:text-lg">
-                Dr. {doctor.name}
+                {doctor.name}
               </h3>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                 <span className="font-semibold text-[#1E40AF]">{doctor.specialty}</span>
@@ -79,7 +79,7 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
         <div className="border-t border-emerald-100 bg-emerald-50 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-bold text-emerald-800">
             <ShieldCheck className="h-5 w-5 text-emerald-600" />
-            Doctor Confirmed — Contact Details Unlocked
+            Professional Confirmed - Contact Details Unlocked
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
             <a href={`tel:${doctor.phone}`} className="flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900 hover:underline">
@@ -108,7 +108,7 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
               
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs text-slate-500">MCI Registration Number</p>
+                  <p className="text-xs text-slate-500">Registration Number</p>
                   <p className="font-medium text-[#0F172A]">{doctor.mciNumber}</p>
                 </div>
                 <div>

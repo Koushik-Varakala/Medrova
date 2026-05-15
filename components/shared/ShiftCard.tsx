@@ -1,14 +1,34 @@
 import type { Shift } from "@/types";
 import { formatCurrencyInr, formatDate } from "@/lib/utils";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { MapPin } from "lucide-react";
+import { calculateDistance } from "@/lib/location";
 
 interface ShiftCardProps {
   shift: Shift;
   actionLabel?: string;
   onAction?: () => void;
+  userLat?: number;
+  userLng?: number;
+  shiftLat?: number;
+  shiftLng?: number;
 }
 
-export function ShiftCard({ shift, actionLabel, onAction }: ShiftCardProps) {
+export function ShiftCard({
+  shift,
+  actionLabel,
+  onAction,
+  userLat,
+  userLng,
+  shiftLat,
+  shiftLng
+}: ShiftCardProps) {
+  let distanceText = "";
+  if (userLat !== undefined && userLng !== undefined && shiftLat !== undefined && shiftLng !== undefined) {
+    const dist = calculateDistance(userLat, userLng, shiftLat, shiftLng);
+    distanceText = `${dist.toFixed(1)} km away`;
+  }
+
   return (
     <article className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -23,9 +43,15 @@ export function ShiftCard({ shift, actionLabel, onAction }: ShiftCardProps) {
               </span>
             ) : null}
           </div>
-          <p className="mt-2 text-sm text-[#64748B]">
-            {shift.clinic?.name ?? "Clinic"} · {shift.area}
-          </p>
+          <div className="mt-2 text-sm text-[#64748B]">
+            <p>{shift.clinic?.name ?? "Clinic"} · {shift.area}</p>
+            {distanceText && (
+              <p className="mt-1 flex items-center gap-1 text-[#1E40AF]">
+                <MapPin className="h-3.5 w-3.5" />
+                {distanceText}
+              </p>
+            )}
+          </div>
           <p className="mt-3 text-sm text-[#0F172A]">
             {formatDate(shift.date)} · {shift.startTime} - {shift.endTime}
           </p>

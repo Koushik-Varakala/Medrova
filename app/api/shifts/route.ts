@@ -10,6 +10,7 @@ import {
 import { createSupabaseServiceClient } from "@/lib/supabase-server";
 
 const createShiftSchema = z.object({
+  professionalType: z.enum(["doctor", "nurse", "technician"]).default("doctor"),
   specialty: z.string().min(1),
   date: z.string().min(1),
   startTime: z.string().min(1),
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
   const specialty = url.searchParams.get("specialty");
   const area = url.searchParams.get("area");
   const date = url.searchParams.get("date");
+  const professionalType = url.searchParams.get("professionalType");
 
   let query = service
     .from("shifts")
@@ -47,6 +49,13 @@ export async function GET(request: Request) {
 
   if (date) {
     query = query.eq("date", date);
+  }
+
+  if (professionalType) {
+    if (!["doctor", "nurse", "technician"].includes(professionalType)) {
+      return jsonError("Invalid professionalType filter.", 422);
+    }
+    query = query.eq("professional_type", professionalType);
   }
 
   const { data, error } = await query;
@@ -94,6 +103,7 @@ export async function POST(request: Request) {
       .from("shifts")
       .insert({
         clinic_id: clinic.id,
+        professional_type: values.professionalType,
         specialty: values.specialty,
         date: values.date,
         start_time: values.startTime,

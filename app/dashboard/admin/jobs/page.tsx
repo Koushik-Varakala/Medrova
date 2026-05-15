@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { JobCard } from "@/components/shared/JobCard";
 import { adminNavigation } from "@/lib/constants";
-import { getStringValue, getNumberValue } from "@/lib/utils";
 import type { Job } from "@/types";
 
 export default function AdminJobsPage() {
@@ -15,20 +14,8 @@ export default function AdminJobsPage() {
     let isMounted = true;
     async function load() {
       const res = await fetch("/api/jobs");
-      const json = (await res.json()) as { jobs?: Record<string, unknown>[] };
-      const mapped: Job[] = (json.jobs ?? []).map((j) => ({
-        id: getStringValue(j, "id"),
-        clinicId: getStringValue(j, "clinic_id"),
-        specialty: getStringValue(j, "specialty"),
-        experienceMin: getNumberValue(j, "experience_min"),
-        jobType: getStringValue(j, "job_type") as Job["jobType"],
-        salaryMin: getNumberValue(j, "salary_min"),
-        salaryMax: getNumberValue(j, "salary_max"),
-        description: getStringValue(j, "description"),
-        status: getStringValue(j, "status") as Job["status"],
-        createdAt: getStringValue(j, "created_at"),
-        clinic: j["clinic"] as Job["clinic"],
-      }));
+      const json = (await res.json()) as { jobs?: Job[] };
+      const mapped = json.jobs ?? [];
       if (!isMounted) return;
       setJobs(mapped);
       setIsLoading(false);

@@ -38,7 +38,13 @@ function getRoleFromMetadata(metadata: unknown): UserRole | null {
     return null;
   }
   const role = (metadata as { role?: unknown }).role;
-  if (role === "doctor" || role === "clinic" || role === "admin") {
+  if (
+    role === "doctor" ||
+    role === "nurse" ||
+    role === "technician" ||
+    role === "clinic" ||
+    role === "admin"
+  ) {
     return role;
   }
   return null;
@@ -109,7 +115,21 @@ export default function SignInPage() {
         return;
       }
 
-      router.push(`/dashboard/${resolvedRole}`);
+      const getDashboardPath = async (role: string) => {
+        if (role === "clinic") return "/dashboard/clinic";
+        if (role === "admin") return "/dashboard/admin";
+        if (role === "doctor") {
+          const { data: professionalProfile } = await supabase
+            .from("healthcare_professionals")
+            .select("id")
+            .eq("user_id", userId)
+            .maybeSingle();
+          return professionalProfile ? "/dashboard/professional" : "/dashboard/doctor";
+        }
+        return "/dashboard/professional";
+      };
+
+      router.push(await getDashboardPath(resolvedRole));
       router.refresh();
     } finally {
       setIsSubmitting(false);
@@ -304,9 +324,30 @@ export default function SignInPage() {
                   </button>
                 </motion.div>
                 <div className="flex justify-end">
-                  <Link href="/forgot-password" className="text-xs font-medium text-[#1E40AF] hover:underline">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const emailInput = (document.getElementById("email") as HTMLInputElement)?.value?.trim();
+                      if (!emailInput) {
+                        setFormError("Enter your email address above, then click Forgot password.");
+                        return;
+                      }
+                      const supabase = createSupabaseBrowserClient();
+                      if (!supabase) return;
+                      const { error } = await supabase.auth.resetPasswordForEmail(emailInput, {
+                        redirectTo: `${window.location.origin}/auth/callback`
+                      });
+                      if (error) {
+                        setFormError(error.message);
+                      } else {
+                        setFormError("");
+                        alert("Password reset email sent! Check your inbox.");
+                      }
+                    }}
+                    className="text-xs font-medium text-[#1E40AF] hover:underline"
+                  >
                     Forgot password?
-                  </Link>
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="mt-1 text-xs font-medium text-red-500 flex items-center gap-1">

@@ -51,14 +51,14 @@ export default function AdminDashboardPage() {
         ]);
 
         const [doctorsJson, clinicsJson, paymentsJson] = await Promise.all([
-          doctorsRes.json() as Promise<{ doctors?: { verification_status: string }[] }>,
+          doctorsRes.json() as Promise<{ professionals?: { verification_status: string }[] }>,
           clinicsRes.json() as Promise<{ clinics?: { verification_status: string }[] }>,
           paymentsRes.json() as Promise<{ summary?: { totalRevenue: number; totalPayouts: number; platformFeesRetained: number } }>,
         ]);
 
         if (!isMounted) return;
 
-        const doctors = doctorsJson.doctors ?? [];
+        const doctors = doctorsJson.professionals ?? [];
         const clinics = clinicsJson.clinics ?? [];
         const summary = paymentsJson.summary;
 

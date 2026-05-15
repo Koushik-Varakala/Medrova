@@ -1,4 +1,5 @@
-export type UserRole = "doctor" | "clinic" | "admin";
+export type ProfessionalRole = "doctor" | "nurse" | "technician";
+export type UserRole = ProfessionalRole | "clinic" | "admin";
 export type VerificationStatus = "pending" | "verified" | "rejected";
 export type ShiftStatus =
   | "pending_payment"
@@ -65,11 +66,16 @@ export interface Shift {
   endTime: string;
   pay: number;
   area: string;
+  latitude?: number;
+  longitude?: number;
+  locationDisplayName?: string;
   notes?: string;
   isUrgent: boolean;
   status: ShiftStatus;
   razorpayPaymentId?: string;
   confirmedDoctorId?: string;
+  professionalType?: ProfessionalRole;
+  confirmedProfessionalId?: string;
   createdAt: string;
 }
 
@@ -84,6 +90,13 @@ export interface Job {
   salaryMax: number;
   description: string;
   status: "active" | "closed";
+  professionalType: ProfessionalRole;
+  locationLat?: number;
+  locationLng?: number;
+  locationDisplayName?: string;
+  isFreePosting: boolean;
+  contactEmail?: string;
+  contactPhone?: string;
   createdAt: string;
 }
 
@@ -118,4 +131,76 @@ export interface DoctorPayment {
   status: PaymentStatus;
   paidAt?: string;
   createdAt: string;
+}
+
+// Unified Healthcare Professional Types
+
+export type ExtendedUserRole = UserRole;
+
+export interface HealthcareProfessional {
+  id: string;
+  userId: string;
+  role: ProfessionalRole;
+  name: string;
+  phone: string;
+  email: string;
+  specialty: string;
+  experience: number;
+  registrationNumber: string;
+  city: string;
+  area: string;
+  latitude?: number;
+  longitude?: number;
+  locationDisplayName?: string;
+  employmentStatus: string;
+  availableDays: string[];
+  shiftPreference: "locum" | "permanent" | "both";
+  expectedPay: number;
+  upiId: string;
+  verificationStatus: VerificationStatus;
+  verificationNote?: string;
+  primaryCertUrl?: string;
+  degreeCertUrl?: string;
+  govIdUrl?: string;
+  createdAt: string;
+}
+
+export interface ProfessionalApplication {
+  id: string;
+  professionalId: string;
+  professional?: HealthcareProfessional;
+  shiftId?: string;
+  shift?: Shift;
+  jobId?: string;
+  job?: Job;
+  status: ApplicationStatus;
+  createdAt: string;
+}
+
+export interface ProfessionalPayout {
+  id: string;
+  professionalId: string;
+  shiftId: string;
+  amount: number;
+  upiId: string;
+  status: PaymentStatus;
+  paidAt?: string;
+  createdAt: string;
+  shift?: {
+    id: string;
+    specialty: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    pay?: number;
+    clinic?: { name: string };
+  };
+}
+
+export interface LocationResult {
+  displayName: string;
+  lat: number;
+  lng: number;
+  area?: string;
+  city?: string;
 }

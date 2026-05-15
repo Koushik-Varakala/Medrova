@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminServiceClient, jsonError, validationError } from "@/lib/api-utils";
+import { getAdminServiceClient, validationError } from "@/lib/api-utils";
 
 export async function GET() {
   try {
@@ -9,28 +9,43 @@ export async function GET() {
       return auth.error;
     }
 
-    const [{ data: clinicPayments, error: clinicError }, { data: doctorPayouts, error: doctorError }] =
-      await Promise.all([
-        auth.service.from("clinic_payments").select("*").order("created_at", { ascending: false }),
-        auth.service.from("doctor_payouts").select("*").order("created_at", { ascending: false })
-      ]);
+    // Try to fetch from the unified professional_payouts table (current schema)
+    const { data: professionalPayouts, error: payoutsError } = await auth.service
+      .from("professional_payouts")
+      .select("amount, status")
+      .order("created_at", { ascending: false });
 
-    if (clinicError) {
-      return jsonError(clinicError.message, 500);
-    }
+    // Gracefully fall back to zero if the table doesn't exist yet
+    const safePayouts = payoutsError ? [] : (professionalPayouts ?? []);
 
-    if (doctorError) {
-      return jsonError(doctorError.message, 500);
-    }
+    // Try legacy tables — they may not exist in all environments
+    const { data: clinicPayments } = await auth.service
+      .from("clinic_payments")
+      .select("amount")
+      .order("created_at", { ascending: false });
 
+    const { data: doctorPayouts } = await auth.service
+      .from("doctor_payouts")
+      .select("amount")
+      .order("created_at", { ascending: false });
+
+    // Revenue = what clinics paid into the platform (clinic_payments)
     const totalRevenue = (clinicPayments ?? []).reduce(
-      (total, payment: { amount: number }) => total + payment.amount,
+      (total: number, payment: { amount: number }) => total + (payment.amount ?? 0),
       0
     );
-    const totalPayouts = (doctorPayouts ?? []).reduce(
-      (total, payout: { amount: number }) => total + payout.amount,
+
+    // Payouts = what professionals were paid out (professional_payouts OR legacy doctor_payouts)
+    const unifiedPayoutsTotal = safePayouts
+      .filter((p: { amount: number; status: string }) => p.status === "completed")
+      .reduce((total: number, p: { amount: number }) => total + (p.amount ?? 0), 0);
+
+    const legacyPayoutsTotal = (doctorPayouts ?? []).reduce(
+      (total: number, payout: { amount: number }) => total + (payout.amount ?? 0),
       0
     );
+
+    const totalPayouts = unifiedPayoutsTotal + legacyPayoutsTotal;
 
     return NextResponse.json({
       clinicPayments: clinicPayments ?? [],

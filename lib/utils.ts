@@ -52,14 +52,31 @@ export function parseStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+export function getRecordValue(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
 export function getStringValue(record: Record<string, unknown>, key: string) {
   const value = record[key];
   return typeof value === "string" ? value : "";
 }
 
+export function getOptionalStringValue(record: Record<string, unknown>, key: string) {
+  const value = getStringValue(record, key);
+  return value || undefined;
+}
+
 export function getNumberValue(record: Record<string, unknown>, key: string) {
   const value = record[key];
   return typeof value === "number" ? value : 0;
+}
+
+export function getOptionalNumberValue(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  return typeof value === "number" ? value : undefined;
 }
 
 export function getBooleanValue(record: Record<string, unknown>, key: string) {

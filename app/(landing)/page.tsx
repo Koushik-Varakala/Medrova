@@ -50,16 +50,14 @@ function LandingNavbar() {
       if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const [{ data: doctor }, { data: clinic }] = await Promise.all([
-          supabase.from("doctors").select("id").eq("user_id", session.user.id).maybeSingle(),
-          supabase.from("clinics").select("id").eq("user_id", session.user.id).maybeSingle()
-        ]);
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
 
-        let role = "onboarding";
-        if (doctor) role = "doctor";
-        else if (clinic) role = "clinic";
-
-        setUser({ email: session.user.email, role });
+        const role = roleRow?.role ?? session.user.user_metadata?.role;
+        setUser({ email: session.user.email, role: role ?? "unknown" });
       }
     }
     checkUser();
@@ -126,7 +124,13 @@ function LandingNavbar() {
                     </div>
                     <div className="p-2">
                       <Link
-                        href={user.role === "doctor" ? "/dashboard/doctor" : user.role === "clinic" ? "/dashboard/clinic" : "/onboarding/doctor"}
+                        href={
+                          user.role === "clinic" ? "/dashboard/clinic" :
+                          user.role === "admin" ? "/dashboard/admin" :
+                          user.role === "doctor" ? "/dashboard/doctor" :
+                          (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
+                          "/sign-up"
+                        }
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         <Activity className="h-4 w-4" />
@@ -189,7 +193,13 @@ function LandingNavbar() {
                     <p className="truncate text-sm font-bold text-gray-900">{user.email}</p>
                   </div>
                   <Link
-                    href={user.role === "doctor" ? "/dashboard/doctor" : user.role === "clinic" ? "/dashboard/clinic" : "/onboarding/doctor"}
+                    href={
+                      user.role === "clinic" ? "/dashboard/clinic" :
+                      user.role === "admin" ? "/dashboard/admin" :
+                      user.role === "doctor" ? "/dashboard/doctor" :
+                      (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
+                      "/sign-up"
+                    }
                     className="flex items-center gap-2 rounded-lg bg-gray-50 p-3 font-medium text-gray-900"
                     onClick={() => setMobileMenuOpen(false)}
                   >

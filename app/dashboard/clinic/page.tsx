@@ -7,12 +7,14 @@ import { ClinicDashboardHome } from "@/components/clinic/ClinicDashboardHome";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { clinicNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
+import { mapShiftRow, toDbRecord } from "@/lib/mappers";
 import { getStringValue, getNumberValue } from "@/lib/utils";
-import type { Clinic, VerificationStatus } from "@/types";
+import type { Clinic, Shift, VerificationStatus } from "@/types";
 
 export default function ClinicDashboardPage() {
   const router = useRouter();
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [recentShifts, setRecentShifts] = useState<Shift[]>([]);
   const [stats, setStats] = useState({ activeShifts: 0, filledShifts: 0, pendingApplications: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,15 +76,14 @@ export default function ClinicDashboardPage() {
         const filledShifts = shifts.filter((s) => s.status === "confirmed" || s.status === "completed").length;
         const shiftIds = shifts.map((s) => s.id);
 
-        // Fetch pending applications across all clinic shifts
+        // Fetch pending applications across all clinic shifts (from both legacy and unified tables)
         let pendingApplications = 0;
         if (shiftIds.length > 0) {
-          const { data: appsData } = await supabase
-            .from("applications")
-            .select("id")
-            .in("shift_id", shiftIds)
-            .eq("status", "applied");
-          pendingApplications = appsData?.length ?? 0;
+          const [{ data: legacyApps }, { data: unifiedApps }] = await Promise.all([
+            supabase.from("applications").select("id").in("shift_id", shiftIds).eq("status", "applied"),
+            supabase.from("professional_applications").select("id").in("shift_id", shiftIds).eq("status", "applied")
+          ]);
+          pendingApplications = (legacyApps?.length ?? 0) + (unifiedApps?.length ?? 0);
         }
 
         // Fetch recent shifts
@@ -100,7 +101,7 @@ export default function ClinicDashboardPage() {
         
         // Let's store recent shifts in a separate state, or just add it to a new state
         // To avoid changing too many things, I'll just fetch and set it in a new state variable
-        setRecentShifts(recentShiftsData ?? []);
+        setRecentShifts((recentShiftsData ?? []).map((shift) => mapShiftRow(toDbRecord(shift))));
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Unable to load your profile.");
@@ -114,8 +115,7 @@ export default function ClinicDashboardPage() {
     return () => { isMounted = false; };
   }, [router]);
 
-  // Use a new state for recent shifts
-  const [recentShifts, setRecentShifts] = useState<any[]>([]);
+  // recentShifts state is declared above with other hooks
 
   return (
     <DashboardShell 

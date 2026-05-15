@@ -1,89 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminDoctorTable } from "@/components/admin/AdminDoctorTable";
+import { AdminProfessionalTable, ProfessionalApiRow } from "@/components/admin/AdminDoctorTable";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { adminNavigation } from "@/lib/constants";
-import type { Doctor, VerificationStatus } from "@/types";
 
-interface DoctorApiRow {
-  id: string;
-  user_id: string;
-  name: string;
-  phone: string;
-  email: string;
-  specialty: string;
-  experience: number;
-  mci_number: string;
-  city: string;
-  area: string;
-  employment_status: string;
-  available_days: string[];
-  shift_preference: string;
-  expected_pay: number;
-  upi_id: string;
-  verification_status: VerificationStatus;
-  verification_note: string | null;
-  mci_cert_url: string | null;
-  degree_cert_url: string | null;
-  gov_id_url: string | null;
-  created_at: string;
-}
-
-export default function AdminDoctorsPage() {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+export default function AdminProfessionalsPage() {
+  const [professionals, setProfessionals] = useState<ProfessionalApiRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadDoctors() {
+    async function loadProfessionals() {
       try {
         const response = await fetch("/api/admin/doctors");
-        const result = (await response.json()) as { doctors?: DoctorApiRow[]; error?: string };
+        const result = (await response.json()) as { professionals?: ProfessionalApiRow[]; error?: string };
 
         if (!response.ok) {
-          throw new Error(result.error ?? "Unable to load doctors.");
+          throw new Error(result.error ?? "Unable to load professionals.");
         }
 
         if (!isMounted) return;
 
-        const mapped: Doctor[] = (result.doctors ?? []).map((d) => ({
-          id: d.id,
-          userId: d.user_id,
-          name: d.name,
-          phone: d.phone,
-          email: d.email,
-          specialty: d.specialty,
-          experience: d.experience,
-          mciNumber: d.mci_number,
-          city: d.city,
-          area: d.area,
-          employmentStatus: d.employment_status,
-          availableDays: d.available_days,
-          shiftPreference: d.shift_preference,
-          expectedPay: d.expected_pay,
-          upiId: d.upi_id,
-          verificationStatus: d.verification_status,
-          verificationNote: d.verification_note ?? undefined,
-          mciCertUrl: d.mci_cert_url ?? undefined,
-          degreeCertUrl: d.degree_cert_url ?? undefined,
-          govIdUrl: d.gov_id_url ?? undefined,
-          createdAt: d.created_at
-        }));
-
-        setDoctors(mapped);
+        setProfessionals(result.professionals ?? []);
       } catch (loadError) {
         const message =
-          loadError instanceof Error ? loadError.message : "Unable to load doctors right now.";
+          loadError instanceof Error ? loadError.message : "Unable to load professionals right now.";
         setError(message);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    loadDoctors();
+    loadProfessionals();
     return () => { isMounted = false; };
   }, []);
 
@@ -92,15 +43,15 @@ export default function AdminDoctorsPage() {
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">Doctors</h1>
+            <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">Healthcare Professionals</h1>
             {!isLoading && (
               <span className="flex h-7 items-center justify-center rounded-full bg-[#1E40AF]/10 px-3 text-xs font-bold text-[#1E40AF]">
-                {doctors.length} Total
+                {professionals.length} Total
               </span>
             )}
           </div>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Review doctor profiles, documents, and verification status.
+            Review professional profiles, documents, and verification status across all roles.
           </p>
         </div>
       </div>
@@ -121,7 +72,7 @@ export default function AdminDoctorsPage() {
           </div>
         </div>
       ) : (
-        <AdminDoctorTable doctors={doctors} />
+        <AdminProfessionalTable professionals={professionals} />
       )}
     </DashboardShell>
   );

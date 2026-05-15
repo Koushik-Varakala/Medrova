@@ -42,19 +42,9 @@ export default function DoctorJobsPage() {
         createdAt: getStringValue(d, "created_at"),
       };
 
-      const res = await fetch("/api/jobs");
-      const json = (await res.json()) as { jobs?: Record<string, unknown>[] };
-      const mappedJobs: Job[] = (json.jobs ?? []).map((j) => ({
-        id: getStringValue(j, "id"), clinicId: getStringValue(j, "clinic_id"),
-        specialty: getStringValue(j, "specialty"),
-        experienceMin: getNumberValue(j, "experience_min"),
-        jobType: getStringValue(j, "job_type") as Job["jobType"],
-        salaryMin: getNumberValue(j, "salary_min"),
-        salaryMax: getNumberValue(j, "salary_max"),
-        description: getStringValue(j, "description"),
-        status: getStringValue(j, "status") as Job["status"],
-        createdAt: getStringValue(j, "created_at"),
-      }));
+      const res = await fetch("/api/jobs?professionalType=doctor");
+      const json = (await res.json()) as { jobs?: Job[] };
+      const mappedJobs = json.jobs ?? [];
 
       if (!isMounted) return;
       setDoctor(mappedDoctor);

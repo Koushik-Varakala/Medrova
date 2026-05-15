@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { clinicTypes, hyderabadAreas, specialties } from "@/lib/constants";
@@ -236,25 +236,22 @@ export function ClinicOnboardingForm() {
       <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4 overflow-hidden relative">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {Array.from({ length: 50 }).map((_, i) => (
-            <div 
+            <motion.div 
               key={i}
+              initial={{ x: `${(i * 17) % 100}vw`, y: -20, rotate: 0 }}
+              animate={{ y: "100vh", rotate: 360 }}
+              transition={{
+                duration: 2 + (i % 4) * 0.5,
+                repeat: Infinity,
+                delay: (i % 7) * 0.2,
+                ease: "linear"
+              }}
               className={cn(
-                "absolute h-3 w-3 rounded-full opacity-70",
+                "absolute left-0 top-0 h-3 w-3 rounded-full opacity-70",
                 ["bg-blue-500", "bg-emerald-500", "bg-purple-500", "bg-amber-500"][i % 4]
               )}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `-20px`,
-                animation: `fall ${Math.random() * 3 + 2}s linear infinite`,
-                animationDelay: `${Math.random() * 2}s`
-              }}
             />
           ))}
-          <style dangerouslySetInnerHTML={{__html: `
-            @keyframes fall {
-              to { transform: translateY(100vh) rotate(360deg); }
-            }
-          `}} />
         </div>
 
         <motion.div 
@@ -317,8 +314,8 @@ export function ClinicOnboardingForm() {
       {/* DESKTOP LEFT PANEL */}
       <div className="hidden lg:flex fixed inset-y-0 left-0 w-1/3 flex-col bg-[#0F172A] overflow-hidden">
         <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-blue-600 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
-          <div className="absolute bottom-10 right-10 h-80 w-80 rounded-full bg-indigo-600 blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
+          <div className="absolute -left-20 -top-20 h-96 w-96 animate-[pulse_8s_ease-in-out_infinite] rounded-full bg-blue-600 blur-[100px]" />
+          <div className="absolute bottom-10 right-10 h-80 w-80 animate-[pulse_10s_ease-in-out_infinite] rounded-full bg-indigo-600 blur-[100px]" />
         </div>
 
         <div className="relative flex flex-col h-full z-10 p-12">
@@ -531,7 +528,11 @@ export function ClinicOnboardingForm() {
                     type="submit"
                   >
                     {isSubmitting && (
-                      <div className="absolute inset-0 bg-blue-800" style={{ width: `${uploadProgress}%`, transition: 'width 0.3s ease' }} />
+                      <motion.div
+                        className="absolute inset-y-0 left-0 bg-blue-800"
+                        animate={{ width: `${uploadProgress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
                     )}
                     <span className="relative z-10 flex items-center gap-2">
                       {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
@@ -553,7 +554,7 @@ export function ClinicOnboardingForm() {
 interface FieldProps {
   label: string;
   error?: string;
-  registration: any;
+  registration: UseFormRegisterReturn;
   type?: string;
   icon?: React.ReactNode;
   filled?: boolean;

@@ -29,55 +29,68 @@ export async function POST(
     }
 
     const clinic = clinicData as { id: string };
+    
+    // First find the shift and update to completed
     const { data: shiftData, error: shiftError } = await auth.service
       .from("shifts")
       .update({ status: "completed" })
       .eq("id", params.id)
       .eq("clinic_id", clinic.id)
       .eq("status", "confirmed")
-      .select("id, pay, confirmed_doctor_id")
+      .select("id, pay, confirmed_professional_id, professional_type, confirmed_doctor_id")
       .single();
 
     if (shiftError || !shiftData) {
       return jsonError(shiftError?.message ?? "Confirmed shift not found.", 404);
     }
 
-    const shift = shiftData as { id: string, pay: number, confirmed_doctor_id: string };
+    const confirmedDoctorId =
+      typeof shiftData.confirmed_doctor_id === "string"
+        ? shiftData.confirmed_doctor_id
+        : null;
+    const confirmedProfessionalId =
+      typeof shiftData.confirmed_professional_id === "string"
+        ? shiftData.confirmed_professional_id
+        : null;
 
-    // Update Application
-    await auth.service
-      .from("applications")
-      .update({ status: "completed" })
-      .eq("shift_id", shift.id)
-      .eq("doctor_id", shift.confirmed_doctor_id);
-
-    // Get doctor to find UPI ID for payment
-    const { data: doctorData } = await auth.service
-      .from("doctors")
-      .select("upi_id, email, name")
-      .eq("id", shift.confirmed_doctor_id)
-      .single();
-
-    const doctor = doctorData as { upi_id: string; email: string; name: string } | null;
-
-    // Create Doctor Payment
-    const { error: paymentError } = await auth.service
-      .from("doctor_payouts")
-      .insert({
-        doctor_id: shift.confirmed_doctor_id,
-        shift_id: shift.id,
-        amount: shift.pay,
-        upi_id: doctor?.upi_id ?? "unknown",
-        status: "completed", // Simulating instant payout for now
-        paid_at: new Date().toISOString()
-      });
-
-    if (paymentError) {
-      console.error("[payout error]", paymentError);
+    if (!confirmedDoctorId && !confirmedProfessionalId) {
+      return jsonError("Shift has no confirmed professional attached.", 400);
     }
 
-    // Simulate Email Notification to Doctor
-    console.log(`
+    if (confirmedDoctorId) {
+      await auth.service
+        .from("applications")
+        .update({ status: "completed" })
+        .eq("shift_id", shiftData.id)
+        .eq("doctor_id", confirmedDoctorId);
+
+      const { data: doctorData } = await auth.service
+        .from("doctors")
+        .select("upi_id, email, name")
+        .eq("id", confirmedDoctorId)
+        .single();
+
+      const doctor =
+        doctorData && typeof doctorData === "object"
+          ? (doctorData as { upi_id?: string; email?: string; name?: string })
+          : null;
+
+      const { error: doctorPayoutError } = await auth.service
+        .from("doctor_payouts")
+        .insert({
+          doctor_id: confirmedDoctorId,
+          shift_id: shiftData.id,
+          amount: shiftData.pay,
+          upi_id: doctor?.upi_id ?? "unknown",
+          status: "completed",
+          paid_at: new Date().toISOString()
+        });
+
+      if (doctorPayoutError) {
+        console.error("[doctor payout error]", doctorPayoutError);
+      }
+
+      console.log(`
       =======================================================
       [EMAIL NOTIFICATION SENT]
       To: ${doctor?.email}
@@ -86,15 +99,65 @@ export async function POST(
       Hi Dr. ${doctor?.name},
       
       The clinic has confirmed you successfully completed the shift.
-      An amount of ₹${shift.pay} has been initiated to your UPI ID: ${doctor?.upi_id}.
+      An amount of ₹${shiftData.pay} has been initiated to your UPI ID: ${doctor?.upi_id}.
       
       Thank you for using Medrova!
       =======================================================
     `);
+    }
+
+    if (confirmedProfessionalId) {
+      await auth.service
+        .from("professional_applications")
+        .update({ status: "completed" })
+        .eq("shift_id", shiftData.id)
+        .eq("professional_id", confirmedProfessionalId);
+
+      const { data: profData } = await auth.service
+        .from("healthcare_professionals")
+        .select("upi_id, email, name, role")
+        .eq("id", confirmedProfessionalId)
+        .single();
+
+      const prof =
+        profData && typeof profData === "object"
+          ? (profData as { upi_id?: string; email?: string; name?: string; role?: string })
+          : null;
+
+      const { error: professionalPayoutError } = await auth.service
+        .from("professional_payouts")
+        .insert({
+          professional_id: confirmedProfessionalId,
+          shift_id: shiftData.id,
+          amount: shiftData.pay,
+          upi_id: prof?.upi_id ?? "unknown",
+          status: "completed",
+          paid_at: new Date().toISOString()
+        });
+
+      if (professionalPayoutError) {
+        console.error("[professional payout error]", professionalPayoutError);
+      }
+
+      console.log(`
+      =======================================================
+      [EMAIL NOTIFICATION SENT]
+      To: ${prof?.email}
+      Subject: Payment Received for Medrova Shift!
+      
+      Hi ${prof?.name},
+      
+      The clinic has confirmed you successfully completed the shift.
+      An amount of ₹${shiftData.pay} has been initiated to your UPI ID: ${prof?.upi_id}.
+      
+      Thank you for using Medrova!
+      =======================================================
+    `);
+    }
 
     return NextResponse.json({
       status: "completed",
-      payoutTriggered: true
+      payoutTriggered: Boolean(confirmedDoctorId || confirmedProfessionalId)
     });
   } catch (error) {
     return validationError(error);

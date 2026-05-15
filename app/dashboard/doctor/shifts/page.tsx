@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { DoctorShiftBrowser, ShiftSkeletonGrid } from "@/components/doctor/DoctorShiftBrowser";import { DashboardShell } from "@/components/shared/DashboardShell";
+import { DoctorShiftBrowser, ShiftSkeletonGrid } from "@/components/doctor/DoctorShiftBrowser";
+import { DashboardShell } from "@/components/shared/DashboardShell";
 import { doctorNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
-import { getBooleanValue, getStringValue, getNumberValue } from "@/lib/utils";
-import type { Doctor, Shift, Clinic, VerificationStatus } from "@/types";
+import { mapShiftRow, toDbRecord } from "@/lib/mappers";
+import { getStringValue, getNumberValue, parseStringArray } from "@/lib/utils";
+import type { Doctor, Shift, VerificationStatus } from "@/types";
 
 export default function DoctorShiftsPage() {
   const router = useRouter();
@@ -35,7 +37,7 @@ export default function DoctorShiftsPage() {
         experience: getNumberValue(d, "experience"), mciNumber: getStringValue(d, "mci_number"),
         city: getStringValue(d, "city"), area: getStringValue(d, "area"),
         employmentStatus: getStringValue(d, "employment_status"),
-        availableDays: Array.isArray(d["available_days"]) ? d["available_days"] as string[] : [],
+        availableDays: parseStringArray(d["available_days"]),
         shiftPreference: getStringValue(d, "shift_preference"),
         expectedPay: getNumberValue(d, "expected_pay"), upiId: getStringValue(d, "upi_id"),
         verificationStatus: getStringValue(d, "verification_status") as VerificationStatus,
@@ -45,38 +47,23 @@ export default function DoctorShiftsPage() {
         createdAt: getStringValue(d, "created_at"),
       };
 
-      const res = await fetch("/api/shifts");
+      const res = await fetch("/api/shifts?professionalType=doctor");
       const json = (await res.json()) as { shifts?: Record<string, unknown>[] };
-      const mappedShifts: Shift[] = (json.shifts ?? []).map((s) => {
-        const rawClinic = s["clinic"];
-        const c = Array.isArray(rawClinic) ? rawClinic[0] : rawClinic;
-        const clinicObj = c ? {
-          name: getStringValue(c, "name"),
-          contactPerson: getStringValue(c, "contact_person"),
-          contactPhone: getStringValue(c, "contact_phone"),
-          address: getStringValue(c, "address"),
-          area: getStringValue(c, "area")
-        } : undefined;
-
-        return {
-          id: getStringValue(s, "id"), clinicId: getStringValue(s, "clinic_id"),
-          specialty: getStringValue(s, "specialty"), date: getStringValue(s, "date"),
-          startTime: getStringValue(s, "start_time"), endTime: getStringValue(s, "end_time"),
-          pay: getNumberValue(s, "pay"), area: getStringValue(s, "area"),
-          notes: getStringValue(s, "notes") || undefined,
-          isUrgent: getBooleanValue(s, "is_urgent"),
-          status: getStringValue(s, "status") as Shift["status"],
-          createdAt: getStringValue(s, "created_at"),
-          clinic: clinicObj as unknown as Clinic
-        };
-      });
+      const mappedShifts: Shift[] = (json.shifts ?? []).map((shift) => mapShiftRow(toDbRecord(shift)));
 
       const { data: appRows } = await supabase
         .from("applications")
         .select("shift_id")
         .eq("doctor_id", mappedDoctor.id);
 
-      const appliedShiftIds = new Set((appRows ?? []).map((a: any) => a.shift_id));
+      const appliedShiftIds = new Set(
+        (appRows ?? [])
+          .map((row) => {
+            const record = toDbRecord(row);
+            return getStringValue(record, "shift_id");
+          })
+          .filter(Boolean)
+      );
       const unappliedShifts = mappedShifts.filter(s => !appliedShiftIds.has(s.id));
 
       if (!isMounted) return;

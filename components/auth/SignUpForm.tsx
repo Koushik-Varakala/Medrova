@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Loader2, Stethoscope } from "lucide-react";
+import { Building2, FlaskConical, Heart, Loader2, Stethoscope } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,7 @@ const signUpSchema = z
     email: z.string().email("Enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(8, "Confirm your password"),
-    role: z.enum(["doctor", "clinic"])
+    role: z.enum(["doctor", "nurse", "technician", "clinic"])
   })
   .refine((value) => value.password === value.confirmPassword, {
     message: "Passwords do not match",
@@ -25,7 +25,7 @@ const signUpSchema = z
 type SignUpValues = z.infer<typeof signUpSchema>;
 
 const roleOptions: Array<{
-  role: Extract<UserRole, "doctor" | "clinic">;
+  role: Extract<UserRole, "doctor" | "nurse" | "technician" | "clinic">;
   title: string;
   description: string;
   icon: typeof Stethoscope;
@@ -37,19 +37,36 @@ const roleOptions: Array<{
     icon: Stethoscope
   },
   {
+    role: "nurse",
+    title: "Nurse",
+    description: "Find nursing shifts and permanent roles across Hyderabad.",
+    icon: Heart
+  },
+  {
+    role: "technician",
+    title: "Technician",
+    description: "Find allied health shifts and permanent roles across Hyderabad.",
+    icon: FlaskConical
+  },
+  {
     role: "clinic",
     title: "Clinic",
-    description: "Hire verified doctors for shifts and full-time positions.",
+    description: "Hire verified healthcare professionals for shifts and jobs.",
     icon: Building2
   }
 ];
+
+function getOnboardingPath(role: SignUpValues["role"]) {
+  if (role === "clinic") return "/onboarding/clinic";
+  return `/onboarding/professional?role=${role}`;
+}
 
 export function SignUpForm() {
   const router = useRouter();
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
-  const [confirmedRole, setConfirmedRole] = useState<"doctor" | "clinic">("doctor");
+  const [confirmedRole, setConfirmedRole] = useState<SignUpValues["role"]>("doctor");
   const {
     register,
     handleSubmit,
@@ -135,7 +152,7 @@ export function SignUpForm() {
         return;
       }
 
-      router.push(values.role === "doctor" ? "/onboarding/doctor" : "/onboarding/clinic");
+      router.push(getOnboardingPath(values.role));
       router.refresh();
     } finally {
       setIsSubmitting(false);

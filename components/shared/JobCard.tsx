@@ -16,9 +16,18 @@ export function JobCard({ job, actionLabel, onAction }: JobCardProps) {
           <h3 className="text-lg font-semibold text-[#0F172A]">
             {job.specialty}
           </h3>
-          <p className="mt-2 text-sm text-[#64748B]">
-            {job.clinic?.name ?? "Clinic"} · {job.jobType.replace("_", " ")}
-          </p>
+          <div className="mt-2 flex flex-wrap gap-2 text-sm text-[#64748B]">
+            <span>{job.clinic?.name ?? "Clinic"}</span>
+            <span>·</span>
+            <span>{job.jobType.replace("_", " ")}</span>
+            <span>·</span>
+            <span className="capitalize">{job.professionalType}</span>
+            {job.isFreePosting && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                Free Posting
+              </span>
+            )}
+          </div>
           <p className="mt-3 text-sm text-[#0F172A]">
             Minimum {job.experienceMin} years experience
           </p>

@@ -20,17 +20,29 @@ interface RoleRow {
   role: UserRole;
 }
 
-function getRoleFromMetadata(metadata: unknown): UserRole | null {
-  if (!metadata || typeof metadata !== "object") {
-    return null;
-  }
-
+function getRoleFromMetadata(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
   const role = (metadata as { role?: unknown }).role;
-  if (role === "doctor" || role === "clinic" || role === "admin") {
-    return role;
-  }
-
+  if (typeof role === "string") return role;
   return null;
+}
+
+async function getDashboardPath(
+  role: string,
+  userId: string,
+  supabase: NonNullable<ReturnType<typeof createSupabaseBrowserClient>>
+): Promise<string> {
+  if (role === "clinic") return "/dashboard/clinic";
+  if (role === "admin") return "/dashboard/admin";
+  if (role === "doctor") {
+    const { data: professionalProfile } = await supabase
+      .from("healthcare_professionals")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return professionalProfile ? "/dashboard/professional" : "/dashboard/doctor";
+  }
+  return "/dashboard/professional";
 }
 
 export function SignInForm() {
@@ -89,7 +101,7 @@ export function SignInForm() {
         return;
       }
 
-      router.push(`/dashboard/${resolvedRole}`);
+      router.push(await getDashboardPath(resolvedRole, userId, supabase));
       router.refresh();
     } finally {
       setIsSubmitting(false);

@@ -6,6 +6,7 @@ import {
   parseJsonWithSchema,
   validationError
 } from "@/lib/api-utils";
+import { mapJobRow, toDbRecord } from "@/lib/mappers";
 import { createSupabaseServiceClient } from "@/lib/supabase-server";
 
 interface JobRouteContext {
@@ -41,7 +42,7 @@ export async function GET(_request: Request, { params }: JobRouteContext) {
     return jsonError(error?.message ?? "Job not found.", 404);
   }
 
-  return NextResponse.json({ job: data });
+  return NextResponse.json({ job: mapJobRow(toDbRecord(data)) });
 }
 
 export async function PATCH(request: Request, { params }: JobRouteContext) {
@@ -86,7 +87,7 @@ export async function PATCH(request: Request, { params }: JobRouteContext) {
       return jsonError(error?.message ?? "Unable to update job.", 500);
     }
 
-    return NextResponse.json({ job: data });
+    return NextResponse.json({ job: mapJobRow(toDbRecord(data)) });
   } catch (error) {
     return validationError(error);
   }

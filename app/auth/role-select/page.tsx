@@ -3,40 +3,87 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Stethoscope, Building2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import {
+  Stethoscope,
+  Building2,
+  Heart,
+  FlaskConical,
+  ArrowRight,
+  Loader2,
+  AlertCircle
+} from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import type { UserRole } from "@/types";
 
-const roleOptions: Array<{
-  role: Extract<UserRole, "doctor" | "clinic">;
+type SelectableRole = "doctor" | "nurse" | "technician" | "clinic";
+
+interface RoleOption {
+  role: SelectableRole;
   title: string;
   subtitle: string;
   icon: typeof Stethoscope;
   color: string;
   bg: string;
-}> = [
+  ring: string;
+}
+
+const roleOptions: RoleOption[] = [
   {
     role: "doctor",
     title: "I'm a Doctor",
     subtitle: "Find locum shifts and permanent roles across Hyderabad clinics",
     icon: Stethoscope,
     color: "text-blue-700",
-    bg: "bg-blue-100"
+    bg: "bg-blue-100",
+    ring: "border-[#1E40AF] bg-blue-50 ring-2 ring-[#1E40AF]/20"
+  },
+  {
+    role: "nurse",
+    title: "I'm a Nurse",
+    subtitle: "Find nursing shifts and permanent positions",
+    icon: Heart,
+    color: "text-emerald-700",
+    bg: "bg-emerald-100",
+    ring: "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20"
+  },
+  {
+    role: "technician",
+    title: "I'm a Technician",
+    subtitle: "Find lab, radiology, OT, and allied health roles",
+    icon: FlaskConical,
+    color: "text-purple-700",
+    bg: "bg-purple-100",
+    ring: "border-purple-500 bg-purple-50 ring-2 ring-purple-500/20"
   },
   {
     role: "clinic",
     title: "I'm a Clinic",
-    subtitle: "Hire verified doctors for shifts and permanent positions",
+    subtitle: "Hire verified healthcare professionals for shifts and jobs",
     icon: Building2,
-    color: "text-purple-700",
-    bg: "bg-purple-100"
+    color: "text-slate-700",
+    bg: "bg-slate-100",
+    ring: "border-slate-500 bg-slate-50 ring-2 ring-slate-500/20"
   }
 ];
 
+function getOnboardingPath(role: SelectableRole): string {
+  if (role === "clinic") return "/onboarding/clinic";
+  return `/onboarding/professional?role=${role}`;
+}
+
+function getCheckColor(role: SelectableRole): string {
+  const map: Record<SelectableRole, string> = {
+    doctor: "bg-[#1E40AF]",
+    nurse: "bg-emerald-600",
+    technician: "bg-purple-600",
+    clinic: "bg-slate-600"
+  };
+  return map[role];
+}
+
 export default function RoleSelectPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"doctor" | "clinic" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<SelectableRole | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -52,14 +99,17 @@ export default function RoleSelectPage() {
         return;
       }
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+
       if (userError || !user) {
         setError("Session expired. Please sign in again.");
         router.push("/sign-in");
         return;
       }
 
-      // Save role to user_roles table
       const { error: roleError } = await supabase.from("user_roles").upsert({
         user_id: user.id,
         role: selectedRole
@@ -70,13 +120,10 @@ export default function RoleSelectPage() {
         return;
       }
 
-      // Also update user metadata for convenience
-      await supabase.auth.updateUser({
-        data: { role: selectedRole }
-      });
+      await supabase.auth.updateUser({ data: { role: selectedRole } });
 
-      router.push(selectedRole === "doctor" ? "/onboarding/doctor" : "/onboarding/clinic");
-    } catch (e) {
+      router.push(getOnboardingPath(selectedRole));
+    } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -89,7 +136,7 @@ export default function RoleSelectPage() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-lg"
+        className="w-full max-w-xl"
       >
         {/* Header */}
         <div className="mb-10 text-center">
@@ -100,7 +147,7 @@ export default function RoleSelectPage() {
           </p>
         </div>
 
-        {/* Role Cards */}
+        {/* Role Cards — 2×2 grid */}
         <div className="grid gap-4 sm:grid-cols-2">
           {roleOptions.map((option) => {
             const Icon = option.icon;
@@ -112,23 +159,36 @@ export default function RoleSelectPage() {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setSelectedRole(option.role)}
                 className={cn(
-                  "relative flex flex-col items-start rounded-2xl border-2 p-6 text-left transition-all duration-200 shadow-sm",
-                  isSelected
-                    ? "border-[#1E40AF] bg-blue-50 shadow-md ring-2 ring-[#1E40AF]/20"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
+                  "relative flex flex-col items-start rounded-2xl border-2 p-6 text-left shadow-sm transition-all duration-200",
+                  isSelected ? option.ring : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
                 )}
               >
-                <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", isSelected ? option.bg : "bg-slate-100")}>
-                  <Icon className={cn("h-6 w-6", isSelected ? option.color : "text-slate-500")} />
+                <div
+                  className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl",
+                    isSelected ? option.bg : "bg-slate-100"
+                  )}
+                >
+                  <Icon
+                    className={cn("h-6 w-6", isSelected ? option.color : "text-slate-500")}
+                  />
                 </div>
-                <p className={cn("mt-4 text-base font-bold", isSelected ? "text-[#1E40AF]" : "text-[#0F172A]")}>
+                <p
+                  className={cn(
+                    "mt-4 text-base font-bold",
+                    isSelected ? option.color : "text-[#0F172A]"
+                  )}
+                >
                   {option.title}
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
-                  {option.subtitle}
-                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{option.subtitle}</p>
                 {isSelected && (
-                  <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-[#1E40AF] text-white">
+                  <div
+                    className={cn(
+                      "absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full text-white",
+                      getCheckColor(option.role)
+                    )}
+                  >
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
