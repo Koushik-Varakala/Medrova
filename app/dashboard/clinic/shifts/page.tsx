@@ -8,6 +8,9 @@ import { clinicNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { getBooleanValue, getStringValue, getNumberValue } from "@/lib/utils";
 import type { Application, Shift } from "@/types";
+import { Calendar, CalendarPlus } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function ClinicShiftsPage() {
   const router = useRouter();
@@ -30,7 +33,7 @@ export default function ClinicShiftsPage() {
       const clinicId = (clinicRow as { id: string }).id;
 
       const { data: shiftRows } = await supabase
-        .from("shifts").select("*").eq("clinic_id", clinicId).order("date", { ascending: true });
+        .from("shifts").select("*").eq("clinic_id", clinicId).order("date", { ascending: false });
 
       const mappedShifts: Shift[] = (shiftRows ?? []).map((s: Record<string, unknown>) => ({
         id: getStringValue(s, "id"), clinicId: getStringValue(s, "clinic_id"),
@@ -92,14 +95,52 @@ export default function ClinicShiftsPage() {
 
   return (
     <DashboardShell items={clinicNavigation}>
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">My shifts</h1>
-        <p className="mt-2 text-sm leading-6 text-[#64748B]">Review shift status, inspect applicants, and confirm coverage.</p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight text-[#0F172A]">My Shifts</h1>
+            {!isLoading && (
+              <span className="flex h-6 items-center justify-center rounded-full bg-blue-100 px-2.5 text-sm font-bold text-blue-700">
+                {shifts.length}
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-[#64748B]">Review shift status, inspect applicants, and confirm coverage.</p>
+        </div>
       </div>
+
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">Loading shifts...</p>
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-[200px] w-full animate-pulse rounded-2xl bg-slate-200"></div>
+            ))}
+          </div>
+          <div className="hidden h-[500px] w-full animate-pulse rounded-2xl bg-slate-200 lg:block"></div>
+        </div>
+      ) : shifts.length === 0 ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-dashed border-[#E2E8F0] bg-white p-8 text-center shadow-sm"
+        >
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-500 shadow-inner">
+            <Calendar className="h-10 w-10 animate-bounce" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#0F172A]">You haven&apos;t posted any shifts yet</h2>
+          <p className="mt-2 max-w-md text-[#64748B]">
+            Create your first locum shift to start finding verified doctors in your area.
+          </p>
+          <Link 
+            href="/dashboard/clinic/post-shift" 
+            className="mt-8 inline-flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-[#1D4ED8] hover:shadow-lg"
+          >
+            <CalendarPlus className="h-5 w-5" />
+            Post your first shift
+          </Link>
+        </motion.div>
       ) : (
-        <ClinicShiftManager applications={applications} shifts={shifts} />
+        <ClinicShiftManager shifts={shifts} applications={applications} />
       )}
     </DashboardShell>
   );

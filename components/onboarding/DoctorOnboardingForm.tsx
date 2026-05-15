@@ -1,11 +1,31 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Upload } from "lucide-react";
+import { 
+  CheckCircle2, 
+  ChevronLeft, 
+  ChevronRight, 
+  Loader2, 
+  Upload, 
+  UserCircle,
+  Stethoscope,
+  FileCheck,
+  Calendar,
+  Wallet,
+  User,
+  Phone,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  Briefcase,
+  FileText,
+  AlertCircle
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   employmentStatuses,
   hyderabadAreas,
@@ -42,6 +62,39 @@ const stepFields: DoctorField[][] = [
   ["upiId"]
 ];
 
+const stepsData = [
+  {
+    title: "Tell us about yourself",
+    subtitle: "We'll use this to create your verified profile",
+    icon: UserCircle,
+    name: "Personal Info"
+  },
+  {
+    title: "Your medical credentials",
+    subtitle: "This is how clinics will find and trust you",
+    icon: Stethoscope,
+    name: "Professional Info"
+  },
+  {
+    title: "Upload your credentials",
+    subtitle: "We verify every doctor to ensure clinic trust",
+    icon: FileCheck,
+    name: "Documents"
+  },
+  {
+    title: "Your availability",
+    subtitle: "Only get notified about shifts that fit your schedule",
+    icon: Calendar,
+    name: "Availability"
+  },
+  {
+    title: "Get paid fast",
+    subtitle: "Verified doctors receive UPI payouts within 24 hours of shift completion",
+    icon: Wallet,
+    name: "Payment"
+  }
+];
+
 export function DoctorOnboardingForm() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -49,26 +102,35 @@ export function DoctorOnboardingForm() {
   const [formError, setFormError] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const [mciCert, setMciCert] = useState<File | null>(null);
   const [degreeCert, setDegreeCert] = useState<File | null>(null);
   const [govId, setGovId] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Check for a valid Supabase session on mount so the user doesn't fill all 5 steps
-  // only to hit "Auth session missing!" at the very end.
   useEffect(() => {
     async function checkSession() {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) return;
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setSessionError(
-          "Your session has expired or you are not signed in. Please sign in before completing onboarding."
-        );
+        setSessionError("Your session has expired or you are not signed in. Please sign in before completing onboarding.");
+        return;
+      }
+      
+      const [ { data: doctorRow }, { data: clinicRow } ] = await Promise.all([
+        supabase.from("doctors").select("id").eq("user_id", session.user.id).maybeSingle(),
+        supabase.from("clinics").select("id").eq("user_id", session.user.id).maybeSingle()
+      ]);
+
+      if (doctorRow) {
+        router.push("/dashboard/doctor");
+      } else if (clinicRow) {
+        router.push("/dashboard/clinic");
       }
     }
     checkSession();
-  }, []);
+  }, [router]);
 
   const {
     register,
@@ -91,6 +153,8 @@ export function DoctorOnboardingForm() {
   });
 
   const availableDays = watch("availableDays");
+  const shiftPreference = watch("shiftPreference");
+  const formValues = watch();
 
   async function goNext() {
     setFormError("");
@@ -112,7 +176,6 @@ export function DoctorOnboardingForm() {
     const nextDays = availableDays.includes(day)
       ? availableDays.filter((selectedDay) => selectedDay !== day)
       : [...availableDays, day];
-
     setValue("availableDays", nextDays, { shouldValidate: true });
   }
 
@@ -127,27 +190,30 @@ export function DoctorOnboardingForm() {
       }
 
       const supabase = createSupabaseBrowserClient();
-
       if (!supabase) {
-        setFormError("Supabase is not configured. Add your environment variables first.");
+        setFormError("Supabase is not configured.");
         return;
       }
 
-      const {
-        data: { user },
-        error: userError
-      } = await supabase.auth.getUser();
-
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
         setFormError(userError?.message ?? "Sign in before completing onboarding.");
         return;
       }
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(p => Math.min(p + 10, 90));
+      }, 300);
 
       const [mciCertUrl, degreeCertUrl, govIdUrl] = await Promise.all([
         uploadDocument(supabase, mciCert, `doctors/${user.id}/mci`),
         uploadDocument(supabase, degreeCert, `doctors/${user.id}/degree`),
         uploadDocument(supabase, govId, `doctors/${user.id}/gov-id`)
       ]);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
 
       const { error } = await supabase.from("doctors").upsert({
         user_id: user.id,
@@ -183,277 +249,553 @@ export function DoctorOnboardingForm() {
 
   if (sessionError) {
     return (
-      <div className="rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 p-6 text-center">
-        <p className="text-sm font-medium text-[#B91C1C]">{sessionError}</p>
-        <a
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-[#1E40AF] px-4 py-2 font-medium text-white hover:bg-[#1D4ED8]"
-          href="/sign-in"
-        >
-          Go to sign in
-        </a>
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4">
+        <div className="w-full max-w-md rounded-2xl border border-red-200 bg-white p-8 text-center shadow-lg">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+            <AlertCircle className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="mt-6 text-2xl font-bold text-[#0F172A]">Session expired</h2>
+          <p className="mt-2 text-sm text-[#64748B]">{sessionError}</p>
+          <button
+            className="mt-8 flex w-full justify-center rounded-xl bg-[#1E40AF] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#1D4ED8]"
+            onClick={() => router.push("/sign-in")}
+          >
+            Sign in again
+          </button>
+        </div>
       </div>
     );
   }
 
   if (isComplete) {
     return (
-      <div className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-center shadow-sm">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-[#10B981]" />
-        <h1 className="mt-4 text-2xl font-semibold text-[#0F172A]">
-          Verification pending
-        </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#64748B]">
-          Your doctor profile is submitted. Medrova admin will review your documents
-          before enabling applications.
-        </p>
-        <button
-          className="mt-6 rounded-lg bg-[#1E40AF] px-4 py-2 font-medium text-white hover:bg-[#1D4ED8]"
-          onClick={() => router.push("/dashboard/doctor")}
-          type="button"
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4 overflow-hidden relative">
+        {/* Confetti effect using raw CSS */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div 
+              key={i}
+              className={cn(
+                "absolute h-3 w-3 rounded-full opacity-70",
+                ["bg-blue-500", "bg-emerald-500", "bg-purple-500", "bg-amber-500"][i % 4]
+              )}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `-20px`,
+                animation: `fall ${Math.random() * 3 + 2}s linear infinite`,
+                animationDelay: `${Math.random() * 2}s`
+              }}
+            />
+          ))}
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes fall {
+              to { transform: translateY(100vh) rotate(360deg); }
+            }
+          `}} />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-10 w-full max-w-lg rounded-3xl border border-[#E2E8F0] bg-white p-10 text-center shadow-2xl"
         >
-          Go to dashboard
-        </button>
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-emerald-50">
+            <motion.svg 
+              className="h-12 w-12 text-emerald-500" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="3"
+            >
+              <motion.path 
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                d="M5 13l4 4L19 7" 
+              />
+            </motion.svg>
+          </div>
+          <h1 className="mt-8 text-3xl font-black tracking-tight text-[#0F172A]">
+            You're all set!
+          </h1>
+          <p className="mt-3 text-lg font-medium text-[#64748B]">
+            Your profile has been submitted for verification.
+          </p>
+          <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-800">
+            Our team reviews profiles within 24 hours. You'll receive an email once verified.
+          </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              className="flex flex-1 items-center justify-center rounded-xl bg-[#1E40AF] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-blue-900/30"
+              onClick={() => router.push("/dashboard/doctor")}
+              type="button"
+            >
+              Go to Dashboard
+            </button>
+            <button
+              className="flex flex-1 items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-700 transition-all hover:border-slate-300 hover:bg-slate-50"
+              onClick={() => router.push("/dashboard/doctor/profile")}
+              type="button"
+            >
+              View Profile
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
+  const StepIcon = stepsData[step].icon;
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <ProgressHeader step={step} totalSteps={5} />
-      <section className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
-        {step === 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField error={errors.name?.message} label="Full name" registration={register("name")} />
-            <TextField error={errors.phone?.message} label="Phone" registration={register("phone")} />
-            <TextField error={errors.city?.message} label="City" registration={register("city")} />
-            <SelectField
-              error={errors.area?.message}
-              label="Area in Hyderabad"
-              options={hyderabadAreas}
-              registration={register("area")}
-            />
-          </div>
-        ) : null}
+    <div className="flex min-h-screen w-full bg-[#F8FAFC]">
+      {/* DESKTOP LEFT PANEL */}
+      <div className="hidden lg:flex fixed inset-y-0 left-0 w-1/3 flex-col bg-[#0F172A] overflow-hidden">
+        {/* Animated Background blobs */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-blue-600 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-10 right-10 h-80 w-80 rounded-full bg-indigo-600 blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
+        </div>
 
-        {step === 1 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <SelectField
-              error={errors.specialty?.message}
-              label="Specialty"
-              options={specialties}
-              registration={register("specialty")}
-            />
-            <TextField
-              error={errors.experience?.message}
-              label="Years of experience"
-              registration={register("experience")}
-              type="number"
-            />
-            <TextField
-              error={errors.mciNumber?.message}
-              label="MCI/NMC number"
-              registration={register("mciNumber")}
-            />
-            <SelectField
-              error={errors.employmentStatus?.message}
-              label="Employment status"
-              options={employmentStatuses}
-              registration={register("employmentStatus")}
-            />
+        <div className="relative flex flex-col h-full z-10 p-12">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-black tracking-tight text-white">Medrova</span>
           </div>
-        ) : null}
 
-        {step === 2 ? (
-          <div className="grid gap-4 md:grid-cols-3">
-            <FilePicker file={mciCert} label="MCI certificate" onChange={setMciCert} />
-            <FilePicker file={degreeCert} label="Degree certificate" onChange={setDegreeCert} />
-            <FilePicker file={govId} label="Government ID" onChange={setGovId} />
+          <div className="flex-1 flex flex-col justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={step}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 shadow-2xl">
+                  <StepIcon className="h-10 w-10 text-blue-400" />
+                </div>
+                <h2 className="text-4xl font-black text-white leading-tight">
+                  {stepsData[step].title}
+                </h2>
+                <p className="mt-4 text-lg font-medium text-slate-400 max-w-sm">
+                  {stepsData[step].subtitle}
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        ) : null}
 
-        {step === 3 ? (
-          <div className="space-y-5">
-            <div>
-              <p className="text-sm font-medium text-[#0F172A]">Available days</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {weekDays.map((day) => (
+          {/* Stepper Progress */}
+          <div className="mt-auto">
+            <div className="flex items-center justify-between relative">
+              {/* Connecting line background */}
+              <div className="absolute left-0 right-0 h-1 top-1/2 -translate-y-1/2 bg-white/10 rounded-full z-0" />
+              
+              {/* Active connecting line */}
+              <motion.div 
+                className="absolute left-0 h-1 top-1/2 -translate-y-1/2 bg-blue-500 rounded-full z-0"
+                initial={false}
+                animate={{ width: `${(step / (stepsData.length - 1)) * 100}%` }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
+
+              {stepsData.map((s, i) => (
+                <div key={i} className="relative z-10 flex flex-col items-center">
+                  <div className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full border-4 transition-all duration-300",
+                    i < step ? "border-emerald-500 bg-emerald-500 text-white" : 
+                    i === step ? "border-blue-500 bg-[#0F172A] text-blue-500" : 
+                    "border-white/20 bg-[#0F172A] text-white/30"
+                  )}>
+                    {i < step ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-sm font-bold">{i + 1}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-between text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span>{stepsData[0].name}</span>
+              <span>{stepsData[stepsData.length - 1].name}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="flex-1 lg:ml-[33.333333%] flex flex-col min-h-screen relative bg-white pb-24 lg:pb-0">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between p-6 lg:hidden border-b border-slate-100">
+          <span className="text-xl font-black tracking-tight text-[#1E40AF]">Medrova</span>
+          <div className="text-right">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step {step + 1} of 5</p>
+            <p className="text-sm font-bold text-[#0F172A]">{stepsData[step].name}</p>
+          </div>
+        </div>
+        
+        {/* Mobile simple progress bar */}
+        <div className="h-1 w-full bg-slate-100 lg:hidden">
+          <motion.div 
+            className="h-full bg-[#1E40AF]"
+            initial={false}
+            animate={{ width: `${((step + 1) / stepsData.length) * 100}%` }}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 sm:p-10 lg:p-16">
+          <div className="mx-auto w-full max-w-[560px]">
+            {/* Form step transition */}
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <div className="mb-10 lg:hidden">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
+                      <StepIcon className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h2 className="text-3xl font-black text-[#0F172A]">{stepsData[step].title}</h2>
+                    <p className="mt-2 text-base font-medium text-[#64748B]">{stepsData[step].subtitle}</p>
+                  </div>
+
+                  {step === 0 && (
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <FloatingField error={errors.name?.message} label="Full Name" icon={<User />} registration={register("name")} filled={!!formValues.name} />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <FloatingField error={errors.phone?.message} label="Phone Number" icon={<Phone />} registration={register("phone")} filled={!!formValues.phone} />
+                      </div>
+                      <FloatingField error={errors.city?.message} label="City" icon={<MapPin />} registration={register("city")} filled={!!formValues.city} />
+                      <FloatingSelect 
+                        error={errors.area?.message} 
+                        label="Area in Hyderabad" 
+                        icon={<MapPin />} 
+                        options={hyderabadAreas} 
+                        registration={register("area")} 
+                        filled={!!formValues.area} 
+                      />
+                    </div>
+                  )}
+
+                  {step === 1 && (
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <FloatingSelect 
+                          error={errors.specialty?.message} 
+                          label="Specialty" 
+                          icon={<Stethoscope />} 
+                          options={specialties} 
+                          registration={register("specialty")} 
+                          filled={!!formValues.specialty} 
+                        />
+                      </div>
+                      <FloatingField error={errors.experience?.message} label="Years of Experience" icon={<Clock />} type="number" registration={register("experience")} filled={!!formValues.experience} />
+                      <FloatingSelect 
+                        error={errors.employmentStatus?.message} 
+                        label="Current Status" 
+                        icon={<Briefcase />} 
+                        options={employmentStatuses} 
+                        registration={register("employmentStatus")} 
+                        filled={!!formValues.employmentStatus} 
+                      />
+                      <div className="sm:col-span-2">
+                        <FloatingField error={errors.mciNumber?.message} label="MCI/NMC Registration Number" icon={<ShieldCheck />} registration={register("mciNumber")} filled={!!formValues.mciNumber} />
+                        <p className="mt-2 text-xs font-semibold text-slate-500">Your registration number will be securely verified by our medical team.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 2 && (
+                    <div className="space-y-6">
+                      <FileUploadZone file={mciCert} onChange={setMciCert} title="MCI/NMC Certificate" />
+                      <FileUploadZone file={degreeCert} onChange={setDegreeCert} title="Medical Degree Certificate" />
+                      <FileUploadZone file={govId} onChange={setGovId} title="Government ID (Aadhaar/PAN)" />
+                    </div>
+                  )}
+
+                  {step === 3 && (
+                    <div className="space-y-10">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-4">What days are you available?</h3>
+                        <div className="flex flex-wrap gap-3">
+                          {weekDays.map((day) => {
+                            const isSelected = availableDays.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => toggleDay(day)}
+                                className={cn(
+                                  "rounded-full px-5 py-2.5 text-sm font-bold transition-all hover:scale-105 active:scale-95",
+                                  isSelected 
+                                    ? "bg-[#1E40AF] text-white shadow-md shadow-blue-900/20" 
+                                    : "border-2 border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                                )}
+                              >
+                                {day}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {errors.availableDays && <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-red-500"><AlertCircle className="h-4 w-4" />{errors.availableDays.message}</p>}
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-4">What type of shifts?</h3>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          {[
+                            { id: "locum", label: "Locum Only", icon: Clock },
+                            { id: "permanent", label: "Permanent", icon: Briefcase },
+                            { id: "both", label: "Open to Both", icon: Calendar }
+                          ].map(pref => {
+                            const isSelected = shiftPreference === pref.id;
+                            const Icon = pref.icon;
+                            return (
+                              <label key={pref.id} className="relative cursor-pointer">
+                                <input type="radio" value={pref.id} className="peer sr-only" {...register("shiftPreference")} />
+                                <div className={cn(
+                                  "flex h-full flex-col items-center justify-center gap-3 rounded-2xl border-2 p-5 text-center transition-all",
+                                  isSelected 
+                                    ? "border-[#1E40AF] bg-blue-50 text-[#1E40AF]" 
+                                    : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-slate-50"
+                                )}>
+                                  <Icon className="h-8 w-8" />
+                                  <span className="font-bold">{pref.label}</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-4">Minimum pay expectations</h3>
+                        <FloatingField 
+                          error={errors.expectedPay?.message} 
+                          label="Expected Pay per Shift (₹)" 
+                          icon={<span className="text-lg font-bold">₹</span>} 
+                          type="number" 
+                          registration={register("expectedPay")} 
+                          filled={!!formValues.expectedPay} 
+                        />
+                        <p className="mt-2 text-xs font-semibold text-slate-500">This is your expected minimum per shift. We'll match you accordingly.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {step === 4 && (
+                    <div className="space-y-8">
+                      <FloatingField error={errors.upiId?.message} label="UPI ID" icon={<Wallet />} registration={register("upiId")} filled={!!formValues.upiId} />
+                      
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+                        <p className="font-bold text-emerald-800">Your earnings will be transferred directly to this UPI ID within 24 hours of completing a shift. Medrova never holds your money.</p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 px-2 text-center text-sm font-bold text-slate-400">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100"><Briefcase className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider">Clinic Pays</span>
+                        </div>
+                        <div className="h-0.5 flex-1 bg-slate-200"></div>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100"><CheckCircle2 className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider">Shift Complete</span>
+                        </div>
+                        <div className="h-0.5 flex-1 bg-slate-200"></div>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Wallet className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider text-emerald-600">You receive 90%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </motion.div>
+              </AnimatePresence>
+
+              {formError && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+                  <p>{formError}</p>
+                </motion.div>
+              )}
+
+              {/* NAV BUTTONS */}
+              <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white/90 p-4 backdrop-blur-md sm:static sm:mt-12 sm:flex-row sm:border-0 sm:bg-transparent sm:p-0">
+                <button
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3.5 font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-0 sm:w-auto"
+                  disabled={step === 0 || isSubmitting}
+                  onClick={() => setStep(s => Math.max(s - 1, 0))}
+                  type="button"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  Back
+                </button>
+                <div className="flex-1"></div>
+                {step < 4 ? (
                   <button
-                    className={cn(
-                      "rounded-lg border border-[#E2E8F0] px-4 py-2 text-sm font-medium text-[#64748B]",
-                      availableDays.includes(day) && "border-[#1E40AF] bg-[#1E40AF] text-white"
-                    )}
-                    key={day}
-                    onClick={() => toggleDay(day)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1E40AF] px-8 py-3.5 font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-blue-900/30 sm:w-auto"
+                    onClick={goNext}
                     type="button"
                   >
-                    {day}
+                    Continue
+                    <ChevronRight className="h-5 w-5" />
                   </button>
-                ))}
+                ) : (
+                  <button
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-[#1E40AF] px-8 py-3.5 font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-xl hover:shadow-blue-900/30 disabled:cursor-not-allowed disabled:opacity-80 sm:w-auto"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {isSubmitting && (
+                      <div className="absolute inset-0 bg-blue-800" style={{ width: `${uploadProgress}%`, transition: 'width 0.3s ease' }} />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                      {isSubmitting ? `Uploading... ${uploadProgress}%` : "Submit for Verification"}
+                    </span>
+                  </button>
+                )}
               </div>
-              {errors.availableDays ? (
-                <p className="mt-1 text-sm text-[#EF4444]">
-                  {errors.availableDays.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <SelectField
-                error={errors.shiftPreference?.message}
-                label="Shift preference"
-                options={["locum", "permanent", "both"]}
-                registration={register("shiftPreference")}
-              />
-              <TextField
-                error={errors.expectedPay?.message}
-                label="Expected pay per shift"
-                registration={register("expectedPay")}
-                type="number"
-              />
-            </div>
+            </form>
           </div>
-        ) : null}
-
-        {step === 4 ? (
-          <TextField
-            error={errors.upiId?.message}
-            label="UPI ID for receiving payments"
-            registration={register("upiId")}
-          />
-        ) : null}
-      </section>
-
-      {formError ? (
-        <p className="rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#B91C1C]">
-          {formError}
-        </p>
-      ) : null}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#E2E8F0] bg-white px-4 py-2 font-medium text-[#0F172A] hover:bg-[#F8FAFC] disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={step === 0 || isSubmitting}
-          onClick={() => setStep((currentStep) => Math.max(currentStep - 1, 0))}
-          type="button"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </button>
-        {step < 4 ? (
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1E40AF] px-4 py-2 font-medium text-white hover:bg-[#1D4ED8]"
-            onClick={goNext}
-            type="button"
-          >
-            Continue
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1E40AF] px-4 py-2 font-medium text-white hover:bg-[#1D4ED8] disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Submit for verification
-          </button>
-        )}
-      </div>
-    </form>
-  );
-}
-
-function ProgressHeader({ step, totalSteps }: { step: number; totalSteps: number }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-[#1E40AF]">
-          Step {step + 1} of {totalSteps}
-        </p>
-        <p className="text-sm text-[#64748B]">{Math.round(((step + 1) / totalSteps) * 100)}%</p>
-      </div>
-      <div className="mt-3 h-2 rounded-full bg-[#E2E8F0]">
-        <div
-          className={cn(
-            "h-2 rounded-full bg-[#1E40AF]",
-            step === 0 && "w-1/5",
-            step === 1 && "w-2/5",
-            step === 2 && "w-3/5",
-            step === 3 && "w-4/5",
-            step === 4 && "w-full"
-          )}
-        />
+        </div>
       </div>
     </div>
   );
 }
+
+// ----- SUBCOMPONENTS -----
 
 interface FieldProps {
   label: string;
   error?: string;
-  registration: ReturnType<typeof registerPlaceholder>;
+  registration: any;
   type?: string;
+  icon?: React.ReactNode;
+  filled?: boolean;
 }
 
-function registerPlaceholder() {
-  return {};
-}
-
-function TextField({ label, error, registration, type = "text" }: FieldProps) {
+function FloatingField({ label, error, registration, type = "text", icon, filled }: FieldProps) {
   return (
     <div>
-      <label className="text-sm font-medium text-[#0F172A]">{label}</label>
-      <input
-        className="mt-2 w-full rounded-lg border border-[#E2E8F0] px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1E40AF]"
-        type={type}
-        {...registration}
-      />
-      {error ? <p className="mt-1 text-sm text-[#EF4444]">{error}</p> : null}
+      <div className="relative">
+        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          {icon}
+        </div>
+        <input
+          className={cn(
+            "peer w-full rounded-xl border-2 bg-transparent px-12 pb-2 pt-6 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-4 focus:ring-[#1E40AF]/10",
+            error ? "border-red-400" : "border-slate-200 hover:border-slate-300"
+          )}
+          type={type}
+          placeholder=" "
+          {...registration}
+        />
+        <label className={cn(
+          "pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 transition-all",
+          "peer-focus:top-4 peer-focus:-translate-y-1 peer-focus:text-xs peer-focus:text-[#1E40AF]",
+          filled && "top-4 -translate-y-1 text-xs"
+        )}>
+          {label}
+        </label>
+      </div>
+      {error && (
+        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-1.5 flex items-center gap-1 text-xs font-bold text-red-500">
+          <AlertCircle className="h-3.5 w-3.5" />{error}
+        </motion.p>
+      )}
     </div>
   );
 }
 
-function SelectField({ label, error, registration, options }: FieldProps & { options: string[] }) {
+function FloatingSelect({ label, error, registration, options, icon, filled }: FieldProps & { options: string[] }) {
   return (
     <div>
-      <label className="text-sm font-medium text-[#0F172A]">{label}</label>
-      <select
-        className="mt-2 w-full rounded-lg border border-[#E2E8F0] bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#1E40AF]"
-        {...registration}
-      >
-        <option value="">Select</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      {error ? <p className="mt-1 text-sm text-[#EF4444]">{error}</p> : null}
+      <div className="relative">
+        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          {icon}
+        </div>
+        <select
+          className={cn(
+            "peer w-full appearance-none rounded-xl border-2 bg-transparent px-12 pb-2 pt-6 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-4 focus:ring-[#1E40AF]/10",
+            error ? "border-red-400" : "border-slate-200 hover:border-slate-300",
+            !filled && "text-transparent" // Hide the initial select value so label looks empty
+          )}
+          {...registration}
+        >
+          <option value="" disabled className="text-slate-500">Select...</option>
+          {options.map((option) => (
+            <option key={option} value={option} className="text-[#0F172A]">{option}</option>
+          ))}
+        </select>
+        <label className={cn(
+          "pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 transition-all",
+          "peer-focus:top-4 peer-focus:-translate-y-1 peer-focus:text-xs peer-focus:text-[#1E40AF]",
+          filled && "top-4 -translate-y-1 text-xs"
+        )}>
+          {label}
+        </label>
+      </div>
+      {error && (
+        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-1.5 flex items-center gap-1 text-xs font-bold text-red-500">
+          <AlertCircle className="h-3.5 w-3.5" />{error}
+        </motion.p>
+      )}
     </div>
   );
 }
 
-function FilePicker({
+function FileUploadZone({
   file,
-  label,
+  title,
   onChange
 }: {
   file: File | null;
-  label: string;
+  title: string;
   onChange: (file: File | null) => void;
 }) {
   return (
-    <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#E2E8F0] bg-[#F8FAFC] p-4 text-center">
-      <Upload className="h-6 w-6 text-[#1E40AF]" />
-      <span className="mt-3 text-sm font-medium text-[#0F172A]">{label}</span>
-      <span className="mt-1 max-w-full truncate text-xs text-[#64748B]">
-        {file ? file.name : "PDF, JPG, or PNG"}
-      </span>
+    <div className={cn(
+      "group relative overflow-hidden rounded-2xl border-2 border-dashed p-6 transition-all hover:scale-[1.01]",
+      file ? "border-emerald-500 bg-emerald-50" : "border-slate-300 bg-slate-50 hover:border-[#1E40AF] hover:bg-blue-50/50"
+    )}>
       <input
         accept=".pdf,.jpg,.jpeg,.png"
-        className="sr-only"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
         type="file"
       />
-    </label>
+      <div className="flex items-center gap-5 relative z-10 pointer-events-none">
+        <div className={cn(
+          "flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-colors",
+          file ? "bg-emerald-500 text-white" : "bg-white text-blue-600 shadow-sm group-hover:bg-blue-600 group-hover:text-white"
+        )}>
+          {file ? <CheckCircle2 className="h-7 w-7" /> : <FileText className="h-6 w-6" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={cn("text-base font-bold", file ? "text-emerald-900" : "text-[#0F172A]")}>{title}</p>
+          {file ? (
+            <p className="mt-1 truncate text-sm font-semibold text-emerald-700">{file.name} • {(file.size / 1024 / 1024).toFixed(2)} MB</p>
+          ) : (
+            <p className="mt-1 text-sm font-semibold text-slate-500">PDF, JPG, or PNG — max 5MB</p>
+          )}
+        </div>
+      </div>
+      
+      {file && (
+        <button
+          className="absolute right-4 top-4 z-20 rounded-full bg-white p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 shadow-sm"
+          onClick={(e) => { e.preventDefault(); onChange(null); }}
+          type="button"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }

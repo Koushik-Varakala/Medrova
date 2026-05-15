@@ -46,13 +46,20 @@ export default function ClinicProfilePage() {
   }, [router]);
 
   return (
-    <DashboardShell items={clinicNavigation}>
+    <DashboardShell 
+      items={clinicNavigation}
+      userProfile={clinic ? { name: clinic.name, verificationStatus: clinic.verificationStatus } : undefined}
+    >
       <div className="mb-6">
-        <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">Profile</h1>
-        <p className="mt-2 text-sm leading-6 text-[#64748B]">Edit clinic, contact, and specialty requirements.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-[#0F172A]">Profile Management</h1>
+        <p className="mt-2 text-sm leading-6 text-[#64748B]">Update your clinic&apos;s details, contact information, and documents.</p>
       </div>
+
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">Loading profile...</p>
+        <div className="space-y-6">
+          <div className="h-40 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+          <div className="h-[500px] w-full animate-pulse rounded-2xl bg-slate-200"></div>
+        </div>
       ) : clinic ? (
         <ClinicProfileForm clinic={clinic} />
       ) : null}

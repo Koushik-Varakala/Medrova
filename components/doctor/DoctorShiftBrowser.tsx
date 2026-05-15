@@ -109,11 +109,11 @@ export function DoctorShiftBrowser({ doctor, shifts }: DoctorShiftBrowserProps) 
 
       {/* FILTER BAR */}
       <div className="sticky top-0 z-20 -mx-4 overflow-hidden bg-white/80 px-4 pb-4 pt-2 backdrop-blur-md sm:mx-0 sm:rounded-2xl sm:border sm:border-[#E2E8F0] sm:p-4 sm:shadow-sm">
-        <div className="flex w-full items-center gap-3 overflow-x-auto pb-2 scrollbar-hide sm:grid sm:grid-cols-4 sm:pb-0">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:pb-0">
           <SelectFilter label="Specialty" onChange={setSpecialty} options={specialties} value={specialty} />
           <SelectFilter label="Area" onChange={setArea} options={hyderabadAreas} value={area} />
           
-          <div className="min-w-[140px] shrink-0 sm:min-w-0">
+          <div className="w-full">
             <label className="mb-1.5 hidden text-xs font-bold uppercase tracking-wider text-[#64748B] sm:block">Date</label>
             <input
               className="w-full rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-medium text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-2 focus:ring-[#1E40AF]/20"
@@ -123,7 +123,7 @@ export function DoctorShiftBrowser({ doctor, shifts }: DoctorShiftBrowserProps) 
             />
           </div>
           
-          <div className="min-w-[140px] shrink-0 sm:min-w-0">
+          <div className="w-full">
             <label className="mb-1.5 hidden text-xs font-bold uppercase tracking-wider text-[#64748B] sm:block">Min Pay</label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-sm font-medium text-slate-400">₹</span>
@@ -217,7 +217,7 @@ export function DoctorShiftBrowser({ doctor, shifts }: DoctorShiftBrowserProps) 
 
 function SelectFilter({ label, onChange, options, value }: { label: string; options: string[]; value: string; onChange: (v: string) => void; }) {
   return (
-    <div className="min-w-[140px] shrink-0 sm:min-w-0">
+    <div className="w-full">
       <label className="mb-1.5 hidden text-xs font-bold uppercase tracking-wider text-[#64748B] sm:block">{label}</label>
       <select
         className="w-full appearance-none rounded-xl border border-[#E2E8F0] bg-white px-3 py-2.5 text-sm font-medium text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-2 focus:ring-[#1E40AF]/20"

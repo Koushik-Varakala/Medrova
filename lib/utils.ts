@@ -31,6 +31,19 @@ export function formatDate(date: string) {
   }).format(new Date(date));
 }
 
+export function formatTime(time: string) {
+  if (!time) return "";
+  const [hours, minutes] = time.split(':');
+  const date = new Date();
+  date.setHours(parseInt(hours, 10));
+  date.setMinutes(parseInt(minutes, 10));
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true
+  }).format(date);
+}
+
 export function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];

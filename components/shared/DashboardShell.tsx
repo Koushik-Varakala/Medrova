@@ -51,13 +51,15 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden w-[260px] flex-col border-r border-[#E2E8F0] bg-white lg:flex">
         <div className="flex h-20 items-center px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-[#1E40AF]">Medrova</span>
-            <Activity className="h-5 w-5 text-[#1E40AF]" />
+          <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-md shadow-blue-600/20">
+              <Activity className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-xl font-black tracking-tight text-[#0F172A]">Medrova</span>
           </Link>
         </div>
 
-        <nav className="flex-1 space-y-1 px-4 py-4">
+        <nav className="flex-1 space-y-1.5 px-3 py-4">
           {items.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -66,13 +68,21 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-[#1E40AF] text-white"
-                    : "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0F172A]"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("h-5 w-5", isActive ? "text-white" : "text-[#64748B]")} />
+                {isActive && (
+                  <motion.div
+                    layoutId="sidebarActiveIndicator"
+                    className="absolute left-0 h-full w-1 rounded-r-full bg-blue-600"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <Icon className={cn("h-5 w-5 transition-colors", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600")} />
                 {item.label}
               </Link>
             );
@@ -80,20 +90,22 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
         </nav>
 
         {userProfile && (
-          <div className="mb-4 mt-auto px-4">
-            <div className="flex items-center gap-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3 shadow-sm">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1E40AF]/10 text-sm font-bold text-[#1E40AF]">
+          <div className="px-4 pb-4 mt-auto">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:shadow-md">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-sm font-bold text-blue-700">
                 {getInitials(userProfile.name)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-[#0F172A]">Dr. {userProfile.name}</p>
+                <p className="truncate text-sm font-bold text-slate-900" title={userProfile.name}>
+                  {userProfile.name}
+                </p>
                 {userProfile.verificationStatus === "verified" ? (
-                  <p className="flex items-center gap-1 text-xs font-medium text-[#10B981]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]"></span> Verified
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Verified
                   </p>
                 ) : (
-                  <p className="flex items-center gap-1 text-xs font-medium text-[#F59E0B]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B]"></span> Pending
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Pending
                   </p>
                 )}
               </div>
@@ -101,11 +113,11 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
           </div>
         )}
 
-        <div className="border-t border-[#E2E8F0] p-4">
+        <div className="border-t border-slate-200 p-4">
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#64748B] transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
           >
             <LogOut className="h-5 w-5" />
             {isLoggingOut ? "Logging out..." : "Log out"}
@@ -127,7 +139,7 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
       </main>
 
       {/* MOBILE BOTTOM TAB BAR */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[60px] items-center justify-around border-t border-[#E2E8F0] bg-white pb-safe lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[68px] items-center justify-around border-t border-slate-200 bg-white/90 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)] backdrop-blur-xl lg:hidden">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -136,22 +148,22 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
               key={item.href}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center w-full h-full gap-1 transition-colors",
-                isActive ? "text-[#1E40AF]" : "text-[#64748B]"
+                "relative flex flex-col items-center justify-center w-full h-full gap-1 transition-all duration-200",
+                isActive ? "text-blue-700" : "text-slate-500 hover:text-slate-800"
               )}
             >
               <AnimatePresence>
                 {isActive && (
                   <motion.div
                     layoutId="mobileTabIndicator"
-                    className="absolute top-0 h-0.5 w-8 rounded-b-full bg-[#1E40AF]"
+                    className="absolute top-0 h-1 w-10 rounded-b-full bg-blue-600"
                     initial={false}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
               </AnimatePresence>
-              <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110 text-blue-600")} />
+              <span className={cn("text-[10px] font-bold", isActive ? "text-blue-700" : "font-semibold")}>{item.label}</span>
             </Link>
           );
         })}

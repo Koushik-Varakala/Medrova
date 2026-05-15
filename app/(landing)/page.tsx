@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, animate, useInView, AnimatePresence } from "framer-motion";
 import {
   Menu, X, CheckCircle2, Star, Quote, Shield, Clock, IndianRupee,
-  Activity, Users, Building, Wallet, MapPin, ChevronRight
+  Activity, Users, Building, Wallet, MapPin, ChevronRight, LogOut, User as UserIcon
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 function AnimatedCounter({ from = 0, to, prefix = "", suffix = "" }: { from?: number, to: number, prefix?: string, suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -34,6 +35,42 @@ function AnimatedCounter({ from = 0, to, prefix = "", suffix = "" }: { from?: nu
 function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ email?: string, role?: string } | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    async function checkUser() {
+      const supabase = createSupabaseBrowserClient();
+      if (!supabase) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const [{ data: doctor }, { data: clinic }] = await Promise.all([
+          supabase.from("doctors").select("id").eq("user_id", session.user.id).maybeSingle(),
+          supabase.from("clinics").select("id").eq("user_id", session.user.id).maybeSingle()
+        ]);
+
+        let role = "onboarding";
+        if (doctor) role = "doctor";
+        else if (clinic) role = "clinic";
+
+        setUser({ email: session.user.email, role });
+      }
+    }
+    checkUser();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createSupabaseBrowserClient();
+    if (supabase) await supabase.auth.signOut();
+    setUser(null);
+    window.location.reload();
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -46,9 +83,8 @@ function LandingNavbar() {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
-        scrolled ? "bg-white/40 backdrop-blur-lg shadow-sm border-b border-white/20" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${scrolled ? "bg-white/40 backdrop-blur-lg shadow-sm border-b border-white/20" : "bg-transparent"
+        }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
@@ -64,20 +100,67 @@ function LandingNavbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-4">
-          <Link
-            href="/sign-in"
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              scrolled ? "text-[#0F172A] hover:text-[#1E40AF]" : "text-white/90 hover:text-white"
-            }`}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/sign-up"
-            className="rounded-full bg-[#1E40AF] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#1D4ED8] hover:shadow-xl hover:-translate-y-0.5"
-          >
-            Get Started
-          </Link>
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${scrolled ? "text-[#0F172A] hover:text-[#1E40AF]" : "text-white/90 hover:text-white"
+                  }`}
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E40AF]/10 text-[#1E40AF] backdrop-blur-md">
+                  <UserIcon className="h-4 w-4" />
+                </div>
+                Signed In
+              </button>
+
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
+                  >
+                    <div className="border-b border-gray-100 px-4 py-3">
+                      <p className="truncate text-sm font-medium text-gray-900">{user.email}</p>
+                    </div>
+                    <div className="p-2">
+                      <Link
+                        href={user.role === "doctor" ? "/dashboard/doctor" : user.role === "clinic" ? "/dashboard/clinic" : "/onboarding/doctor"}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Activity className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className={`px-4 py-2 text-sm font-medium transition-colors ${scrolled ? "text-[#0F172A] hover:text-[#1E40AF]" : "text-white/90 hover:text-white"
+                  }`}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="rounded-full bg-[#1E40AF] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#1D4ED8] hover:shadow-xl hover:-translate-y-0.5"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Nav Toggle */}
@@ -99,16 +182,42 @@ function LandingNavbar() {
             className="md:hidden overflow-hidden bg-white border-b border-gray-200"
           >
             <div className="flex flex-col px-4 py-6 gap-4">
-              <Link href="/sign-in" className="text-[#0F172A] font-medium p-2" onClick={() => setMobileMenuOpen(false)}>
-                Sign In
-              </Link>
-              <Link
-                href="/sign-up"
-                className="rounded-lg bg-[#1E40AF] p-3 text-center font-medium text-white"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Get Started
-              </Link>
+              {user ? (
+                <>
+                  <div className="border-b border-gray-100 pb-4">
+                    <p className="text-sm font-medium text-gray-500">Signed in as</p>
+                    <p className="truncate text-sm font-bold text-gray-900">{user.email}</p>
+                  </div>
+                  <Link
+                    href={user.role === "doctor" ? "/dashboard/doctor" : user.role === "clinic" ? "/dashboard/clinic" : "/onboarding/doctor"}
+                    className="flex items-center gap-2 rounded-lg bg-gray-50 p-3 font-medium text-gray-900"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Activity className="h-5 w-5 text-[#1E40AF]" />
+                    Go to Dashboard
+                  </Link>
+                  <button
+                    onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                    className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 font-medium text-red-600"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="text-[#0F172A] font-medium p-2" onClick={() => setMobileMenuOpen(false)}>
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/sign-up"
+                    className="rounded-lg bg-[#1E40AF] p-3 text-center font-medium text-white"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -307,17 +416,15 @@ export default function LandingPage() {
             <div className="mb-12 flex rounded-xl bg-white p-1 shadow-sm border border-slate-200 relative z-10">
               <button
                 onClick={() => setActiveTab("doctors")}
-                className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${
-                  activeTab === "doctors" ? "bg-[#1E40AF] text-white shadow-md" : "text-slate-600 hover:text-[#0F172A]"
-                }`}
+                className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${activeTab === "doctors" ? "bg-[#1E40AF] text-white shadow-md" : "text-slate-600 hover:text-[#0F172A]"
+                  }`}
               >
                 For Doctors
               </button>
               <button
                 onClick={() => setActiveTab("clinics")}
-                className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${
-                  activeTab === "clinics" ? "bg-[#1E40AF] text-white shadow-md" : "text-slate-600 hover:text-[#0F172A]"
-                }`}
+                className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${activeTab === "clinics" ? "bg-[#1E40AF] text-white shadow-md" : "text-slate-600 hover:text-[#0F172A]"
+                  }`}
               >
                 For Clinics
               </button>
@@ -444,9 +551,9 @@ export default function LandingPage() {
       {/* CTA BANNER */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#1E40AF] to-[#1D4ED8] py-24">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent bg-[length:20px_20px]" />
-        
+
         <motion.div className="relative mx-auto max-w-4xl px-4 text-center md:px-6">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -454,8 +561,8 @@ export default function LandingPage() {
           >
             Ready to simplify your healthcare staffing?
           </motion.h2>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -481,7 +588,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="bg-white pt-16 pb-8 border-t border-slate-200">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -501,7 +608,7 @@ export default function LandingPage() {
                 India&apos;s trusted locum recruitment marketplace. Building the future of healthcare staffing in Hyderabad.
               </p>
             </div>
-            
+
             <div>
               <h3 className="font-bold text-[#0F172A] mb-4">Quick Links</h3>
               <ul className="space-y-3">
@@ -510,7 +617,7 @@ export default function LandingPage() {
                 <li><Link href="/sign-in" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Login</Link></li>
               </ul>
             </div>
-            
+
             <div>
               <h3 className="font-bold text-[#0F172A] mb-4">Contact</h3>
               <ul className="space-y-3">
@@ -518,11 +625,11 @@ export default function LandingPage() {
                   <MapPin className="h-4 w-4" /> Hyderabad, Telangana, India
                 </li>
                 <li className="text-slate-500">support@medrova.com</li>
-                <li className="text-slate-500">+91 98765 43210</li>
+                <li className="text-slate-500">+91 77990 01102</li>
               </ul>
             </div>
           </motion.div>
-          
+
           <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-400 text-sm">© {new Date().getFullYear()} Medrova. All rights reserved.</p>
             <p className="text-slate-400 text-sm font-medium">Made with ❤️ in Hyderabad</p>

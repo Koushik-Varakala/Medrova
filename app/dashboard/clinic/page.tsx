@@ -85,10 +85,22 @@ export default function ClinicDashboardPage() {
           pendingApplications = appsData?.length ?? 0;
         }
 
+        // Fetch recent shifts
+        const { data: recentShiftsData } = await supabase
+          .from("shifts")
+          .select("*")
+          .eq("clinic_id", mappedClinic.id)
+          .order("created_at", { ascending: false })
+          .limit(3);
+
         if (!isMounted) return;
 
         setClinic(mappedClinic);
         setStats({ activeShifts, filledShifts, pendingApplications });
+        
+        // Let's store recent shifts in a separate state, or just add it to a new state
+        // To avoid changing too many things, I'll just fetch and set it in a new state variable
+        setRecentShifts(recentShiftsData ?? []);
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : "Unable to load your profile.");
@@ -102,36 +114,28 @@ export default function ClinicDashboardPage() {
     return () => { isMounted = false; };
   }, [router]);
 
+  // Use a new state for recent shifts
+  const [recentShifts, setRecentShifts] = useState<any[]>([]);
+
   return (
-    <DashboardShell items={clinicNavigation}>
+    <DashboardShell 
+      items={clinicNavigation}
+      userProfile={clinic ? { name: clinic.name, verificationStatus: clinic.verificationStatus } : undefined}
+    >
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">
-          Loading your profile...
-        </p>
+        <div className="space-y-6">
+          <div className="h-48 w-full animate-pulse rounded-2xl bg-slate-200"></div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[1, 2, 3].map(i => <div key={i} className="h-32 w-full animate-pulse rounded-xl bg-slate-200"></div>)}
+          </div>
+        </div>
       ) : error ? (
         <p className="rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#B91C1C]">
           {error}
         </p>
       ) : clinic ? (
-        <div className="space-y-6">
-          <ClinicDashboardHome clinic={clinic} stats={stats} />
-          <section className="grid gap-4 md:grid-cols-3">
-            <QuickCard icon={CalendarCheck} label="Active shifts" value={String(stats.activeShifts)} />
-            <QuickCard icon={Users} label="Applicants waiting" value={String(stats.pendingApplications)} />
-            <QuickCard icon={ClipboardList} label="Filled shifts" value={String(stats.filledShifts)} />
-          </section>
-        </div>
+        <ClinicDashboardHome clinic={clinic} stats={stats} recentShifts={recentShifts} />
       ) : null}
     </DashboardShell>
-  );
-}
-
-function QuickCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
-  return (
-    <article className="rounded-xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
-      <Icon className="h-5 w-5 text-[#1E40AF]" />
-      <p className="mt-4 text-sm text-[#64748B]">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-[#0F172A]">{value}</p>
-    </article>
   );
 }
