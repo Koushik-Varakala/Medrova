@@ -15,18 +15,27 @@ interface ClinicShiftManagerProps {
 type TabType = "all" | "active" | "pending_payment" | "confirmed" | "completed";
 
 export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerProps) {
-  const [selectedShiftId, setSelectedShiftId] = useState(shifts[0]?.id ?? "");
+  const [localShifts, setLocalShifts] = useState<Shift[]>(shifts);
+  const [localApps, setLocalApps] = useState<Application[]>(applications);
+  
+  // Update local state when props change
+  useMemo(() => {
+    setLocalShifts(shifts);
+    setLocalApps(applications);
+  }, [shifts, applications]);
+
+  const [selectedShiftId, setSelectedShiftId] = useState(localShifts[0]?.id ?? "");
   const [notice, setNotice] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
 
   const filteredShifts = useMemo(() => {
-    if (activeTab === "all") return shifts;
-    return shifts.filter(s => s.status === activeTab);
-  }, [shifts, activeTab]);
+    if (activeTab === "all") return localShifts;
+    return localShifts.filter(s => s.status === activeTab);
+  }, [localShifts, activeTab]);
 
-  const selectedShift = shifts.find((shift) => shift.id === selectedShiftId) || filteredShifts[0];
-  const shiftApplications = applications.filter((application) => application.shiftId === selectedShift?.id);
+  const selectedShift = localShifts.find((shift) => shift.id === selectedShiftId) || filteredShifts[0];
+  const shiftApplications = localApps.filter((application) => application.shiftId === selectedShift?.id);
 
   // Auto-select first shift if current selected is filtered out
   if (selectedShift && selectedShift.id !== selectedShiftId) {
@@ -52,6 +61,10 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
         return;
       }
 
+      // Optimistic update
+      setLocalApps(prev => prev.map(app => app.id === applicationId ? { ...app, status: "confirmed" } : app));
+      setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: "confirmed" } : s));
+
       setNotice("✅ Applicant confirmed! Contact details are now unlocked.");
     } finally {
       setIsProcessing(false);
@@ -76,6 +89,10 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
         return;
       }
       
+      // Optimistic update
+      setLocalApps(prev => prev.map(app => app.id === applicationId ? { ...app, status: "completed" } : app));
+      setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: "completed" } : s));
+
       setNotice("✅ Shift marked as completed! Payment transfer to the doctor has been initiated.");
     } finally {
       setIsProcessing(false);
@@ -176,6 +193,21 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
                       {shift.status.replace("_", " ")}
                     </div>
                   </div>
+
+                  {/* MOBILE INLINE APPLICANTS PANEL */}
+                  {isSelected && (
+                    <div className="mt-4 border-t border-blue-100 pt-4 lg:hidden">
+                      <ApplicantsPanel 
+                        applications={shiftApplications} 
+                        selectedShift={selectedShift}
+                        notice={notice}
+                        isProcessing={isProcessing}
+                        confirmApplicant={confirmApplicant}
+                        completeShift={completeShift}
+                        setNotice={setNotice}
+                      />
+                    </div>
+                  )}
                 </motion.button>
               );
             })}
@@ -188,87 +220,127 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
           )}
         </div>
 
-        {/* RIGHT COLUMN - APPLICANTS PANEL */}
-        <div className="sticky top-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center gap-3 border-b border-[#E2E8F0] pb-4">
-            <h2 className="text-xl font-bold text-[#0F172A]">Applicants</h2>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-              {shiftApplications.length}
-            </span>
-          </div>
-
-          {notice && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mb-6 overflow-hidden rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-blue-900 shadow-sm"
-            >
-              {notice}
-            </motion.div>
-          )}
-
-          <div className="space-y-4">
-            {shiftApplications.length > 0 ? (
-              shiftApplications.map((application) => (
-                <div key={application.id} className="relative">
-                  <ApplicantCard 
-                    application={application} 
-                    isShiftConfirmed={selectedShift?.status === "confirmed"}
-                  />
-                  
-                  {/* Action Buttons Below Card */}
-                  {application.status === "applied" && selectedShift?.status !== "confirmed" && (
-                    <div className="mt-3 flex gap-3">
-                      <button
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1E40AF] py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1D4ED8]"
-                        onClick={() => confirmApplicant(application.id)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                        Confirm Doctor
-                      </button>
-                      <button
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white py-2.5 text-sm font-bold text-[#0F172A] hover:bg-slate-50"
-                        onClick={() => setNotice("Applicant rejected locally. (UI simulated)")}
-                        disabled={isProcessing}
-                      >
-                        <X className="h-4 w-4" />
-                        Reject
-                      </button>
-                    </div>
-                  )}
-
-                  {application.status === "confirmed" && selectedShift?.status === "confirmed" && (
-                    <div className="mt-4">
-                      <button
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-[#059669]"
-                        onClick={() => completeShift(application.id)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
-                        Mark Completed & Transfer Payment
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-slate-300" />
-                </div>
-                <h3 className="text-lg font-bold text-[#0F172A]">No applicants yet</h3>
-                <p className="mt-1 max-w-[250px] text-sm text-[#64748B]">
-                  {selectedShift?.status === "active" 
-                    ? "This shift is live and visible to doctors. Check back soon!" 
-                    : "This shift is not active yet."}
-                </p>
-              </div>
-            )}
-          </div>
+        {/* RIGHT COLUMN - APPLICANTS PANEL (DESKTOP) */}
+        <div className="hidden lg:block sticky top-6 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+          <ApplicantsPanel 
+            applications={shiftApplications} 
+            selectedShift={selectedShift}
+            notice={notice}
+            isProcessing={isProcessing}
+            confirmApplicant={confirmApplicant}
+            completeShift={completeShift}
+            setNotice={setNotice}
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+// Sub-component for applicants panel
+function ApplicantsPanel({ 
+  applications, 
+  selectedShift, 
+  notice, 
+  isProcessing, 
+  confirmApplicant, 
+  completeShift, 
+  setNotice 
+}: { 
+  applications: Application[], 
+  selectedShift: Shift | undefined,
+  notice: string,
+  isProcessing: boolean,
+  confirmApplicant: (id: string) => void,
+  completeShift: (id: string) => void,
+  setNotice: (n: string) => void
+}) {
+  return (
+    <>
+      <div className="mb-6 flex items-center gap-3 border-b border-[#E2E8F0] pb-4">
+        <h2 className="text-xl font-bold text-[#0F172A]">Applicants</h2>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+          {applications.length}
+        </span>
+      </div>
+
+      {notice && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mb-6 overflow-hidden rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-blue-900 shadow-sm"
+        >
+          {notice}
+        </motion.div>
+      )}
+
+      <div className="space-y-4">
+        {applications.length > 0 ? (
+          applications.map((application) => (
+            <div key={application.id} className="relative">
+              <ApplicantCard 
+                application={application} 
+                isShiftConfirmed={selectedShift?.status === "confirmed" || selectedShift?.status === "completed"}
+              />
+              
+              {/* Action Buttons Below Card */}
+              {application.status === "applied" && selectedShift?.status === "active" && (
+                <div className="mt-3 flex gap-3">
+                  <button
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1E40AF] py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1D4ED8]"
+                    onClick={(e) => { e.stopPropagation(); confirmApplicant(application.id); }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    Confirm Doctor
+                  </button>
+                  <button
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white py-2.5 text-sm font-bold text-[#0F172A] hover:bg-slate-50"
+                    onClick={(e) => { e.stopPropagation(); setNotice("Applicant rejected locally. (UI simulated)"); }}
+                    disabled={isProcessing}
+                  >
+                    <X className="h-4 w-4" />
+                    Reject
+                  </button>
+                </div>
+              )}
+
+              {application.status === "confirmed" && selectedShift?.status === "confirmed" && (
+                <div className="mt-4">
+                  <button
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-[#059669]"
+                    onClick={(e) => { e.stopPropagation(); completeShift(application.id); }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
+                    Mark Completed & Transfer Payment
+                  </button>
+                </div>
+              )}
+
+              {application.status === "completed" && selectedShift?.status === "completed" && (
+                <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-100 py-3 text-sm font-bold text-emerald-700 border border-emerald-200">
+                  <Check className="h-5 w-5" />
+                  Shift Completed & Paid
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-4 h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center">
+              <Users className="h-8 w-8 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-bold text-[#0F172A]">No applicants yet</h3>
+            <p className="mt-1 max-w-[250px] text-sm text-[#64748B]">
+              {selectedShift?.status === "active" 
+                ? "This shift is live and visible to doctors. Check back soon!" 
+                : "This shift is not active yet."}
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
