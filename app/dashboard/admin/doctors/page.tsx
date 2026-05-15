@@ -89,35 +89,40 @@ export default function AdminDoctorsPage() {
 
   return (
     <DashboardShell items={adminNavigation}>
-      <Header
-        description="Review doctor profiles, documents, and verification status."
-        title="Doctors"
-      />
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">Doctors</h1>
+            {!isLoading && (
+              <span className="flex h-7 items-center justify-center rounded-full bg-[#1E40AF]/10 px-3 text-xs font-bold text-[#1E40AF]">
+                {doctors.length} Total
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Review doctor profiles, documents, and verification status.
+          </p>
+        </div>
+      </div>
+
       {error ? (
-        <p className="mb-4 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#B91C1C]">
+        <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 shadow-sm">
           {error}
         </p>
       ) : null}
+
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">
-          Loading doctors...
-        </p>
-      ) : doctors.length === 0 ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">
-          No doctors registered yet.
-        </p>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-10 w-24 rounded-full bg-slate-200 animate-pulse" />)}
+          </div>
+          <div className="grid gap-4">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-40 rounded-xl bg-slate-200 animate-pulse border border-slate-300" />)}
+          </div>
+        </div>
       ) : (
         <AdminDoctorTable doctors={doctors} />
       )}
     </DashboardShell>
-  );
-}
-
-function Header({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="mb-6">
-      <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">{title}</h1>
-      <p className="mt-2 text-sm leading-6 text-[#64748B]">{description}</p>
-    </div>
   );
 }

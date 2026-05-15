@@ -319,13 +319,13 @@ export function DoctorOnboardingForm() {
             </motion.svg>
           </div>
           <h1 className="mt-8 text-3xl font-black tracking-tight text-[#0F172A]">
-            You're all set!
+            You&apos;re all set!
           </h1>
           <p className="mt-3 text-lg font-medium text-[#64748B]">
             Your profile has been submitted for verification.
           </p>
           <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-800">
-            Our team reviews profiles within 24 hours. You'll receive an email once verified.
+            Our team reviews profiles within 24 hours. You&apos;ll receive an email once verified.
           </div>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
@@ -583,7 +583,7 @@ export function DoctorOnboardingForm() {
                           registration={register("expectedPay")} 
                           filled={!!formValues.expectedPay} 
                         />
-                        <p className="mt-2 text-xs font-semibold text-slate-500">This is your expected minimum per shift. We'll match you accordingly.</p>
+                        <p className="mt-2 text-xs font-semibold text-slate-500">This is your expected minimum per shift. We&apos;ll match you accordingly.</p>
                       </div>
                     </div>
                   )}

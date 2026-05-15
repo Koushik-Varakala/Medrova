@@ -8,7 +8,7 @@ import { DashboardShell } from "@/components/shared/DashboardShell";
 import { doctorNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { parseStringArray, getStringValue, getNumberValue, getBooleanValue } from "@/lib/utils";
-import type { Doctor, Shift, VerificationStatus } from "@/types";
+import type { Doctor, Shift, Clinic, VerificationStatus } from "@/types";
 
 export default function DoctorDashboardPage() {
   const router = useRouter();
@@ -102,7 +102,7 @@ export default function DoctorDashboardPage() {
             isUrgent: getBooleanValue(s, "is_urgent"),
             status: getStringValue(s, "status") as Shift["status"],
             createdAt: getStringValue(s, "created_at"),
-            clinic: clinicObj as any
+            clinic: clinicObj as unknown as Clinic
           };
         });
 

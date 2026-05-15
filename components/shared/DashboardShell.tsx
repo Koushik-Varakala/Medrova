@@ -56,6 +56,9 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
               <Activity className="h-4 w-4 text-white" />
             </div>
             <span className="text-xl font-black tracking-tight text-[#0F172A]">Medrova</span>
+            {pathname.startsWith("/dashboard/admin") && (
+              <span className="ml-0.5 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-black tracking-wider text-red-600 border border-red-200 uppercase">Admin</span>
+            )}
           </Link>
         </div>
 

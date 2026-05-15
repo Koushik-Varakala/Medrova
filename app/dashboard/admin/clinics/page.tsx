@@ -11,13 +11,14 @@ interface ClinicApiRow {
   user_id: string;
   name: string;
   type: string;
-  address: string;
-  area: string;
   phone: string;
   contact_person: string;
   contact_phone: string;
+  address: string;
+  area: string;
   specialties_needed: string[];
   verification_status: VerificationStatus;
+  verification_note: string | null;
   reg_cert_url: string | null;
   created_at: string;
 }
@@ -39,72 +40,75 @@ export default function AdminClinicsPage() {
           throw new Error(result.error ?? "Unable to load clinics.");
         }
 
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
-        const mappedClinics: Clinic[] = (result.clinics ?? []).map((clinic) => ({
-          id: clinic.id,
-          userId: clinic.user_id,
-          name: clinic.name,
-          type: clinic.type,
-          address: clinic.address,
-          area: clinic.area,
-          phone: clinic.phone,
-          contactPerson: clinic.contact_person,
-          contactPhone: clinic.contact_phone,
-          specialtiesNeeded: clinic.specialties_needed,
-          verificationStatus: clinic.verification_status,
-          regCertUrl: clinic.reg_cert_url ?? undefined,
-          createdAt: clinic.created_at
+        const mapped: (Clinic & { verificationNote?: string })[] = (result.clinics ?? []).map((c) => ({
+          id: c.id,
+          userId: c.user_id,
+          name: c.name,
+          type: c.type,
+          phone: c.phone || c.contact_phone,
+          contactPerson: c.contact_person,
+          contactPhone: c.contact_phone,
+          address: c.address,
+          area: c.area,
+          specialtiesNeeded: c.specialties_needed || [],
+          verificationStatus: c.verification_status,
+          verificationNote: c.verification_note ?? undefined,
+          regCertUrl: c.reg_cert_url ?? undefined,
+          createdAt: c.created_at
         }));
 
-        setClinics(mappedClinics);
+        setClinics(mapped);
       } catch (loadError) {
         const message =
           loadError instanceof Error ? loadError.message : "Unable to load clinics right now.";
         setError(message);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     }
 
     loadClinics();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   return (
     <DashboardShell items={adminNavigation}>
-      <Header
-        description="Review clinic registrations and approve verified hiring accounts."
-        title="Clinics"
-      />
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">Clinics</h1>
+            {!isLoading && (
+              <span className="flex h-7 items-center justify-center rounded-full bg-[#1E40AF]/10 px-3 text-xs font-bold text-[#1E40AF]">
+                {clinics.length} Total
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Review clinic registrations, documents, and verification status.
+          </p>
+        </div>
+      </div>
+
       {error ? (
-        <p className="mb-4 rounded-lg border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#B91C1C]">
+        <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 shadow-sm">
           {error}
         </p>
       ) : null}
+
       {isLoading ? (
-        <p className="rounded-xl border border-[#E2E8F0] bg-white p-6 text-sm text-[#64748B] shadow-sm">
-          Loading clinics...
-        </p>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-10 w-24 rounded-full bg-slate-200 animate-pulse" />)}
+          </div>
+          <div className="grid gap-4">
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 rounded-xl bg-slate-200 animate-pulse border border-slate-300" />)}
+          </div>
+        </div>
       ) : (
         <AdminClinicTable clinics={clinics} />
       )}
     </DashboardShell>
-  );
-}
-
-function Header({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="mb-6">
-      <h1 className="text-3xl font-semibold tracking-normal text-[#0F172A]">{title}</h1>
-      <p className="mt-2 text-sm leading-6 text-[#64748B]">{description}</p>
-    </div>
   );
 }

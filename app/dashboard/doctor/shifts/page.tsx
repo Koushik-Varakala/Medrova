@@ -7,7 +7,7 @@ import { DoctorShiftBrowser, ShiftSkeletonGrid } from "@/components/doctor/Docto
 import { doctorNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { getBooleanValue, getStringValue, getNumberValue } from "@/lib/utils";
-import type { Doctor, Shift, VerificationStatus } from "@/types";
+import type { Doctor, Shift, Clinic, VerificationStatus } from "@/types";
 
 export default function DoctorShiftsPage() {
   const router = useRouter();
@@ -67,7 +67,7 @@ export default function DoctorShiftsPage() {
           isUrgent: getBooleanValue(s, "is_urgent"),
           status: getStringValue(s, "status") as Shift["status"],
           createdAt: getStringValue(s, "created_at"),
-          clinic: clinicObj as any
+          clinic: clinicObj as unknown as Clinic
         };
       });
 

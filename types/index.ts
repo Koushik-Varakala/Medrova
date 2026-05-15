@@ -50,6 +50,7 @@ export interface Clinic {
   contactPhone: string;
   specialtiesNeeded: string[];
   verificationStatus: VerificationStatus;
+  verificationNote?: string;
   regCertUrl?: string;
   createdAt: string;
 }
