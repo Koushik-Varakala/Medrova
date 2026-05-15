@@ -30,10 +30,8 @@ export async function GET(request: Request) {
         if (role) {
           return NextResponse.redirect(`${origin}/dashboard/${role}`);
         } else {
-          // If no role, sign them out and tell them they need to create an account
-          // (Or we could redirect them to a role selection page, but this is simpler for now)
-          // Since the user is asking to "make it work", let's redirect them to onboarding if no role
-          return NextResponse.redirect(`${origin}/sign-in?error=No role found. Please sign up using email.`);
+          // New Google user — send them to pick their role
+          return NextResponse.redirect(`${origin}/auth/role-select`);
         }
       }
       return NextResponse.redirect(`${origin}${next}`);
