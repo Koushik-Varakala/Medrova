@@ -203,13 +203,13 @@ function SignInContent() {
               Welcome back to Medrova
             </h1>
             <p className="mt-4 text-lg text-slate-300">
-              India&apos;s most trusted doctor staffing platform
+              India&apos;s verified healthcare staffing marketplace
             </p>
 
             <div className="mt-12 space-y-6">
               {[
-                "Verified doctors and clinics only",
-                "Shifts filled within hours",
+                "Doctors, nurses & technicians verified",
+                "Locum shifts filled within hours",
                 "Guaranteed 24hr UPI payout"
               ].map((bullet, i) => (
                 <div key={i} className="flex items-center gap-3 text-slate-200">
@@ -235,7 +235,7 @@ function SignInContent() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
             </div>
             <p className="text-sm font-medium text-white max-w-[250px] leading-relaxed">
-              Dr. Anil Reddy just confirmed a shift at Care Clinic, Banjara Hills
+              New shift confirmed — Pediatric Clinic, Banjara Hills
             </p>
           </div>
         </motion.div>

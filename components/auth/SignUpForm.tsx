@@ -168,8 +168,7 @@ export function SignUpForm() {
         <h2 className="text-xl font-semibold text-[#0F172A]">Check your email</h2>
         <p className="mx-auto max-w-sm text-sm leading-6 text-[#64748B]">
           We sent a confirmation link to your email address. Click the link to verify your account,
-          then sign in to complete your{" "}
-          <span className="font-medium text-[#1E40AF]">{confirmedRole}</span> onboarding.
+          then return here to sign in and complete your profile.
         </p>
         <a
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#1E40AF] px-4 py-2 font-medium text-white hover:bg-[#1D4ED8]"

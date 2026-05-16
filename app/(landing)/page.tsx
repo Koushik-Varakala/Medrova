@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, animate, useInView, AnimatePresence } from "framer-motion";
 import {
-  Menu, X, CheckCircle2, Star, Quote, Shield, Clock, IndianRupee,
-  Activity, Users, Building, Wallet, MapPin, ChevronRight, LogOut, User as UserIcon
+  Menu, X, CheckCircle2, Star, Quote, Shield, ShieldCheck, Clock, IndianRupee,
+  Activity, Users, Building, Building2, Wallet, MapPin, ChevronRight, LogOut, User as UserIcon,
+  Stethoscope, AlertTriangle, XCircle, Zap, Lock
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -241,18 +242,20 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll();
   const parallaxY = useTransform(scrollYProgress, [0, 1], [0, -150]);
 
-  const headlineWords = "India's Trusted Doctor Recruitment Platform".split(" ");
+  const headlineWords = "Healthcare Staffing, Finally Done Right.".split(" ");
 
   const steps = {
     doctors: [
-      { title: "Create Profile", desc: "Upload your MCI certificate and verification details in minutes." },
-      { title: "Browse Shifts", desc: "Find locum shifts in your city that perfectly fit your schedule." },
-      { title: "Work & Get Paid", desc: "Complete your shift and receive guaranteed payout within 24 hours." }
+      { title: "Create Your Profile", desc: "Sign up free. Upload your MCI certificate, degree, and government ID. Nurses upload nursing council registration. Technicians upload relevant certifications." },
+      { title: "Get Verified", desc: "Our team manually reviews every credential before you can apply to shifts or jobs. This verification is what makes clinics trust you instantly." },
+      { title: "Browse Shifts and Jobs", desc: "See locum shifts sorted by distance, pay, and urgency. Apply in one tap. Browse permanent job postings from verified clinics." },
+      { title: "Work and Get Paid", desc: "Complete the shift. Receive your full payment directly to your UPI ID within 24 hours. No chasing. No waiting. Guaranteed." }
     ],
     clinics: [
-      { title: "Post a Shift", desc: "Specify date, time, specialty, and base pay. We add a transparent 10% fee." },
-      { title: "Review Applicants", desc: "Verified doctors apply instantly. Choose the best fit for your clinic." },
-      { title: "Confirm & Complete", desc: "Confirm the shift, and mark it complete once done. We handle the payout." }
+      { title: "Register Your Clinic", desc: "Create a clinic account and upload your registration certificate. Free to register, free to post permanent jobs." },
+      { title: "Post a Shift or Job", desc: "For permanent jobs: post free, receive applications, hire off-platform. For locum shifts: set the specialty, date, time, and pay." },
+      { title: "Pay Upfront, Secure the Shift", desc: "When you confirm a professional, pay the shift fee via Razorpay. Funds are held in escrow. The professional has a 100% guarantee before they show up." },
+      { title: "Mark Complete, Trigger Payout", desc: "After the shift, mark it complete on your dashboard. Medrova releases payment to the professional within 24 hours. You retain the invoice." }
     ]
   };
 
@@ -269,10 +272,16 @@ export default function LandingPage() {
             loop
             playsInline
             className="h-full w-full object-cover opacity-80"
-            poster="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1800&q=80"
+            poster="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1800&q=80"
           >
-            <source src="https://www.pexels.com/video/doctors-looking-at-xray-results-4586955/" type="video/mp4" />
+            <source src="https://www.pexels.com/video/4586955/download/" type="video/mp4" />
           </video>
+          {/* Fallback image in case video fails to load completely */}
+          <img
+            src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1800&q=80"
+            alt="Medical professionals"
+            className="absolute inset-0 h-full w-full object-cover opacity-80 -z-10"
+          />
           <div className="absolute inset-0 bg-[#0F172A]/60" />
         </div>
 
@@ -285,7 +294,7 @@ export default function LandingPage() {
               className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md w-fit"
             >
               <MapPin className="h-4 w-4 text-blue-400" />
-              Built for Hyderabad Healthcare
+              Now Live in Hyderabad · India&apos;s First Verified Locum Marketplace
             </motion.div>
 
             <h1 className="mb-6 text-5xl font-extrabold leading-tight tracking-tight text-white md:text-6xl lg:text-7xl">
@@ -308,7 +317,7 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="mb-10 text-lg leading-relaxed text-slate-300 md:text-xl"
             >
-              Connecting verified locum doctors with top clinics. Fill shifts in hours, work when you want, and experience seamless 24-hour payouts.
+              Medrova connects verified doctors, nurses, and technicians with Hyderabad clinics for locum shifts and permanent jobs. Clinics pay upfront. Professionals get paid in 24 hours. Guaranteed.
             </motion.p>
 
             <motion.div
@@ -319,16 +328,15 @@ export default function LandingPage() {
             >
               <Link
                 href="/sign-up"
-                className="group relative flex items-center justify-center gap-2 rounded-full bg-[#1E40AF] px-8 py-4 text-base font-semibold text-white shadow-[0_0_20px_rgba(30,64,175,0.4)] transition-all hover:bg-[#1D4ED8] hover:shadow-[0_0_30px_rgba(30,64,175,0.6)] hover:-translate-y-1"
+                className="group relative flex items-center justify-center gap-2 rounded-full bg-[#1E40AF] px-8 py-4 text-base font-semibold text-white shadow-[0_0_20px_rgba(30,64,175,0.4)] transition-all hover:bg-[#1D4ED8] hover:shadow-[0_0_30px_rgba(30,64,175,0.6)] hover:-translate-y-1 text-center"
               >
-                Join as a Doctor
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                Join as a Doctor / Nurse / Technician
               </Link>
               <Link
                 href="/sign-up"
-                className="flex items-center justify-center gap-2 rounded-full border-2 border-white/30 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:border-white/50"
+                className="flex items-center justify-center gap-2 rounded-full border-2 border-white/30 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10 hover:border-white/50 text-center"
               >
-                Hire for your Clinic
+                Register Your Clinic
               </Link>
             </motion.div>
 
@@ -339,13 +347,16 @@ export default function LandingPage() {
               className="mt-12 flex flex-wrap gap-6 text-sm font-medium text-slate-300"
             >
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" /> 500+ Verified Doctors
+                <ShieldCheck className="h-5 w-5 text-emerald-400" /> MCI & NNC Verified Professionals Only
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" /> 50+ Partner Clinics
+                <IndianRupee className="h-5 w-5 text-emerald-400" /> Upfront Escrow Payment for Every Shift
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" /> 24hr Guaranteed Payout
+                <Clock className="h-5 w-5 text-emerald-400" /> Guaranteed 24hr UPI Payout
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-emerald-400" /> Launching in Hyderabad
               </div>
             </motion.div>
           </div>
@@ -358,11 +369,11 @@ export default function LandingPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
-                  <CheckCircle2 className="h-6 w-6" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Dr. Priya Sharma</p>
-                  <p className="text-sm text-slate-300">Shift Confirmed ✓</p>
+                  <p className="font-semibold text-white">Shift Confirmed</p>
+                  <p className="text-sm text-slate-300">Pediatric Clinic, Kukatpally</p>
                 </div>
               </div>
             </motion.div>
@@ -374,11 +385,11 @@ export default function LandingPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">
-                  <Activity className="h-6 w-6" />
+                  <div className="h-3 w-3 rounded-full bg-blue-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white">Pediatric Clinic, Kukatpally</p>
-                  <p className="text-sm text-slate-300">Shift Filled in 2hrs</p>
+                  <p className="font-semibold text-white">Payout Sent</p>
+                  <p className="text-sm text-slate-300">₹4,500 to UPI in 18hrs</p>
                 </div>
               </div>
             </motion.div>
@@ -386,31 +397,61 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* STATS BAR */}
-      <section className="bg-[#0F172A] py-12 border-t border-white/10">
+      {/* THE PROBLEM */}
+      <section className="bg-[#0F172A] py-24 border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {[
-              { label: "Verified Doctors", value: 500, suffix: "+" },
-              { label: "Partner Clinics", value: 50, suffix: "+" },
-              { label: "Paid Out", value: 10, prefix: "₹", suffix: "L+" },
-              { label: "Payout Time", value: 24, suffix: "hr" }
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="text-center"
-              >
-                <p className="text-4xl md:text-5xl font-bold text-white mb-2">
-                  <AnimatedCounter from={0} to={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
-                </p>
-                <p className="text-sm md:text-base font-medium text-slate-400">{stat.label}</p>
-              </motion.div>
-            ))}
+          <div className="mb-16 text-center">
+            <span className="mb-4 inline-block rounded-full bg-slate-800 px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-300">The Problem</span>
+            <h2 className="text-3xl font-bold tracking-tight text-white md:text-5xl">Healthcare staffing in India is broken.</h2>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+            >
+              <AlertTriangle className="mb-6 h-10 w-10 text-amber-400" />
+              <h3 className="mb-3 text-xl font-bold text-white">No Credential Trust</h3>
+              <p className="text-slate-400 leading-relaxed">Clinics have no quick way to verify a locum doctor&apos;s MCI registration or a nurse&apos;s certification before they walk through the door.</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+            >
+              <XCircle className="mb-6 h-10 w-10 text-red-400" />
+              <h3 className="mb-3 text-xl font-bold text-white">Payment Insecurity</h3>
+              <p className="text-slate-400 leading-relaxed">Professionals complete 12-hour emergency shifts and then spend weeks chasing payment. Ghosting and delays are the norm.</p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+            >
+              <Clock className="mb-6 h-10 w-10 text-slate-400" />
+              <h3 className="mb-3 text-xl font-bold text-white">Zero Speed</h3>
+              <p className="text-slate-400 leading-relaxed">Clinics facing a last-minute gap rely on WhatsApp forwards and phone calls. By the time someone shows up, the damage is done.</p>
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-16 text-center"
+          >
+            <p className="text-xl font-bold text-white">Medrova fixes all three. Structurally, not just operationally.</p>
+          </motion.div>
         </div>
       </section>
 
@@ -429,7 +470,7 @@ export default function LandingPage() {
                 className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${activeTab === "doctors" ? "bg-[#1E40AF] text-white shadow-md" : "text-slate-600 hover:text-[#0F172A]"
                   }`}
               >
-                For Doctors
+                For Professionals
               </button>
               <button
                 onClick={() => setActiveTab("clinics")}
@@ -487,16 +528,17 @@ export default function LandingPage() {
       <section className="bg-gradient-to-br from-[#F8FAFC] via-white to-[#EFF6FF] py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-16 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#0F172A] md:text-5xl">Why Choose Us</h2>
-            <p className="mt-4 text-lg text-[#64748B]">The modern standard for locum recruitment.</p>
+            <span className="mb-4 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E40AF]">Why Medrova</span>
+            <h2 className="text-3xl font-bold tracking-tight text-[#0F172A] md:text-5xl">This is not just a job board.</h2>
+            <p className="mt-4 text-lg text-[#64748B]">Medrova is trust infrastructure for healthcare staffing.</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { title: "Verified Network", desc: "Every doctor and clinic is manually verified by our team.", icon: Shield },
-              { title: "Fast Payments", desc: "Guaranteed payouts within 24 hours of shift completion.", icon: Wallet },
-              { title: "Flexible Schedule", desc: "Choose exactly when and where you want to work.", icon: Clock },
-              { title: "Transparent Pricing", desc: "No hidden fees. Flat 10% platform fee for clinics.", icon: IndianRupee },
+              { title: "Strict Credential Verification", desc: "Every doctor, nurse, and technician is manually verified by our team — MCI numbers, nursing council registrations, degrees, and government IDs. If documents change, verification resets automatically.", icon: ShieldCheck, color: "text-blue-600" },
+              { title: "Escrow Payment Model", desc: "Clinics pay the full shift amount upfront via Razorpay before a shift goes live. The money is secured before the professional walks in the door. No more payment risk.", icon: Lock, color: "text-emerald-600" },
+              { title: "24-Hour Guaranteed Payout", desc: "Once a clinic marks a shift complete, Medrova initiates the UPI transfer within 24 hours. No delays, no negotiations, no exceptions.", icon: Zap, color: "text-amber-500" },
+              { title: "Transparent and Fair Pricing", desc: "Professionals always join and use Medrova for free. Clinics pay a flat 10% platform fee on locum shifts only. Permanent job posting is always free.", icon: IndianRupee, color: "text-purple-600" },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -505,55 +547,88 @@ export default function LandingPage() {
                 whileHover={{ y: -8, scale: 1.02 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl hover:border-blue-100 relative z-10"
+                className="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl hover:border-blue-100 relative z-10 flex flex-col"
               >
-                <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 text-[#1E40AF] transition-colors group-hover:bg-[#1E40AF] group-hover:text-white">
+                <div className={`mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-slate-50 transition-colors group-hover:bg-slate-100 ${feature.color}`}>
                   <feature.icon className="h-7 w-7" />
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-[#0F172A]">{feature.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{feature.desc}</p>
+                <h3 className="mb-3 text-xl font-bold text-[#0F172A]">{feature.title}</h3>
+                <p className="text-slate-600 leading-relaxed text-sm flex-1">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* EARLY ACCESS */}
       <section className="overflow-hidden bg-white py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="mb-16 text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#0F172A] md:text-5xl">Trusted by Peers</h2>
+            <span className="mb-4 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E40AF]">Now Live in Hyderabad</span>
+            <h2 className="text-3xl font-bold tracking-tight text-[#0F172A] md:text-5xl">Be Among the First on Medrova.</h2>
+            <p className="mt-4 text-lg text-[#64748B]">We just launched. Join early and help shape India&apos;s most trusted healthcare staffing platform.</p>
           </div>
 
-          <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 md:grid md:grid-cols-3 md:overflow-visible px-4 md:px-0 scrollbar-hide">
-            {[
-              { quote: "Medrova changed how I find weekend shifts. The 24hr payout is completely real.", name: "Dr. Anil Reddy", role: "General Physician" },
-              { quote: "We filled an emergency pediatric shift in just 2 hours. Incredible platform for clinics.", name: "Dr. Sunita Patel", role: "Pediatrician" },
-              { quote: "The verification process ensures we only get top-tier locum doctors. Highly recommend.", name: "Dr. Ravi Kumar", role: "Orthopedic Surgeon" },
-            ].map((testimonial, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.2 }}
-                className="relative min-w-[300px] snap-center rounded-2xl border border-slate-200 bg-slate-50 p-8 shadow-sm"
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* For Doctors */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="rounded-2xl border-2 border-blue-100 bg-blue-50 p-8 shadow-sm flex flex-col hover:border-blue-200 transition-colors"
+            >
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#1E40AF] shadow-sm">
+                <Stethoscope className="h-8 w-8" />
+              </div>
+              <h3 className="mb-3 text-2xl font-bold text-[#0F172A]">I&apos;m a Doctor, Nurse, or Technician</h3>
+              <p className="mb-6 text-slate-600 leading-relaxed">Join free. Browse verified locum shifts and permanent jobs across Hyderabad. Get paid within 24 hours of every shift you complete.</p>
+              
+              <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#1E40AF]" /> Free to join, always</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#1E40AF]" /> MCI / NNC verified badge on your profile</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#1E40AF]" /> 24hr guaranteed UPI payout</li>
+              </ul>
+
+              <Link
+                href="/sign-up"
+                className="mt-auto block w-full text-center rounded-full bg-[#1E40AF] px-8 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1D4ED8] hover:-translate-y-0.5"
               >
-                <Quote className="absolute right-6 top-6 h-16 w-16 text-slate-200 opacity-50" />
-                <div className="mb-6 flex gap-1">
-                  {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <p className="mb-8 text-lg font-medium leading-relaxed text-[#0F172A] relative z-10">
-                  &quot;{testimonial.quote}&quot;
-                </p>
-                <div>
-                  <p className="font-bold text-[#1E40AF]">{testimonial.name}</p>
-                  <p className="text-sm font-medium text-slate-500">{testimonial.role}</p>
-                </div>
-              </motion.div>
-            ))}
+                Create Your Profile
+              </Link>
+            </motion.div>
+
+            {/* For Clinics */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="rounded-2xl border-2 border-slate-200 bg-white p-8 shadow-sm flex flex-col hover:border-slate-300 transition-colors"
+            >
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                <Building2 className="h-8 w-8" />
+              </div>
+              <h3 className="mb-3 text-2xl font-bold text-[#0F172A]">I Run a Clinic or Hospital</h3>
+              <p className="mb-6 text-slate-600 leading-relaxed">Register free. Post permanent jobs at no cost. For locum shifts, pay upfront and get a verified professional within hours.</p>
+              
+              <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Free permanent job posting</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Manually verified professionals only</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Pay only for locum shifts, 10% flat fee</li>
+              </ul>
+
+              <Link
+                href="/sign-up"
+                className="mt-auto block w-full text-center rounded-full border-2 border-slate-200 bg-white px-8 py-3.5 text-sm font-bold text-[#0F172A] transition-all hover:bg-slate-50 hover:border-slate-300 hover:-translate-y-0.5"
+              >
+                Register Your Clinic
+              </Link>
+            </motion.div>
+          </div>
+
+          <div className="mt-12 text-center border-t border-slate-100 pt-8">
+            <p className="text-sm font-medium text-slate-500">No subscription · No hidden fees · Doctors, nurses, and technicians always free</p>
           </div>
         </div>
       </section>
@@ -567,10 +642,20 @@ export default function LandingPage() {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="mb-8 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl"
+            className="mb-6 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl"
           >
-            Ready to simplify your healthcare staffing?
+            Ready to fix healthcare staffing in Hyderabad?
           </motion.h2>
+          
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="mb-10 text-xl text-blue-100 max-w-2xl mx-auto"
+          >
+            Join the platform that guarantees credential trust, upfront payment, and 24-hour payouts.
+          </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -583,13 +668,13 @@ export default function LandingPage() {
               href="/sign-up"
               className="w-full sm:w-auto rounded-full bg-white px-8 py-4 text-base font-bold text-[#1E40AF] shadow-lg transition-transform hover:scale-105"
             >
-              Get Started Now
+              Join as a Professional
             </Link>
             <Link
-              href="/sign-in"
+              href="/sign-up"
               className="w-full sm:w-auto rounded-full border-2 border-white/30 px-8 py-4 text-base font-bold text-white transition-colors hover:bg-white/10"
             >
-              Sign In to Dashboard
+              Register Your Clinic
             </Link>
           </motion.div>
         </motion.div>
@@ -615,7 +700,7 @@ export default function LandingPage() {
                 />
               </Link>
               <p className="text-slate-500 leading-relaxed max-w-xs">
-                India&apos;s trusted locum recruitment marketplace. Building the future of healthcare staffing in Hyderabad.
+                India&apos;s verified healthcare staffing marketplace. Launching in Hyderabad.
               </p>
             </div>
 
@@ -634,7 +719,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-2 text-slate-500">
                   <MapPin className="h-4 w-4" /> Hyderabad, Telangana, India
                 </li>
-                <li className="text-slate-500">support@medrova.com</li>
+                <li className="text-slate-500">hello@medrova.in</li>
                 <li className="text-slate-500">+91 77990 01102</li>
               </ul>
             </div>
