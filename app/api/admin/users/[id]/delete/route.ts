@@ -38,13 +38,28 @@ export async function DELETE(
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Delete profile rows first (they may not cascade from auth.users)
+    // Delete profile rows and their dependent records first (they may not cascade from auth.users)
     if (profRow) {
+      // 1. Remove references in shifts
+      await auth.service.from("shifts").update({ confirmed_professional_id: null }).eq("confirmed_professional_id", params.id);
+      // 2. Delete child records
+      await auth.service.from("professional_applications").delete().eq("professional_id", params.id);
+      await auth.service.from("professional_payouts").delete().eq("professional_id", params.id);
+      // 3. Delete the profile
       await auth.service.from("healthcare_professionals").delete().eq("id", params.id);
     }
     if (doctorRow) {
+      // 1. Remove references in shifts
+      await auth.service.from("shifts").update({ confirmed_doctor_id: null }).eq("confirmed_doctor_id", params.id);
+      // 2. Delete child records
+      await auth.service.from("applications").delete().eq("doctor_id", params.id);
+      await auth.service.from("payments").delete().eq("doctor_id", params.id);
+      // 3. Delete the profile
       await auth.service.from("doctors").delete().eq("id", params.id);
     }
+
+    // Delete user roles
+    await auth.service.from("user_roles").delete().eq("user_id", userId);
 
     // Delete the auth user (this also removes user_roles via FK cascade)
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
