@@ -1,5 +1,6 @@
 import {
   BriefcaseMedical,
+  Building2,
   CalendarCheck,
   ClipboardList,
   CreditCard,
@@ -89,8 +90,8 @@ export const clinicNavigation: Array<SidebarItem & BottomTabItem> = [
 
 export const adminNavigation: Array<SidebarItem & BottomTabItem> = [
   { href: "/dashboard/admin", label: "Home", icon: LayoutDashboard },
-  { href: "/dashboard/admin/doctors", label: "Doctors", icon: Stethoscope },
-  { href: "/dashboard/admin/clinics", label: "Clinics", icon: Users },
+  { href: "/dashboard/admin/professionals", label: "Professionals", icon: Users },
+  { href: "/dashboard/admin/clinics", label: "Clinics", icon: Building2 },
   { href: "/dashboard/admin/shifts", label: "Shifts", icon: CalendarCheck },
   { href: "/dashboard/admin/payments", label: "Payments", icon: FileCheck2 }
 ];

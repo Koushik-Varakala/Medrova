@@ -378,7 +378,7 @@ export function ClinicOnboardingForm() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex-1 lg:ml-[33.333333%] flex flex-col min-h-screen relative bg-white pb-24 lg:pb-0">
+      <div className="flex-1 lg:ml-[33.333333%] flex flex-col min-h-[100dvh] relative bg-white pb-32 lg:pb-0">
         <div className="flex items-center justify-between p-6 lg:hidden border-b border-slate-100">
           <span className="text-xl font-black tracking-tight text-[#1E40AF]">Medrova</span>
           <div className="text-right">
@@ -395,7 +395,7 @@ export function ClinicOnboardingForm() {
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10 lg:p-16">
+        <div className="flex-1 p-6 sm:p-10 lg:p-16">
           <div className="mx-auto w-full max-w-[560px]">
             <form onSubmit={handleSubmit(onSubmit)}>
               <AnimatePresence mode="wait">

@@ -48,7 +48,7 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
+    <div className="flex min-h-screen w-full overflow-x-hidden bg-[#F8FAFC]">
       {/* DESKTOP SIDEBAR */}
       <aside className="hidden w-[260px] flex-col border-r border-[#E2E8F0] bg-white lg:flex">
         <div className="flex h-20 items-center px-6">
@@ -134,7 +134,7 @@ export function DashboardShell({ children, items, userProfile }: DashboardShellP
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 pb-20 lg:pb-0">
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         <div className="mx-auto max-w-[1200px] p-4 md:p-6 lg:p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

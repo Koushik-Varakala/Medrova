@@ -19,9 +19,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 interface AdminStats {
-  doctorCount: number;
+  professionalCount: number;
   clinicCount: number;
-  pendingDoctors: number;
+  pendingProfessionals: number;
   pendingClinics: number;
   totalRevenue: number;
   totalPayouts: number;
@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
     async function load() {
       try {
         const [doctorsRes, clinicsRes, paymentsRes] = await Promise.all([
-          fetch("/api/admin/doctors"),
+          fetch("/api/admin/professionals"),
           fetch("/api/admin/clinics"),
           fetch("/api/admin/payments"),
         ]);
@@ -58,14 +58,14 @@ export default function AdminDashboardPage() {
 
         if (!isMounted) return;
 
-        const doctors = doctorsJson.professionals ?? [];
+        const professionals = doctorsJson.professionals ?? [];
         const clinics = clinicsJson.clinics ?? [];
         const summary = paymentsJson.summary;
 
         setStats({
-          doctorCount: doctors.length,
+          professionalCount: professionals.length,
           clinicCount: clinics.length,
-          pendingDoctors: doctors.filter((d) => d.verification_status === "pending").length,
+          pendingProfessionals: professionals.filter((p) => p.verification_status === "pending").length,
           pendingClinics: clinics.filter((c) => c.verification_status === "pending").length,
           totalRevenue: summary?.totalRevenue ?? 0,
           totalPayouts: summary?.totalPayouts ?? 0,
@@ -145,9 +145,9 @@ export default function AdminDashboardPage() {
           {/* STATS ROW */}
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard 
-              icon={Stethoscope} 
-              label="Doctors" 
-              value={stats.doctorCount.toString()} 
+              icon={UserCheck} 
+              label="Professionals" 
+              value={stats.professionalCount.toString()} 
               caption="Total registered"
               iconColor="text-blue-600"
               iconBg="bg-blue-100"
@@ -194,30 +194,30 @@ export default function AdminDashboardPage() {
                 <h2 className="text-xl font-bold text-[#0F172A]">Operations Queue</h2>
                 <p className="text-sm text-slate-500">Action items requiring admin attention</p>
               </div>
-              {(stats.pendingDoctors > 0 || stats.pendingClinics > 0) && (
+              {(stats.pendingProfessionals > 0 || stats.pendingClinics > 0) && (
                 <span className="ml-auto flex items-center justify-center h-8 w-8 rounded-full bg-red-100 text-red-600 font-bold text-sm">
-                  {stats.pendingDoctors + stats.pendingClinics}
+                  {stats.pendingProfessionals + stats.pendingClinics}
                 </span>
               )}
             </div>
 
-            {stats.pendingDoctors === 0 && stats.pendingClinics === 0 ? (
+            {stats.pendingProfessionals === 0 && stats.pendingClinics === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 p-8 text-center shadow-sm">
                 <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
                   <UserCheck className="h-8 w-8 text-emerald-600" />
                 </div>
                 <h3 className="text-lg font-bold text-emerald-800">All verifications up to date</h3>
-                <p className="mt-1 text-sm text-emerald-600">There are no pending doctors or clinics to review.</p>
+                <p className="mt-1 text-sm text-emerald-600">There are no pending professionals or clinics to review.</p>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                <Link href="/dashboard/admin/doctors" className="group block">
+                <Link href="/dashboard/admin/professionals" className="group block">
                   <div className="relative overflow-hidden rounded-xl border border-amber-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md border-l-4 border-l-amber-500 h-full flex flex-col">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-                        <Stethoscope className="h-6 w-6 text-amber-600" />
+                        <UserCheck className="h-6 w-6 text-amber-600" />
                       </div>
-                      {stats.pendingDoctors > 0 && (
+                      {stats.pendingProfessionals > 0 && (
                         <span className="relative flex h-4 w-4">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500"></span>
@@ -225,8 +225,8 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                     <div className="mt-auto">
-                      <p className="text-4xl font-black text-[#0F172A]">{stats.pendingDoctors}</p>
-                      <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mt-1">Doctors awaiting verification</p>
+                      <p className="text-4xl font-black text-[#0F172A]">{stats.pendingProfessionals}</p>
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-wide mt-1">Professionals awaiting verification</p>
                     </div>
                     <div className="mt-6 flex items-center justify-between text-[#1E40AF] font-bold text-sm bg-blue-50 p-3 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
                       Review Now <ArrowRight className="w-4 h-4" />

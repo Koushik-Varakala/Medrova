@@ -95,17 +95,17 @@ export default function ProfessionalProfilePage() {
       items={professionalNavigation}
       userProfile={profile ? { name: profile.name, verificationStatus: profile.verificationStatus } : undefined}
     >
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-[#0F172A]">My Profile</h1>
           <p className="mt-2 text-sm font-medium text-slate-500">
             Manage your personal details and verification documents.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full sm:w-auto items-center gap-3">
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-[#1E40AF] px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#1D4ED8]"
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-xl bg-[#1E40AF] px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#1D4ED8]"
           >
             <Edit className="h-4 w-4" />
             Edit Profile
@@ -113,7 +113,7 @@ export default function ProfessionalProfilePage() {
           <button
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
+            className="flex flex-1 sm:flex-none justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 disabled:opacity-50"
           >
             {isSigningOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
             Sign Out
@@ -132,7 +132,7 @@ export default function ProfessionalProfilePage() {
       ) : (
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column: Personal Info & Status */}
-          <div className="space-y-8 lg:col-span-1">
+          <div className="space-y-8 lg:col-span-1 min-w-0">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
               <div className="relative px-6 pb-6 text-center">
@@ -156,25 +156,25 @@ export default function ProfessionalProfilePage() {
               {profile.verificationStatus === "verified" ? (
                 <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
                   <CheckCircle2 className="h-8 w-8 shrink-0 text-emerald-500" />
-                  <div>
-                    <p className="font-bold">Verified Professional</p>
-                    <p className="text-xs font-medium text-emerald-600 mt-0.5">Your documents are approved.</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold truncate">Verified Professional</p>
+                    <p className="text-xs font-medium text-emerald-600 mt-0.5 break-words">Your documents are approved.</p>
                   </div>
                 </div>
               ) : profile.verificationStatus === "pending" ? (
                 <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
                   <Clock className="h-8 w-8 shrink-0 text-amber-500" />
-                  <div>
-                    <p className="font-bold">Pending Review</p>
-                    <p className="text-xs font-medium text-amber-600 mt-0.5">We are reviewing your documents.</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold truncate">Pending Review</p>
+                    <p className="text-xs font-medium text-amber-600 mt-0.5 break-words">We are reviewing your documents.</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
                   <XCircle className="h-8 w-8 shrink-0 text-red-500" />
-                  <div>
-                    <p className="font-bold">Verification Rejected</p>
-                    <p className="text-xs font-medium text-red-600 mt-0.5">{profile.verificationNote || "Please re-upload your documents."}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold truncate">Verification Rejected</p>
+                    <p className="text-xs font-medium text-red-600 mt-0.5 break-words">{profile.verificationNote || "Please re-upload your documents."}</p>
                   </div>
                 </div>
               )}
@@ -182,7 +182,7 @@ export default function ProfessionalProfilePage() {
           </div>
 
           {/* Right Column: Details & Documents */}
-          <div className="space-y-8 lg:col-span-2">
+          <div className="space-y-8 lg:col-span-2 min-w-0">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
               <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 className="flex items-center gap-2 text-lg font-bold text-[#0F172A]">
@@ -190,21 +190,21 @@ export default function ProfessionalProfilePage() {
                 </h3>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Email</p>
-                  <p className="flex items-center gap-2 font-medium text-slate-900"><Mail className="w-4 h-4 text-slate-400"/>{profile.email}</p>
+                  <p className="flex items-center gap-2 font-medium text-slate-900 min-w-0" title={profile.email}><Mail className="w-4 h-4 shrink-0 text-slate-400"/><span className="truncate min-w-0 flex-1">{profile.email}</span></p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Phone</p>
-                  <p className="flex items-center gap-2 font-medium text-slate-900"><Phone className="w-4 h-4 text-slate-400"/>{profile.phone}</p>
+                  <p className="flex items-center gap-2 font-medium text-slate-900 min-w-0"><Phone className="w-4 h-4 shrink-0 text-slate-400"/><span className="truncate min-w-0 flex-1">{profile.phone}</span></p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Location</p>
-                  <p className="flex items-center gap-2 font-medium text-slate-900"><MapPin className="w-4 h-4 text-slate-400"/>{profile.area}, {profile.city}</p>
+                  <p className="flex items-center gap-2 font-medium text-slate-900 min-w-0"><MapPin className="w-4 h-4 shrink-0 text-slate-400"/><span className="truncate min-w-0 flex-1">{profile.area}, {profile.city}</span></p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">UPI ID</p>
-                  <p className="font-medium text-slate-900 font-mono">{profile.upiId}</p>
+                  <p className="font-medium text-slate-900 font-mono truncate min-w-0">{profile.upiId}</p>
                 </div>
               </div>
               <div className="mt-6 border-t border-slate-100 pt-6">
@@ -236,21 +236,21 @@ export default function ProfessionalProfilePage() {
                 </h3>
               </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Specialty</p>
-                  <p className="font-medium text-slate-900">{profile.specialty}</p>
+                  <p className="font-medium text-slate-900 truncate min-w-0">{profile.specialty}</p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Experience</p>
-                  <p className="font-medium text-slate-900">{profile.experience} years</p>
+                  <p className="font-medium text-slate-900 truncate min-w-0">{profile.experience} years</p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Employment</p>
-                  <p className="font-medium text-slate-900">{profile.employmentStatus}</p>
+                  <p className="font-medium text-slate-900 truncate min-w-0">{profile.employmentStatus}</p>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Shift Preference</p>
-                  <p className="font-medium text-slate-900 capitalize">{profile.shiftPreference}</p>
+                  <p className="font-medium text-slate-900 capitalize truncate min-w-0">{profile.shiftPreference}</p>
                 </div>
               </div>
 
@@ -387,8 +387,8 @@ function EditProfileModal({ profile, onClose, onSave }: { profile: HealthcarePro
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl my-8 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+      <div className="m-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900">Edit Profile</h2>
           <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100"><XCircle className="h-5 w-5" /></button>

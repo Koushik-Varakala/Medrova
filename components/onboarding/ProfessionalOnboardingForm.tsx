@@ -86,8 +86,6 @@ export function ProfessionalOnboardingForm({ role }: Props) {
     resolver: zodResolver(professionalSchema),
     defaultValues: {
       availableDays: [],
-      shiftPreference: "both",
-      city: "Hyderabad",
     },
   });
 
@@ -223,8 +221,8 @@ export function ProfessionalOnboardingForm({ role }: Props) {
       </div>
 
       {/* Form area */}
-      <div className="flex flex-1 items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-lg">
+      <div className="flex flex-1 justify-center p-6 lg:p-12 overflow-y-auto">
+        <div className="w-full max-w-lg my-auto py-8">
           {/* Mobile progress bar */}
           <div className="mb-8 lg:hidden">
             <div className="mb-2 flex justify-between text-xs font-medium text-slate-500">
@@ -257,12 +255,12 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                   <div className="space-y-4">
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">Full name</label>
-                      <input {...register("name")} placeholder="Dr. Anjali Sharma" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("name")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
                     </div>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">Phone number</label>
-                      <input {...register("phone")} placeholder="+91 98765 43210" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("phone")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
                     </div>
                     <LocationPicker
@@ -281,7 +279,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                     />
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">City</label>
-                      <input {...register("city")} placeholder="Hyderabad" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("city")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.city && <p className="mt-1 text-xs text-red-500">{errors.city.message}</p>}
                     </div>
                   </div>
@@ -309,12 +307,12 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                     </div>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">Years of experience</label>
-                      <input {...register("experience")} type="number" min={0} placeholder="5" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("experience")} type="number" min={0} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.experience && <p className="mt-1 text-xs text-red-500">{errors.experience.message}</p>}
                     </div>
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">{config.registrationLabel}</label>
-                      <input {...register("registrationNumber")} placeholder="MCI-123456" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("registrationNumber")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.registrationNumber && <p className="mt-1 text-xs text-red-500">{errors.registrationNumber.message}</p>}
                     </div>
                     <div>
@@ -411,7 +409,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                     {/* Expected pay */}
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">Expected pay per shift (₹)</label>
-                      <input {...register("expectedPay")} type="number" min={500} placeholder="3500" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("expectedPay")} type="number" min={500} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.expectedPay && <p className="mt-1 text-xs text-red-500">{errors.expectedPay.message}</p>}
                     </div>
                   </div>
@@ -431,16 +429,16 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                   <div className="space-y-4">
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">UPI ID</label>
-                      <input {...register("upiId")} placeholder="yourname@upi" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
+                      <input {...register("upiId")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10" />
                       {errors.upiId && <p className="mt-1 text-xs text-red-500">{errors.upiId.message}</p>}
                     </div>
                     {/* Payout flow visual */}
                     <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">How payouts work</p>
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                         {["Shift Completed","Clinic Confirms","Payment Processed","UPI Payout (24hr)"].map((step, i, arr) => (
-                          <span key={step} className="flex items-center gap-2">
-                            <span className={cn("inline-block rounded-full px-2 py-0.5 font-semibold text-white text-[10px]", colors.accent)}>{step}</span>
+                          <span key={step} className="flex items-center gap-2 mb-2 sm:mb-0">
+                            <span className={cn("inline-block rounded-full px-3 py-1 font-semibold text-white text-[10px] whitespace-nowrap", colors.accent)}>{step}</span>
                             {i < arr.length - 1 && <ArrowRight className="h-3 w-3 text-slate-300 shrink-0" />}
                           </span>
                         ))}

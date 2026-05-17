@@ -143,13 +143,11 @@ export function DoctorOnboardingForm() {
   } = useForm<DoctorOnboardingValues>({
     resolver: zodResolver(doctorSchema),
     defaultValues: {
-      city: "Hyderabad",
+      city: "",
       area: "",
       specialty: "",
       employmentStatus: "",
       availableDays: [],
-      shiftPreference: "both",
-      expectedPay: 6000
     }
   });
 
@@ -420,7 +418,7 @@ export function DoctorOnboardingForm() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex-1 lg:ml-[33.333333%] flex flex-col min-h-screen relative bg-white pb-24 lg:pb-0">
+      <div className="flex-1 lg:ml-[33.333333%] flex flex-col min-h-[100dvh] relative bg-white pb-32 lg:pb-0">
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-6 lg:hidden border-b border-slate-100">
           <span className="text-xl font-black tracking-tight text-[#1E40AF]">Medrova</span>
@@ -439,7 +437,7 @@ export function DoctorOnboardingForm() {
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10 lg:p-16">
+        <div className="flex-1 p-6 sm:p-10 lg:p-16">
           <div className="mx-auto w-full max-w-[560px]">
             {/* Form step transition */}
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -593,20 +591,20 @@ export function DoctorOnboardingForm() {
                         <p className="font-bold text-emerald-800">Your earnings will be transferred directly to this UPI ID within 24 hours of completing a shift. Medrova never holds your money.</p>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2 px-2 text-center text-sm font-bold text-slate-400">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100"><Briefcase className="h-5 w-5" /></div>
-                          <span className="text-[10px] uppercase tracking-wider">Clinic Pays</span>
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-2 px-2 text-center text-sm font-bold text-slate-400">
+                        <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100"><Briefcase className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider text-left sm:text-center flex-1 sm:flex-none">Clinic Pays</span>
                         </div>
-                        <div className="h-0.5 flex-1 bg-slate-200"></div>
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100"><CheckCircle2 className="h-5 w-5" /></div>
-                          <span className="text-[10px] uppercase tracking-wider">Shift Complete</span>
+                        <div className="h-8 w-0.5 sm:h-0.5 sm:flex-1 bg-slate-200"></div>
+                        <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100"><CheckCircle2 className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider text-left sm:text-center flex-1 sm:flex-none">Shift Complete</span>
                         </div>
-                        <div className="h-0.5 flex-1 bg-slate-200"></div>
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Wallet className="h-5 w-5" /></div>
-                          <span className="text-[10px] uppercase tracking-wider text-emerald-600">You receive 90%</span>
+                        <div className="h-8 w-0.5 sm:h-0.5 sm:flex-1 bg-slate-200"></div>
+                        <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Wallet className="h-5 w-5" /></div>
+                          <span className="text-[10px] uppercase tracking-wider text-emerald-600 text-left sm:text-center flex-1 sm:flex-none">You receive 90%</span>
                         </div>
                       </div>
                     </div>
