@@ -306,12 +306,6 @@ export default function LandingPage() {
           >
             <source src="/hero_m.mp4" type="video/mp4" />
           </video>
-          {/* Fallback image in case video fails to load completely */}
-          <img
-            src=""
-            alt="Medical professionals"
-            className="absolute inset-0 h-full w-full object-cover opacity-80 -z-10"
-          />
           <div className="absolute inset-0 bg-[#0F172A]/60" />
         </div>
 

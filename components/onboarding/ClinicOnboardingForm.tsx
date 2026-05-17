@@ -793,7 +793,7 @@ function ComboInput({
           ))}
           {value && !options.some(o => o.toLowerCase() === value.toLowerCase()) && (
             <div className="px-4 py-2 text-xs font-bold text-slate-400 border-t border-slate-100 bg-slate-50">
-              Using: "{value}"
+              Using: &quot;{value}&quot;
             </div>
           )}
         </div>
