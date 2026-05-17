@@ -11,6 +11,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
+import { LiveShiftsPreview } from "@/components/landing/LiveShiftsPreview";
+
 function AnimatedCounter({ from = 0, to, prefix = "", suffix = "" }: { from?: number, to: number, prefix?: string, suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
@@ -151,6 +153,13 @@ function LandingNavbar() {
             </div>
           ) : (
             <>
+              <button
+                onClick={() => document.getElementById('live-jobs')?.scrollIntoView({ behavior: 'smooth' })}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${scrolled ? "text-[#0F172A] hover:text-[#1E40AF]" : "text-white/90 hover:text-white"
+                  }`}
+              >
+                Browse Jobs
+              </button>
               <Link
                 href="/sign-in"
                 className={`px-4 py-2 text-sm font-medium transition-colors ${scrolled ? "text-[#0F172A] hover:text-[#1E40AF]" : "text-white/90 hover:text-white"
@@ -217,6 +226,15 @@ function LandingNavbar() {
                 </>
               ) : (
                 <>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      document.getElementById('live-jobs')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="text-[#0F172A] font-medium p-2 text-left"
+                  >
+                    Browse Jobs
+                  </button>
                   <Link href="/sign-in" className="text-[#0F172A] font-medium p-2" onClick={() => setMobileMenuOpen(false)}>
                     Sign In
                   </Link>
@@ -394,6 +412,22 @@ export default function LandingPage() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* LIVE SHIFTS PREVIEW */}
+      <section id="live-jobs" className="bg-slate-50 py-24 relative overflow-hidden scroll-mt-20">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]" />
+        <div className="relative mx-auto max-w-7xl px-4 md:px-6">
+          <div className="mb-12 text-center max-w-2xl mx-auto">
+            <span className="mb-4 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E40AF]">Live Opportunities</span>
+            <h2 className="text-3xl font-bold tracking-tight text-[#0F172A] md:text-5xl mb-4">Real Shifts. Real Pay.</h2>
+            <p className="text-lg text-slate-600">
+              Browse live locum shifts and permanent jobs currently available in Hyderabad. Create an account to see clinic details and apply instantly.
+            </p>
+          </div>
+          
+          <LiveShiftsPreview />
         </div>
       </section>
 
