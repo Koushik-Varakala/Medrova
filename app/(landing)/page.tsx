@@ -94,7 +94,7 @@ function LandingNavbar() {
             alt="Medrova Logo"
             width={160}
             height={50}
-            className={`object-contain transition-all duration-300 hover:scale-105 ${!scrolled ? "drop-shadow-[0_0_12px_rgba(255,255,255,0.9)]" : ""}`}
+            className={`object-contain transition-all duration-300 hover:scale-105 ${!scrolled ? "brightness-0 invert drop-shadow-lg" : ""}`}
             priority
           />
         </Link>
@@ -129,10 +129,10 @@ function LandingNavbar() {
                       <Link
                         href={
                           user.role === "clinic" ? "/dashboard/clinic" :
-                          user.role === "admin" ? "/dashboard/admin" :
-                          user.role === "doctor" ? "/dashboard/doctor" :
-                          (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
-                          "/sign-up"
+                            user.role === "admin" ? "/dashboard/admin" :
+                              user.role === "doctor" ? "/dashboard/doctor" :
+                                (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
+                                  "/sign-up"
                         }
                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
@@ -205,10 +205,10 @@ function LandingNavbar() {
                   <Link
                     href={
                       user.role === "clinic" ? "/dashboard/clinic" :
-                      user.role === "admin" ? "/dashboard/admin" :
-                      user.role === "doctor" ? "/dashboard/doctor" :
-                      (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
-                      "/sign-up"
+                        user.role === "admin" ? "/dashboard/admin" :
+                          user.role === "doctor" ? "/dashboard/doctor" :
+                            (user.role === "nurse" || user.role === "technician") ? "/dashboard/professional" :
+                              "/sign-up"
                     }
                     className="flex items-center gap-2 rounded-lg bg-gray-50 p-3 font-medium text-gray-900"
                     onClick={() => setMobileMenuOpen(false)}
@@ -284,19 +284,31 @@ export default function LandingPage() {
       {/* HERO SECTION */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 z-0 bg-black">
+          {/* Desktop Video */}
           <video
             autoPlay
             muted
             loop
             playsInline
-            className="h-full w-full object-cover opacity-80"
-            poster="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1800&q=80"
+            className="hidden md:block h-full w-full object-cover opacity-80"
+            poster=""
           >
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-medical-professional-checking-patient-file-in-corridor-42512-large.mp4" type="video/mp4" />
+            <source src="/hero.mp4" type="video/mp4" />
+          </video>
+          {/* Mobile Video */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="block md:hidden h-full w-full object-cover opacity-80"
+            poster=""
+          >
+            <source src="/hero_m.mp4" type="video/mp4" />
           </video>
           {/* Fallback image in case video fails to load completely */}
           <img
-            src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1800&q=80"
+            src=""
             alt="Medical professionals"
             className="absolute inset-0 h-full w-full object-cover opacity-80 -z-10"
           />
@@ -426,7 +438,7 @@ export default function LandingPage() {
               Browse live locum shifts and permanent jobs currently available in Hyderabad. Create an account to see clinic details and apply instantly.
             </p>
           </div>
-          
+
           <LiveShiftsPreview />
         </div>
       </section>
@@ -617,7 +629,7 @@ export default function LandingPage() {
               </div>
               <h3 className="mb-3 text-2xl font-bold text-[#0F172A]">I&apos;m a Doctor, Nurse, or Technician</h3>
               <p className="mb-6 text-slate-600 leading-relaxed">Join free. Browse verified locum shifts and permanent jobs across Hyderabad. Get paid within 24 hours of every shift you complete.</p>
-              
+
               <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#1E40AF]" /> Free to join, always</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[#1E40AF]" /> MCI / NNC verified badge on your profile</li>
@@ -645,7 +657,7 @@ export default function LandingPage() {
               </div>
               <h3 className="mb-3 text-2xl font-bold text-[#0F172A]">I Run a Clinic or Hospital</h3>
               <p className="mb-6 text-slate-600 leading-relaxed">Register free. Post permanent jobs at no cost. For locum shifts, pay upfront and get a verified professional within hours.</p>
-              
+
               <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Free permanent job posting</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Manually verified professionals only</li>
@@ -680,7 +692,7 @@ export default function LandingPage() {
           >
             Ready to fix healthcare staffing in Hyderabad?
           </motion.h2>
-          
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
