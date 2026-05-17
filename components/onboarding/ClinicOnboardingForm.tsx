@@ -29,12 +29,17 @@ import { clinicTypes, hyderabadAreas, specialties } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { uploadDocument } from "@/components/onboarding/upload";
+import LocationPicker from "@/components/shared/LocationPicker";
+import type { LocationResult } from "@/types";
 
 const clinicSchema = z.object({
   name: z.string().min(2, "Enter clinic name"),
-  type: z.string().min(1, "Select clinic type"),
-  address: z.string().min(8, "Enter complete address"),
-  area: z.string().min(1, "Select an area"),
+  type: z.string().min(2, "Enter or select your clinic type"),
+  locationDisplayName: z.string().min(1, "Please select your location to continue"),
+  locationLat: z.number().optional(),
+  locationLng: z.number().optional(),
+  city: z.string().optional(),
+  area: z.string().optional(),
   phone: z.string().min(10, "Enter clinic phone"),
   contactPerson: z.string().min(2, "Enter contact person"),
   designation: z.string().min(2, "Enter designation"),
@@ -46,7 +51,7 @@ type ClinicOnboardingValues = z.infer<typeof clinicSchema>;
 type ClinicField = keyof ClinicOnboardingValues;
 
 const stepFields: ClinicField[][] = [
-  ["name", "type", "address", "area", "phone"],
+  ["name", "type", "phone", "locationDisplayName"],
   ["contactPerson", "designation", "contactPhone"],
   [],
   ["specialtiesNeeded"]
@@ -93,22 +98,44 @@ export function ClinicOnboardingForm() {
     async function checkSession() {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) return;
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setSessionError("Your session has expired or you are not signed in. Please sign in before completing onboarding.");
+        setSessionError(
+          "Your session has expired or you are not signed in. Please sign in before completing onboarding."
+        );
         return;
       }
 
-      const [ { data: doctorRow }, { data: clinicRow } ] = await Promise.all([
-        supabase.from("doctors").select("id").eq("user_id", session.user.id).maybeSingle(),
-        supabase.from("clinics").select("id").eq("user_id", session.user.id).maybeSingle()
+      const userId = session.user.id;
+
+      const [
+        { data: doctorRow },
+        { data: clinicRow },
+        { data: professionalRow }
+      ] = await Promise.all([
+        supabase.from("doctors")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("clinics")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("healthcare_professionals")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle()
       ]);
 
-      if (clinicRow) {
-        router.push("/dashboard/clinic");
-      } else if (doctorRow) {
+      if (doctorRow) {
         router.push("/dashboard/doctor");
+      } else if (clinicRow) {
+        router.push("/dashboard/clinic");
+      } else if (professionalRow) {
+        router.push("/dashboard/professional");
       }
+      // If none found — user is genuinely new, show the form
     }
     checkSession();
   }, [router]);
@@ -124,10 +151,29 @@ export function ClinicOnboardingForm() {
     resolver: zodResolver(clinicSchema),
     defaultValues: {
       type: "",
+      locationDisplayName: "",
+      city: "",
       area: "",
       specialtiesNeeded: []
     }
   });
+
+  const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
+
+  function handleLocationChange(location: LocationResult | null) {
+    setSelectedLocation(location);
+    if (location) {
+      setValue("locationDisplayName", location.displayName, { shouldValidate: true });
+      setValue("locationLat", location.lat);
+      setValue("locationLng", location.lng);
+      setValue("city", location.city ?? "Hyderabad");
+      setValue("area", location.area ?? location.displayName);
+    } else {
+      setValue("locationDisplayName", "");
+      setValue("city", "");
+      setValue("area", "");
+    }
+  }
 
   const selectedSpecialties = watch("specialtiesNeeded");
   const formValues = watch();
@@ -190,8 +236,9 @@ export function ClinicOnboardingForm() {
         user_id: user.id,
         name: values.name,
         type: values.type,
-        address: values.address,
-        area: values.area,
+        address: values.locationDisplayName,
+        area: values.area ?? values.locationDisplayName,
+        city: values.city ?? "Hyderabad",
         phone: values.phone,
         contact_person: values.contactPerson,
         contact_phone: values.contactPhone,
@@ -419,27 +466,26 @@ export function ClinicOnboardingForm() {
                       <div className="sm:col-span-2">
                         <FloatingField error={errors.name?.message} label="Clinic Name" icon={<Building2 />} registration={register("name")} filled={!!formValues.name} />
                       </div>
-                      <FloatingSelect 
-                        error={errors.type?.message} 
-                        label="Clinic Type" 
-                        icon={<Tag />} 
-                        options={clinicTypes} 
-                        registration={register("type")} 
-                        filled={!!formValues.type} 
+                      <ComboInput
+                        label="Clinic Type"
+                        options={clinicTypes}
+                        error={errors.type?.message}
+                        value={watch("type") ?? ""}
+                        onChange={(val) => setValue("type", val, { shouldValidate: true })}
+                        icon={<Tag />}
+                        note="Don't see your type? Just type it in."
                       />
                       <FloatingField error={errors.phone?.message} label="Clinic Phone" icon={<Phone />} registration={register("phone")} filled={!!formValues.phone} />
                       <div className="sm:col-span-2">
-                        <FloatingField error={errors.address?.message} label="Full Address" icon={<MapPin />} registration={register("address")} filled={!!formValues.address} />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <FloatingSelect 
-                          error={errors.area?.message} 
-                          label="Area in Hyderabad" 
-                          icon={<MapPin />} 
-                          options={hyderabadAreas} 
-                          registration={register("area")} 
-                          filled={!!formValues.area} 
+                        <LocationPicker
+                          value={selectedLocation}
+                          onChange={handleLocationChange}
+                          label="Your Location"
+                          error={errors.locationDisplayName?.message}
                         />
+                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                          We use your location to match you with nearby professionals.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -675,6 +721,93 @@ function FileUploadZone({
         >
           <X className="h-4 w-4" />
         </button>
+      )}
+    </div>
+  );
+}
+
+function ComboInput({
+  label,
+  options,
+  error,
+  value,
+  onChange,
+  icon,
+  note
+}: {
+  label: string;
+  options: string[];
+  error?: string;
+  value: string;
+  onChange: (value: string) => void;
+  icon?: React.ReactNode;
+  note?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const filtered = options.filter(opt =>
+    opt.toLowerCase().includes(value.toLowerCase())
+  );
+
+  return (
+    <div>
+      <div className="relative">
+        {icon && (
+          <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+            {icon}
+          </div>
+        )}
+        <input
+          className={cn(
+            "peer w-full rounded-xl border-2 bg-transparent px-12 pb-2 pt-6 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#1E40AF] focus:ring-4 focus:ring-[#1E40AF]/10",
+            error ? "border-red-400" : "border-slate-200 hover:border-slate-300"
+          )}
+          placeholder=" "
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        />
+        <label className={cn(
+          "pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500 transition-all peer-focus:top-4 peer-focus:-translate-y-1 peer-focus:text-xs peer-focus:text-[#1E40AF]",
+          value && "top-4 -translate-y-1 text-xs"
+        )}>
+          {label}
+        </label>
+      </div>
+
+      {isOpen && filtered.length > 0 && (
+        <div className="relative z-50 mt-1 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          {filtered.map(option => (
+            <button
+              key={option}
+              type="button"
+              className="w-full px-4 py-3 text-left text-sm font-semibold text-[#0F172A] hover:bg-blue-50 hover:text-[#1E40AF] transition-colors"
+              onMouseDown={() => {
+                onChange(option);
+                setIsOpen(false);
+              }}
+            >
+              {option}
+            </button>
+          ))}
+          {value && !options.some(o => o.toLowerCase() === value.toLowerCase()) && (
+            <div className="px-4 py-2 text-xs font-bold text-slate-400 border-t border-slate-100 bg-slate-50">
+              Using: "{value}"
+            </div>
+          )}
+        </div>
+      )}
+
+      {note && !error && (
+        <p className="mt-2 text-xs font-semibold text-slate-400">
+          {note}
+        </p>
+      )}
+      {error && (
+        <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-1.5 flex items-center gap-1 text-xs font-bold text-red-500">
+          <AlertCircle className="h-3.5 w-3.5" />{error}
+        </motion.p>
       )}
     </div>
   );

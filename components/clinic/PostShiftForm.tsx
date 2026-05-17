@@ -102,7 +102,7 @@ export function PostShiftForm() {
     setValue("specialty", "", { shouldValidate: false });
   }, [professionalType, setValue]);
 
-  const platformFee = Math.round(Number(payValue) * 0.10);
+  const platformFee = Math.round(Number(payValue) * 0.20);
   const totalPayable = Number(payValue) + platformFee;
 
   async function loadRazorpayCheckout() {
@@ -314,7 +314,7 @@ export function PostShiftForm() {
               <span className="font-bold text-slate-900">{formatCurrencyInr(Number(payValue) || 0)}</span>
             </div>
             <div className="mt-2 flex items-center justify-between text-sm font-medium text-slate-600">
-              <span>Platform fee (10%):</span>
+              <span>Platform fee (20%):</span>
               <span className="font-bold text-slate-900">{formatCurrencyInr(platformFee)}</span>
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 text-lg font-bold text-[#0F172A]">

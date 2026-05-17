@@ -36,12 +36,17 @@ import {
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { uploadDocument } from "@/components/onboarding/upload";
+import LocationPicker from "@/components/shared/LocationPicker";
+import type { LocationResult } from "@/types";
 
 const doctorSchema = z.object({
   name: z.string().min(2, "Enter your full name"),
   phone: z.string().min(10, "Enter a valid phone number"),
-  city: z.string().min(2, "Enter your city"),
-  area: z.string().min(1, "Select an area"),
+  locationDisplayName: z.string().min(1, "Please select your location to continue"),
+  locationLat: z.number().optional(),
+  locationLng: z.number().optional(),
+  city: z.string().optional(),
+  area: z.string().optional(),
   specialty: z.string().min(1, "Select a specialty"),
   experience: z.coerce.number().min(0, "Experience cannot be negative"),
   mciNumber: z.string().min(3, "Enter your MCI/NMC registration number"),
@@ -56,7 +61,7 @@ type DoctorOnboardingValues = z.infer<typeof doctorSchema>;
 type DoctorField = keyof DoctorOnboardingValues;
 
 const stepFields: DoctorField[][] = [
-  ["name", "phone", "city", "area"],
+  ["name", "phone", "locationDisplayName"],
   ["specialty", "experience", "mciNumber", "employmentStatus"],
   [],
   ["availableDays", "shiftPreference", "expectedPay"],
@@ -113,22 +118,44 @@ export function DoctorOnboardingForm() {
     async function checkSession() {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) return;
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        setSessionError("Your session has expired or you are not signed in. Please sign in before completing onboarding.");
+        setSessionError(
+          "Your session has expired or you are not signed in. Please sign in before completing onboarding."
+        );
         return;
       }
-      
-      const [ { data: doctorRow }, { data: clinicRow } ] = await Promise.all([
-        supabase.from("doctors").select("id").eq("user_id", session.user.id).maybeSingle(),
-        supabase.from("clinics").select("id").eq("user_id", session.user.id).maybeSingle()
+
+      const userId = session.user.id;
+
+      const [
+        { data: doctorRow },
+        { data: clinicRow },
+        { data: professionalRow }
+      ] = await Promise.all([
+        supabase.from("doctors")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("clinics")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("healthcare_professionals")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle()
       ]);
 
       if (doctorRow) {
         router.push("/dashboard/doctor");
       } else if (clinicRow) {
         router.push("/dashboard/clinic");
+      } else if (professionalRow) {
+        router.push("/dashboard/professional");
       }
+      // If none found — user is genuinely new, show the form
     }
     checkSession();
   }, [router]);
@@ -143,6 +170,7 @@ export function DoctorOnboardingForm() {
   } = useForm<DoctorOnboardingValues>({
     resolver: zodResolver(doctorSchema),
     defaultValues: {
+      locationDisplayName: "",
       city: "",
       area: "",
       specialty: "",
@@ -150,6 +178,23 @@ export function DoctorOnboardingForm() {
       availableDays: [],
     }
   });
+
+  const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
+
+  function handleLocationChange(location: LocationResult | null) {
+    setSelectedLocation(location);
+    if (location) {
+      setValue("locationDisplayName", location.displayName, { shouldValidate: true });
+      setValue("locationLat", location.lat);
+      setValue("locationLng", location.lng);
+      setValue("city", location.city ?? "Hyderabad");
+      setValue("area", location.area ?? location.displayName);
+    } else {
+      setValue("locationDisplayName", "");
+      setValue("city", "");
+      setValue("area", "");
+    }
+  }
 
   const availableDays = watch("availableDays");
   const shiftPreference = watch("shiftPreference");
@@ -222,8 +267,8 @@ export function DoctorOnboardingForm() {
         specialty: values.specialty,
         experience: values.experience,
         mci_number: values.mciNumber,
-        city: values.city,
-        area: values.area,
+        city: values.city ?? "Hyderabad",
+        area: values.area ?? values.locationDisplayName,
         employment_status: values.employmentStatus,
         available_days: values.availableDays,
         shift_preference: values.shiftPreference,
@@ -458,22 +503,20 @@ export function DoctorOnboardingForm() {
                   </div>
 
                   {step === 0 && (
-                    <div className="grid gap-6 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <FloatingField error={errors.name?.message} label="Full Name" icon={<User />} registration={register("name")} filled={!!formValues.name} />
+                    <div className="space-y-6">
+                      <FloatingField error={errors.name?.message} label="Full Name" icon={<User />} registration={register("name")} filled={!!formValues.name} />
+                      <FloatingField error={errors.phone?.message} label="Phone Number" icon={<Phone />} registration={register("phone")} filled={!!formValues.phone} />
+                      <div>
+                        <LocationPicker
+                          value={selectedLocation}
+                          onChange={handleLocationChange}
+                          label="Your Location"
+                          error={errors.locationDisplayName?.message}
+                        />
+                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                          We use your location to match you with nearby shifts and clinics.
+                        </p>
                       </div>
-                      <div className="sm:col-span-2">
-                        <FloatingField error={errors.phone?.message} label="Phone Number" icon={<Phone />} registration={register("phone")} filled={!!formValues.phone} />
-                      </div>
-                      <FloatingField error={errors.city?.message} label="City" icon={<MapPin />} registration={register("city")} filled={!!formValues.city} />
-                      <FloatingSelect 
-                        error={errors.area?.message} 
-                        label="Area in Hyderabad" 
-                        icon={<MapPin />} 
-                        options={hyderabadAreas} 
-                        registration={register("area")} 
-                        filled={!!formValues.area} 
-                      />
                     </div>
                   )}
 

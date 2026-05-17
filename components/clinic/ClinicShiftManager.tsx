@@ -99,6 +99,41 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
     }
   }
 
+  async function cancelShift() {
+    if (!selectedShift) return;
+    
+    const isConfirmed = selectedShift.status === "confirmed";
+    const confirmMessage = isConfirmed 
+      ? "WARNING: Canceling a confirmed shift less than 12 hours before it starts will result in a 30% penalty fee. Are you sure you want to cancel?"
+      : "Are you sure you want to cancel this shift? You will receive a full refund.";
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setIsProcessing(true);
+    setNotice("Processing cancellation...");
+    
+    try {
+      const response = await fetch(`/api/shifts/${selectedShift.id}/cancel`, {
+        method: "POST"
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        setNotice(result.error ?? "Failed to cancel shift.");
+        return;
+      }
+      
+      // Optimistic update
+      setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: result.status } : s));
+      setNotice(`✅ ${result.message}`);
+    } catch (err) {
+      setNotice("An error occurred while cancelling.");
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   const tabs: { label: string; value: TabType }[] = [
     { label: "All", value: "all" },
     { label: "Active", value: "active" },
@@ -204,6 +239,7 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
                         isProcessing={isProcessing}
                         confirmApplicant={confirmApplicant}
                         completeShift={completeShift}
+                        cancelShift={cancelShift}
                         setNotice={setNotice}
                       />
                     </div>
@@ -229,6 +265,7 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
             isProcessing={isProcessing}
             confirmApplicant={confirmApplicant}
             completeShift={completeShift}
+            cancelShift={cancelShift}
             setNotice={setNotice}
           />
         </div>
@@ -245,6 +282,7 @@ function ApplicantsPanel({
   isProcessing, 
   confirmApplicant, 
   completeShift, 
+  cancelShift,
   setNotice 
 }: { 
   applications: Application[], 
@@ -253,15 +291,27 @@ function ApplicantsPanel({
   isProcessing: boolean,
   confirmApplicant: (id: string) => void,
   completeShift: (id: string) => void,
+  cancelShift: () => void,
   setNotice: (n: string) => void
 }) {
   return (
     <>
-      <div className="mb-6 flex items-center gap-3 border-b border-[#E2E8F0] pb-4">
-        <h2 className="text-xl font-bold text-[#0F172A]">Applicants</h2>
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
-          {applications.length}
-        </span>
+      <div className="mb-6 flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-[#0F172A]">Applicants</h2>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+            {applications.length}
+          </span>
+        </div>
+        {selectedShift && (selectedShift.status === 'active' || selectedShift.status === 'confirmed' || selectedShift.status === 'pending_payment') && (
+          <button
+            onClick={cancelShift}
+            disabled={isProcessing}
+            className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
+          >
+            <X className="h-3 w-3" /> Cancel Shift
+          </button>
+        )}
       </div>
 
       {notice && (

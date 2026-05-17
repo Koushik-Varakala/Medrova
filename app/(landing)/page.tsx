@@ -292,7 +292,7 @@ export default function LandingPage() {
             className="h-full w-full object-cover opacity-80"
             poster="https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=1800&q=80"
           >
-            <source src="https://www.pexels.com/video/4586955/download/" type="video/mp4" />
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-medical-professional-checking-patient-file-in-corridor-42512-large.mp4" type="video/mp4" />
           </video>
           {/* Fallback image in case video fails to load completely */}
           <img

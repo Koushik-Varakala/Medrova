@@ -6,15 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  ArrowRight, ArrowLeft, Loader2, AlertCircle,
-  CheckCircle2, User, Stethoscope, FileText,
-  Calendar, IndianRupee, Upload
-} from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, User, Stethoscope, FileText, Calendar, IndianRupee, Upload, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { professionalRoleConfig, weekDays } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import LocationPicker from "@/components/shared/LocationPicker";
+import { uploadDocument } from "@/components/onboarding/upload";
 import type { ProfessionalRole, LocationResult } from "@/types";
 
 // ─── Zod Schema ────────────────────────────────────────────────────────────────
@@ -93,20 +90,49 @@ export function ProfessionalOnboardingForm({ role }: Props) {
   const shiftPreference = watch("shiftPreference");
 
   useEffect(() => {
-    let isMounted = true;
     async function checkSession() {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) return;
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
-      if (isMounted && (error || !user)) {
-        router.push("/sign-in");
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setFormError(
+          "Your session has expired or you are not signed in. Please sign in before completing onboarding."
+        );
+        return;
       }
+
+      const userId = session.user.id;
+
+      const [
+        { data: doctorRow },
+        { data: clinicRow },
+        { data: professionalRow }
+      ] = await Promise.all([
+        supabase.from("doctors")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("clinics")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("healthcare_professionals")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle()
+      ]);
+
+      if (doctorRow) {
+        router.push("/dashboard/doctor");
+      } else if (clinicRow) {
+        router.push("/dashboard/clinic");
+      } else if (professionalRow) {
+        router.push("/dashboard/professional");
+      }
+      // If none found — user is genuinely new, show the form
     }
     checkSession();
-    return () => { isMounted = false; };
   }, [router]);
 
   // ── Step navigation with validation ──────────────────────────────────────
@@ -136,20 +162,10 @@ export function ProfessionalOnboardingForm({ role }: Props) {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) { setFormError("Session expired. Please sign in again."); return; }
 
-      // Upload helper
-      async function uploadFile(file: File, path: string): Promise<string | null> {
-        const { data, error } = await supabase!.storage
-          .from("documents")
-          .upload(path, file, { upsert: true });
-        if (error) return null;
-        const { data: urlData } = supabase!.storage.from("documents").getPublicUrl(data.path);
-        return urlData.publicUrl;
-      }
-
       const [primaryCertUrl, degreeCertUrl, govIdUrl] = await Promise.all([
-        primaryCertFile ? uploadFile(primaryCertFile, `${user.id}/primary_cert`) : Promise.resolve(null),
-        degreeCertFile ? uploadFile(degreeCertFile, `${user.id}/degree_cert`) : Promise.resolve(null),
-        govIdFile ? uploadFile(govIdFile, `${user.id}/gov_id`) : Promise.resolve(null),
+        primaryCertFile ? uploadDocument(supabase, primaryCertFile, `professionals/${user.id}/primary_cert`).catch(() => null) : Promise.resolve(null),
+        degreeCertFile ? uploadDocument(supabase, degreeCertFile, `professionals/${user.id}/degree_cert`).catch(() => null) : Promise.resolve(null),
+        govIdFile ? uploadDocument(supabase, govIdFile, `professionals/${user.id}/gov_id`).catch(() => null) : Promise.resolve(null),
       ]);
 
       const { error: insertError } = await supabase.from("healthcare_professionals").upsert({
