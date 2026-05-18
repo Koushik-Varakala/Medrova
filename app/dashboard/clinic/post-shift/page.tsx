@@ -17,7 +17,7 @@ export default function ClinicPostShiftPage() {
         <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
           <p className="text-sm font-medium text-blue-900">
-            Shifts are visible to matching verified professionals after upfront payment. You pay ₹X+10% platform fee.
+            Shifts are visible to matching verified professionals after upfront payment. You pay the professional's quoted fee + 20% Medrova platform fee.
           </p>
         </div>
       </div>

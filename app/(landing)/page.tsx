@@ -361,7 +361,7 @@ export default function LandingPage() {
               { title: "Strict Credential Verification", desc: "Every doctor, nurse, and technician is manually verified by our team — MCI numbers, nursing council registrations, degrees, and government IDs. If documents change, verification resets automatically.", icon: ShieldCheck, color: "text-blue-600" },
               { title: "Escrow Payment Model", desc: "Clinics pay the full shift amount upfront via Razorpay before a shift goes live. The money is secured before the professional walks in the door. No more payment risk.", icon: Lock, color: "text-emerald-600" },
               { title: "24-Hour Guaranteed Payout", desc: "Once a clinic marks a shift complete, Medrova initiates the UPI transfer within 24 hours. No delays, no negotiations, no exceptions.", icon: Zap, color: "text-amber-500" },
-              { title: "Transparent and Fair Pricing", desc: "Professionals always join and use Medrova for free. Clinics pay a flat 10% platform fee on locum shifts only. Permanent job posting is always free.", icon: IndianRupee, color: "text-purple-600" },
+              { title: "Transparent and Fair Pricing", desc: "Professionals always join and use Medrova for free and receive 100% of their quoted fee. Clinics pay the professional's fee plus a 20% Medrova platform charge on locum shifts only. Permanent job posting is always free.", icon: IndianRupee, color: "text-purple-600" },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -438,7 +438,7 @@ export default function LandingPage() {
               <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Free permanent job posting</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Manually verified professionals only</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Pay only for locum shifts, 10% flat fee</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Locum shifts: professional fee + 20% Medrova fee</li>
               </ul>
 
               <Link

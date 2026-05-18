@@ -651,7 +651,7 @@ export function DoctorOnboardingForm() {
                         <div className="h-8 w-0.5 sm:h-0.5 sm:flex-1 bg-slate-200"></div>
                         <div className="flex flex-row sm:flex-col items-center gap-4 sm:gap-2 w-full sm:w-auto">
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Wallet className="h-5 w-5" /></div>
-                          <span className="text-[10px] uppercase tracking-wider text-emerald-600 text-left sm:text-center flex-1 sm:flex-none">You receive 90%</span>
+                          <span className="text-[10px] uppercase tracking-wider text-emerald-600 text-left sm:text-center flex-1 sm:flex-none">You receive 100%</span>
                         </div>
                       </div>
 

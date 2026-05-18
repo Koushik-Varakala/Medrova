@@ -5,7 +5,7 @@
  */
 
 const LOGO_URL = "https://medrova.vercel.app/logo.png";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "notifications@medrova.in";
+const FROM_EMAIL = `Medrova <${process.env.RESEND_FROM_EMAIL ?? "notifications@medrova.in"}>`;
 
 // ─────────────────────────────────────────────────────────
 // Shared Design Tokens
