@@ -12,14 +12,18 @@ import {
   AlertCircle,
   CheckCircle2,
   Zap,
-  Users
+  Users,
+  ShieldCheck,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { hyderabadAreas, professionalRoleConfig } from "@/lib/constants";
 import { cn, formatCurrencyInr } from "@/lib/utils";
-import type { ProfessionalRole } from "@/types";
+import type { ProfessionalRole, LocationResult } from "@/types";
+import LocationPicker from "@/components/shared/LocationPicker";
 
 const postShiftSchema = z.object({
   professionalType: z.enum(["doctor", "nurse", "technician"]),
@@ -28,7 +32,10 @@ const postShiftSchema = z.object({
   startTime: z.string().min(1, "Select start time"),
   endTime: z.string().min(1, "Select end time"),
   pay: z.coerce.number().min(1000, "Enter shift pay"),
-  area: z.string().min(1, "Select an area"),
+  area: z.string().optional(),
+  locationDisplayName: z.string().min(1, "Please select the shift location"),
+  locationLat: z.number().optional(),
+  locationLng: z.number().optional(),
   notes: z.string().optional(),
   isUrgent: z.boolean()
 });
@@ -62,6 +69,7 @@ export function PostShiftForm() {
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [duration, setDuration] = useState<string | null>(null);
+  const [confirmedShift, setConfirmedShift] = useState<PostShiftValues | null>(null);
 
   const {
     register,
@@ -74,9 +82,21 @@ export function PostShiftForm() {
     defaultValues: {
       professionalType: "doctor",
       isUrgent: false,
-      notes: ""
+      notes: "",
+      locationDisplayName: ""
     }
   });
+
+  const [location, setLocation] = useState<LocationResult | null>(null);
+
+  useEffect(() => {
+    if (location) {
+      setValue("locationDisplayName", location.displayName, { shouldValidate: true });
+      setValue("area", location.area || location.city || "Unknown");
+      setValue("locationLat", location.lat);
+      setValue("locationLng", location.lng);
+    }
+  }, [location, setValue]);
 
   const payValue = useWatch({ control, name: "pay" }) || 0;
   const isUrgent = useWatch({ control, name: "isUrgent" });
@@ -176,7 +196,7 @@ export function PostShiftForm() {
               razorpayOrderId: response.razorpay_order_id,
             })
           });
-          setNotice(`✅ Payment successful! Your shift is now live and visible to ${values.professionalType}s.`);
+          setConfirmedShift(values);
         },
         modal: {
           ondismiss: () => {
@@ -195,6 +215,114 @@ export function PostShiftForm() {
   const currentSpecialties = professionalType 
     ? professionalRoleConfig[professionalType].specialties 
     : [];
+
+  // PAYMENT SUCCESS SCREEN
+  if (confirmedShift) {
+    const pay = Number(confirmedShift.pay);
+    const platformFee = Math.round(pay * 0.20);
+    return (
+      <div className="mx-auto max-w-2xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* Success Header */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50">
+            <CheckCircle2 className="h-14 w-14 text-emerald-500" strokeWidth={1.5} />
+          </div>
+          <h1 className="text-3xl font-black text-[#0F172A]">Shift Posted Successfully!</h1>
+          <p className="mt-2 text-base font-medium text-slate-500">Your shift is now live and visible to verified {confirmedShift.professionalType}s.</p>
+        </div>
+
+        {/* Shift Summary Card */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+          <div className="bg-[#0F172A] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" />
+              <span className="text-sm font-bold text-white tracking-widest uppercase">Shift Confirmation</span>
+            </div>
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
+              <Sparkles className="h-3.5 w-3.5" /> Live
+            </span>
+          </div>
+
+          <div className="p-6 grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Professional Type</p>
+              <p className="font-bold text-[#0F172A] capitalize flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-500" /> {confirmedShift.professionalType}
+              </p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Specialty</p>
+              <p className="font-bold text-[#0F172A]">{confirmedShift.specialty}</p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Shift Date</p>
+              <p className="font-bold text-[#0F172A] flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-blue-500" /> {new Date(confirmedShift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Time</p>
+              <p className="font-bold text-[#0F172A] flex items-center gap-2">
+                <Clock className="h-4 w-4 text-blue-500" /> {confirmedShift.startTime} – {confirmedShift.endTime}
+              </p>
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Location</p>
+              <p className="font-bold text-[#0F172A] flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-500" /> {confirmedShift.locationDisplayName}
+              </p>
+            </div>
+            {confirmedShift.isUrgent && (
+              <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                <Zap className="h-5 w-5 text-amber-500" />
+                <span className="font-bold text-amber-800">Marked as Urgent</span>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 grid sm:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Professional Earns</p>
+              <p className="text-xl font-black text-emerald-600">₹{pay.toLocaleString("en-IN")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Platform Fee (20%)</p>
+              <p className="text-xl font-black text-slate-700">₹{platformFee.toLocaleString("en-IN")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Total Paid</p>
+              <p className="text-xl font-black text-[#1E40AF]">₹{(pay + platformFee).toLocaleString("en-IN")}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Guarantee Banner */}
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
+          <p className="text-sm font-medium text-emerald-900">
+            <strong>Payment Held in Escrow.</strong> The professional is paid within 24 hours after you mark the shift as complete. 100% refunded if no one shows up.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-4">
+          <button
+            type="button"
+            onClick={() => setConfirmedShift(null)}
+            className="flex-1 rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+          >
+            Post Another Shift
+          </button>
+          <a
+            href="/dashboard/clinic"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#1E40AF] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#1D4ED8] transition"
+          >
+            Go to My Shifts <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form className="mx-auto max-w-3xl space-y-8 pb-24" onSubmit={handleSubmit(onSubmit)}>
@@ -237,13 +365,14 @@ export function PostShiftForm() {
             error={errors.specialty?.message} 
             icon={<div className="h-2 w-2 rounded-full bg-blue-500"></div>}
           />
-          <Select 
-            label="Clinic Area" 
-            options={hyderabadAreas} 
-            registration={register("area")} 
-            error={errors.area?.message} 
-            icon={<MapPin className="h-4 w-4 text-slate-400" />}
-          />
+          <div className="flex flex-col gap-1.5">
+            <LocationPicker 
+              label="Shift Location" 
+              value={location} 
+              onChange={setLocation} 
+            />
+            {errors.locationDisplayName && <p className="text-xs font-medium text-red-500">{errors.locationDisplayName.message}</p>}
+          </div>
           <Input 
             label="Shift Date" 
             type="date" 

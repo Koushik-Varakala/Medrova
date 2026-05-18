@@ -43,7 +43,15 @@ export async function GET() {
       return jsonError("Profile not found", 404);
     }
 
-    return NextResponse.json({ profile: mapHealthcareProfessionalRow(toDbRecord(profRow)) });
+    // Count completed shifts for this professional
+    const { count: shiftsCompleted } = await auth.service
+      .from("professional_applications")
+      .select("id", { count: "exact", head: true })
+      .eq("professional_id", profRow.id)
+      .eq("status", "completed");
+
+    const profile = mapHealthcareProfessionalRow(toDbRecord(profRow));
+    return NextResponse.json({ profile: { ...profile, shiftsCompleted: shiftsCompleted ?? 0 } });
   } catch (error) {
     return validationError(error);
   }

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Mail, MapPin, Phone, ShieldCheck, User } from "lucide-react";
+import { ChevronDown, ChevronUp, Mail, MapPin, Phone, ShieldCheck, User, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Application } from "@/types";
@@ -48,13 +48,19 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="font-bold text-[#0F172A] sm:text-lg">
+              <h3 className="flex items-center gap-2 font-bold text-[#0F172A] sm:text-lg">
                 {doctor.name}
+                <div className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                  <ShieldCheck className="h-3 w-3" />
+                  Verified
+                </div>
               </h3>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                 <span className="font-semibold text-[#1E40AF]">{doctor.specialty}</span>
                 <span className="text-slate-300">•</span>
-                <span className="text-slate-600">{doctor.experience} yrs exp</span>
+                <span className="font-medium text-slate-600">{doctor.experience} yrs exp</span>
+                <span className="text-slate-300">•</span>
+                <span className="font-bold text-[#0F172A]">0 Shifts Completed</span>
               </div>
             </div>
             
@@ -104,6 +110,28 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
             className="overflow-hidden"
           >
             <div className="border-t border-[#E2E8F0] p-5">
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-[#64748B]">Trust & Reliability</h4>
+              <div className="mb-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                    Medrova Verified
+                  </div>
+                  <p className="mt-1.5 text-xs font-medium text-emerald-700">
+                    Medical License & Government ID manually verified.
+                  </p>
+                </div>
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-bold text-[#1E40AF]">
+                    <CheckCircle className="h-4 w-4 text-blue-600" />
+                    0 Shifts Completed
+                  </div>
+                  <p className="mt-1.5 text-xs font-medium text-blue-800">
+                    This professional is new to the Medrova platform.
+                  </p>
+                </div>
+              </div>
+
               <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">Professional Profile</h4>
               
               <div className="mt-3 grid gap-4 sm:grid-cols-2">

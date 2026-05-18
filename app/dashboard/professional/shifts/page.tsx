@@ -18,6 +18,7 @@ export default function ProfessionalShiftsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [appliedShiftIds, setAppliedShiftIds] = useState<Set<string>>(new Set());
   
   // Search and Location state
   const [searchSpecialty, setSearchSpecialty] = useState("");
@@ -66,6 +67,7 @@ export default function ProfessionalShiftsPage() {
         setNotice({ type: "error", message: data.error ?? "Failed to apply." });
       } else {
         setNotice({ type: "success", message: "Successfully applied to shift!" });
+        setAppliedShiftIds(prev => new Set(prev).add(shiftId));
       }
     } catch {
       setNotice({ type: "error", message: "An unexpected error occurred." });
@@ -190,8 +192,8 @@ export default function ProfessionalShiftsPage() {
             <ShiftCard 
               key={shift.id} 
               shift={shift} 
-              actionLabel={applyingId === shift.id ? "Applying..." : "Apply Now"}
-              onAction={() => handleApply(shift.id)}
+              actionLabel={appliedShiftIds.has(shift.id) ? "Applied ✓" : applyingId === shift.id ? "Applying..." : "Apply Now"}
+              onAction={appliedShiftIds.has(shift.id) ? undefined : () => handleApply(shift.id)}
               userLat={location?.lat ?? profile?.latitude}
               userLng={location?.lng ?? profile?.longitude}
               shiftLat={shift.latitude}

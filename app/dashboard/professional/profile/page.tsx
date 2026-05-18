@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, User, Phone, MapPin, Mail, ShieldCheck, FileText, CheckCircle2, XCircle, Settings, Clock, Edit } from "lucide-react";
+import { Loader2, User, Phone, MapPin, Mail, ShieldCheck, FileText, CheckCircle2, XCircle, Settings, Clock, Edit, Star } from "lucide-react";
 import { DashboardShell } from "@/components/shared/DashboardShell";
 import { professionalNavigation, professionalRoleConfig } from "@/lib/constants";
 import type { HealthcareProfessional, LocationResult } from "@/types";
+
+type ProfileWithStats = HealthcareProfessional & { shiftsCompleted?: number };
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import LocationPicker from "@/components/shared/LocationPicker";
@@ -14,7 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function ProfessionalProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<HealthcareProfessional | null>(null);
+  const [profile, setProfile] = useState<ProfileWithStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -133,50 +135,99 @@ export default function ProfessionalProfilePage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column: Personal Info & Status */}
           <div className="space-y-8 lg:col-span-1 min-w-0">
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-              <div className="relative px-6 pb-6 text-center">
-                <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-slate-100 text-3xl font-black text-slate-400 shadow-sm">
-                  {getInitials(profile.name)}
+            {/* Medrova Digital ID Card (Only for verified) */}
+            {profile.verificationStatus === "verified" ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                <div className="bg-[#0F172A] p-4 text-center">
+                  <h3 className="text-sm font-bold tracking-widest text-white uppercase">Medrova Digital ID</h3>
                 </div>
-                <div className="pt-16">
-                  <h2 className="text-xl font-black text-[#0F172A]">{profile.name}</h2>
-                  <p className="mt-1 text-sm font-bold text-blue-600 uppercase tracking-widest">{professionalRoleConfig[profile.role].label}</p>
+                <div className="relative px-6 py-8 text-center">
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                    <ShieldCheck className="h-48 w-48" />
+                  </div>
                   
-                  <div className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
-                    <ShieldCheck className="h-3.5 w-3.5" />
-                    {profile.registrationNumber}
+                  <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-emerald-500 bg-slate-100 text-3xl font-black text-slate-400 shadow-lg relative z-10">
+                    {getInitials(profile.name)}
+                    <div className="absolute -bottom-2 -right-2 rounded-full bg-white p-1 shadow-sm">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-500 fill-emerald-100" />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-6 relative z-10">
+                    <h2 className="text-2xl font-black text-[#0F172A]">{profile.name}</h2>
+                    <p className="mt-1 text-sm font-bold text-emerald-600 uppercase tracking-widest">{professionalRoleConfig[profile.role].label}</p>
+                    
+                    <div className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700">
+                      <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      ID: {profile.registrationNumber}
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center text-xs font-semibold text-slate-500">
+                  <span>Issued by Medrova</span>
+                  <span className="flex items-center gap-1 text-emerald-600"><CheckCircle2 className="h-3.5 w-3.5"/> Verified</span>
+                </div>
+              </div>
+            ) : (
+              // Original top card for pending/rejected
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+                <div className="relative px-6 pb-6 text-center">
+                  <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-slate-100 text-3xl font-black text-slate-400 shadow-sm">
+                    {getInitials(profile.name)}
+                  </div>
+                  <div className="pt-16">
+                    <h2 className="text-xl font-black text-[#0F172A]">{profile.name}</h2>
+                    <p className="mt-1 text-sm font-bold text-blue-600 uppercase tracking-widest">{professionalRoleConfig[profile.role].label}</p>
+                    <div className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-600">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      {profile.registrationNumber}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
+            {/* Verification Status Banner (If not verified) */}
+            {profile.verificationStatus !== "verified" && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Verification Status</h3>
+                {profile.verificationStatus === "pending" ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                    <Clock className="h-8 w-8 shrink-0 text-amber-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold truncate">Pending Review</p>
+                      <p className="text-xs font-medium text-amber-600 mt-0.5 break-words">We are reviewing your documents.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+                    <XCircle className="h-8 w-8 shrink-0 text-red-500" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold truncate">Verification Rejected</p>
+                      <p className="text-xs font-medium text-red-600 mt-0.5 break-words">{profile.verificationNote || "Please re-upload your documents."}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Shift Performance Stats */}
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Verification Status</h3>
-              {profile.verificationStatus === "verified" ? (
-                <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
-                  <CheckCircle2 className="h-8 w-8 shrink-0 text-emerald-500" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold truncate">Verified Professional</p>
-                    <p className="text-xs font-medium text-emerald-600 mt-0.5 break-words">Your documents are approved.</p>
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-slate-400">Medrova Stats</h3>
+              <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <div className="flex items-center gap-3 text-[#1E40AF]">
+                  <CheckCircle2 className="h-6 w-6 text-blue-500" />
+                  <div>
+                    <p className="font-bold">Shifts Completed</p>
+                    <p className="text-xs font-medium text-blue-800">Your total track record</p>
                   </div>
                 </div>
-              ) : profile.verificationStatus === "pending" ? (
-                <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                  <Clock className="h-8 w-8 shrink-0 text-amber-500" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold truncate">Pending Review</p>
-                    <p className="text-xs font-medium text-amber-600 mt-0.5 break-words">We are reviewing your documents.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
-                  <XCircle className="h-8 w-8 shrink-0 text-red-500" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold truncate">Verification Rejected</p>
-                    <p className="text-xs font-medium text-red-600 mt-0.5 break-words">{profile.verificationNote || "Please re-upload your documents."}</p>
-                  </div>
-                </div>
+                <div className="text-2xl font-black text-[#1E40AF]">{profile.shiftsCompleted ?? 0}</div>
+              </div>
+              {(profile.shiftsCompleted ?? 0) === 0 && (
+                <p className="mt-3 text-center text-xs font-medium text-slate-400">Complete your first shift to build your track record!</p>
               )}
             </div>
           </div>
