@@ -772,7 +772,7 @@ export default function LandingPage() {
             </div>
             <div className="flex flex-col gap-1 text-center md:text-right">
               <p className="text-slate-400 text-sm font-medium">Made with ❤️ in Hyderabad</p>
-              <p className="text-slate-400 text-xs">For support: hello@medrova.in · +91 77990 01102</p>
+              <p className="text-slate-400 text-xs">For support: koushik@medrova.in · +91 77990 01102</p>
             </div>
           </div>
         </div>
