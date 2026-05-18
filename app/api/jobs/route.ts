@@ -37,6 +37,9 @@ export async function GET(request: Request) {
   const jobType = url.searchParams.get("jobType");
   const professionalType = url.searchParams.get("professionalType");
 
+  const publicParam = url.searchParams.get("public");
+  const isPublic = publicParam === "true";
+
   let query = service
     .from("jobs")
     .select("*, clinic:clinics(*)")
@@ -64,7 +67,17 @@ export async function GET(request: Request) {
     return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ jobs: (data ?? []).map((row) => mapJobRow(toDbRecord(row))) });
+  const sanitized = (data ?? []).map((job: Record<string, unknown>) => {
+    if (isPublic) {
+      const safeJob = { ...job };
+      delete safeJob.contact_email;
+      delete safeJob.contact_phone;
+      return safeJob;
+    }
+    return job;
+  });
+
+  return NextResponse.json({ jobs: sanitized.map((row) => mapJobRow(toDbRecord(row))) });
 }
 
 export async function POST(request: Request) {

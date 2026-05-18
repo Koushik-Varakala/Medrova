@@ -34,10 +34,17 @@ export async function GET(request: Request) {
   const date = url.searchParams.get("date");
   const professionalType = url.searchParams.get("professionalType");
 
+  const publicParam = url.searchParams.get("public");
+  const isPublic = publicParam === "true";
+
   let query = service
     .from("shifts")
     .select("*, clinic:clinics(*)")
     .order("date", { ascending: true });
+
+  if (isPublic) {
+    query = query.eq("status", "active");
+  }
 
   if (specialty) {
     query = query.eq("specialty", specialty);
@@ -64,7 +71,19 @@ export async function GET(request: Request) {
     return jsonError(error.message, 500);
   }
 
-  return NextResponse.json({ shifts: data ?? [] });
+  const sanitized = (data ?? []).map((shift: Record<string, unknown>) => {
+    if (isPublic && shift.clinic && typeof shift.clinic === "object") {
+      const safeClinic = { ...(shift.clinic as Record<string, unknown>) };
+      delete safeClinic.phone;
+      delete safeClinic.contact_person;
+      delete safeClinic.contact_phone;
+      delete safeClinic.reg_cert_url;
+      return { ...shift, clinic: safeClinic };
+    }
+    return shift;
+  });
+
+  return NextResponse.json({ shifts: sanitized });
 }
 
 export async function POST(request: Request) {

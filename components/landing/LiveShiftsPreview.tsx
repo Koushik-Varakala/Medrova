@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, IndianRupee, Clock, Briefcase, Zap, Calendar, Lock, X, Loader2, Filter, ShieldAlert } from "lucide-react";
+import { Search, MapPin, IndianRupee, Clock, Briefcase, Zap, Calendar, Lock, X, Loader2, Filter, ShieldAlert, Building } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -22,25 +22,24 @@ export type Opportunity = {
 };
 
 export function LiveShiftsPreview() {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   // Filters
   const [activeRole, setActiveRole] = useState<string>("all");
-  const [activeType, setActiveType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   
   // Modal State
-  const [selectedItem, setSelectedItem] = useState<Opportunity | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
   useEffect(() => {
     async function fetchOpportunities() {
       try {
-        const res = await fetch('/api/public/opportunities');
+        const res = await fetch('/api/shifts?public=true');
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
-        setOpportunities(data.opportunities || []);
+        setOpportunities(data.shifts || []);
       } catch (err) {
         console.error(err);
         setError(true);
@@ -53,19 +52,29 @@ export function LiveShiftsPreview() {
 
   const filteredData = useMemo(() => {
     return opportunities.filter(item => {
-      const matchRole = activeRole === "all" || item.role === activeRole;
-      const matchType = activeType === "all" || item.type === activeType;
+      const matchRole = activeRole === "all" || item.professional_type === activeRole;
       const matchSearch = 
         item.specialty.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        item.location.toLowerCase().includes(searchQuery.toLowerCase());
+        (item.clinic?.location_area || "").toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchRole && matchType && matchSearch;
+      return matchRole && matchSearch;
     });
-  }, [opportunities, activeRole, activeType, searchQuery]);
+  }, [opportunities, activeRole, searchQuery]);
 
-  const formatPay = (min: number, max: number) => {
-    if (min === max) return `₹${min.toLocaleString()}`;
-    return `₹${min.toLocaleString()} - ₹${max.toLocaleString()}`;
+  const roleCounts = useMemo(() => {
+    const counts = { doctor: 0, nurse: 0, technician: 0 };
+    opportunities.forEach(item => {
+      if (item.professional_type in counts) {
+        counts[item.professional_type as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  }, [opportunities]);
+
+  const formatPay = (min?: number, max?: number) => {
+    if (min === undefined || min === null) return "Not specified";
+    if (max === undefined || max === null || min === max) return `₹${min.toLocaleString("en-IN")}`;
+    return `₹${min.toLocaleString("en-IN")} - ₹${max.toLocaleString("en-IN")}`;
   };
 
   return (
@@ -83,24 +92,7 @@ export function LiveShiftsPreview() {
                   activeRole === role ? "bg-white text-[#1E40AF] shadow-sm" : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                {role === "all" ? "All Roles" : role + "s"}
-              </button>
-            ))}
-          </div>
-
-          <div className="h-8 w-px bg-slate-200 hidden lg:block mx-2" />
-
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide bg-slate-100 p-1 rounded-xl">
-            {["all", "shift", "job"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveType(type)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all whitespace-nowrap",
-                  activeType === type ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-                )}
-              >
-                {type === "all" ? "All Types" : type === "shift" ? "Locum Shifts" : "Permanent Jobs"}
+                {role === "all" ? "All Roles" : `${role}s (${roleCounts[role as keyof typeof roleCounts] || 0})`}
               </button>
             ))}
           </div>
@@ -131,87 +123,96 @@ export function LiveShiftsPreview() {
           <p className="text-sm text-red-500 mt-1">Please try refreshing the page.</p>
         </div>
       ) : filteredData.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white text-center px-4">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-            <Search className="h-6 w-6 text-slate-400" />
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-[#E2E8F0] bg-[#0F172A] p-12 text-center shadow-xl">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
+            <Building className="h-8 w-8 text-white" />
           </div>
-          <h3 className="text-lg font-bold text-[#0F172A]">No opportunities found</h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-md">
-            There are currently no open positions matching your filters. Try adjusting your search or sign up to get notified when new shifts are posted.
+          <h3 className="text-2xl font-bold text-white mb-3">Be the first clinic to post a shift in Hyderabad</h3>
+          <p className="mt-1 text-base text-slate-300 max-w-lg mb-8 leading-relaxed">
+            Register your clinic and post your first locum shift. Verified professionals are waiting.
           </p>
-          <Link href="/sign-up" className="mt-6 rounded-full bg-[#1E40AF] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#1D4ED8] transition-all">
-            Get SMS Alerts
+          <Link href="/sign-up" className="rounded-full bg-white px-8 py-3.5 text-base font-bold text-[#0F172A] shadow-md hover:bg-slate-100 transition-all hover:scale-105">
+            Post a Shift
           </Link>
         </div>
       ) : (
-        <motion.div layout className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <>
+          <motion.div layout className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
-            {filteredData.slice(0, 9).map((item, i) => (
-              <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: i * 0.05 }}
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xl transition-all duration-300 flex flex-col relative"
-              >
-                {/* Hot Badge */}
-                {item.isUrgent && (
-                  <div className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-red-600 shadow-sm border border-red-200">
-                    <Zap className="h-3 w-3" fill="currentColor" /> Urgent Fill
-                  </div>
-                )}
-                
-                {item.type === 'job' && (
-                  <div className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-purple-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-purple-700 shadow-sm border border-purple-200">
-                    <Briefcase className="h-3 w-3" /> Permanent
-                  </div>
-                )}
+            {filteredData.slice(0, 6).map((item, i) => {
+              const start = new Date(`1970-01-01T${item.start_time}Z`);
+              const end = new Date(`1970-01-01T${item.end_time}Z`);
+              let diff = (end.getTime() - start.getTime()) / 1000 / 60 / 60;
+              if (diff < 0) diff += 24;
 
-                <div className="p-6 pb-5 flex-1">
-                  <div className="mb-4">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{item.role}</p>
-                    <h3 className="text-xl font-bold text-[#0F172A] line-clamp-1 group-hover:text-[#1E40AF] transition-colors">{item.specialty} {item.type === 'shift' ? 'Locum Shift' : 'Role'}</h3>
-                  </div>
+              return (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, delay: i * 0.05 }}
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-xl transition-all duration-300 flex flex-col relative"
+                >
+                  {/* Hot Badge */}
+                  {item.is_urgent && (
+                    <div className="absolute top-4 right-4 z-10 flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-red-600 shadow-sm border border-red-200">
+                      <Zap className="h-3 w-3" fill="currentColor" /> Urgent Fill
+                    </div>
+                  )}
 
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-2.5 text-sm font-semibold text-emerald-600 bg-emerald-50 w-fit px-2.5 py-1 rounded-md border border-emerald-100">
-                      <IndianRupee className="h-4 w-4" />
-                      {formatPay(item.payMin, item.payMax)} {item.type === 'job' ? '/ month' : 'total payout'}
+                  <div className="p-6 pb-5 flex-1">
+                    <div className="mb-4">
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{item.professional_type}</p>
+                      <h3 className="text-xl font-bold text-[#0F172A] line-clamp-1 group-hover:text-[#1E40AF] transition-colors">{item.specialty} Locum Shift</h3>
                     </div>
 
-                    <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      {item.location} <span className="text-slate-400 text-xs">(Exact address hidden)</span>
-                    </div>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-2.5 text-sm font-semibold text-emerald-600 bg-emerald-50 w-fit px-2.5 py-1 rounded-md border border-emerald-100">
+                        <IndianRupee className="h-4 w-4" />
+                        {formatPay(item.pay, item.pay)} total payout
+                      </div>
 
-                    {item.type === 'shift' && (
+                      <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
+                        <MapPin className="h-4 w-4 text-slate-400" />
+                        {item.clinic?.location_area} <span className="text-slate-400 text-xs">(Exact address hidden)</span>
+                      </div>
+
                       <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">
                         <Calendar className="h-4 w-4 text-slate-400" />
-                        {item.date ? new Date(item.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Flexible'}
-                        {item.startTime && <span className="text-slate-400 bg-slate-100 px-1.5 rounded text-xs ml-1">{item.startTime} - {item.endTime}</span>}
+                        {new Date(item.date).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        <span className="text-slate-400 bg-slate-100 px-1.5 rounded text-xs ml-1">{item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)} ({diff}h)</span>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Gate Footer */}
-                <div className="border-t border-slate-100 bg-slate-50 p-4 relative overflow-hidden group-hover:bg-[#1E40AF] transition-colors duration-300">
-                  <div className="flex items-center justify-between z-10 relative">
-                    <span className="text-sm font-semibold text-slate-500 group-hover:text-blue-100 flex items-center gap-2">
-                      <Lock className="h-4 w-4" /> Clinic Details Hidden
-                    </span>
-                    <span className="text-sm font-bold text-[#1E40AF] group-hover:text-white flex items-center gap-1">
-                      Unlock <span className="hidden sm:inline">to Apply</span> &rarr;
-                    </span>
+                  {/* Gate Footer */}
+                  <div className="border-t border-slate-100 bg-slate-50 p-4 relative overflow-hidden group-hover:bg-[#1E40AF] transition-colors duration-300">
+                    <div className="flex items-center justify-between z-10 relative">
+                      <span className="text-sm font-semibold text-slate-500 group-hover:text-blue-100 flex items-center gap-2">
+                        <Lock className="h-4 w-4" /> Clinic Details Hidden
+                      </span>
+                      <span className="text-sm font-bold text-[#1E40AF] group-hover:text-white flex items-center gap-1">
+                        Unlock to Apply &rarr;
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </motion.div>
+        
+        {opportunities.length > 0 && (
+          <div className="mt-8 text-center">
+            <Link href="/shifts" className="inline-flex items-center gap-2 text-sm font-bold text-[#1E40AF] hover:text-[#1D4ED8] hover:underline">
+              View all shifts &rarr;
+            </Link>
+          </div>
+        )}
+      </>
       )}
 
       {/* UNLOCK MODAL */}
@@ -255,12 +256,12 @@ export function LiveShiftsPreview() {
                   <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
                     <span className="text-sm font-semibold text-slate-500">Expected Payout</span>
                     <span className="text-lg font-black text-emerald-600 flex items-center">
-                      <IndianRupee className="h-4 w-4" /> {formatPay(selectedItem.payMin, selectedItem.payMax)}
+                      <IndianRupee className="h-4 w-4" /> {formatPay(selectedItem.pay, selectedItem.pay)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between pb-1">
                     <span className="text-sm font-semibold text-slate-500">Location Area</span>
-                    <span className="text-sm font-bold text-slate-900">{selectedItem.location}</span>
+                    <span className="text-sm font-bold text-slate-900">{selectedItem.clinic?.location_area}</span>
                   </div>
                   <div className="flex items-center justify-between opacity-50 blur-[2px] select-none pointer-events-none mt-2">
                     <span className="text-sm font-semibold text-slate-500">Clinic Name</span>
