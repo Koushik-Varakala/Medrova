@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthedServiceClient, jsonError, validationError } from "@/lib/api-utils";
 import { mapProfessionalApplicationRow, toDbRecord } from "@/lib/mappers";
+import { sendEmail, newApplicantEmailHtml } from "@/lib/email";
 
 export async function GET() {
   try {
@@ -133,6 +134,47 @@ export async function POST(request: Request) {
 
     if (error || !app) {
       return jsonError("Failed to apply", 500);
+    }
+
+    // Notify the clinic that they have a new applicant (for shift applications only)
+    if (shiftId) {
+      try {
+        const { data: shiftRow } = await auth.service
+          .from("shifts")
+          .select("specialty, date, clinic:clinics(name, email)")
+          .eq("id", shiftId)
+          .maybeSingle();
+
+        const shiftData = shiftRow as {
+          specialty: string;
+          date: string;
+          clinic: { name: string; email: string } | null;
+        } | null;
+
+        const { data: profRow2 } = await auth.service
+          .from("healthcare_professionals")
+          .select("name, specialty, experience")
+          .eq("id", profRow.id)
+          .maybeSingle();
+
+        const prof2 = profRow2 as { name: string; specialty: string; experience: number } | null;
+
+        if (shiftData?.clinic?.email && prof2) {
+          await sendEmail({
+            to: shiftData.clinic.email,
+            subject: `New applicant for your ${shiftData.specialty} shift!`,
+            html: newApplicantEmailHtml({
+              clinicName: shiftData.clinic.name,
+              professionalName: prof2.name,
+              specialty: prof2.specialty,
+              experience: prof2.experience,
+              shiftDate: new Date(shiftData.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+            }),
+          });
+        }
+      } catch {
+        // Never block the application success because the email failed
+      }
     }
 
     return NextResponse.json({ success: true, id: app.id });

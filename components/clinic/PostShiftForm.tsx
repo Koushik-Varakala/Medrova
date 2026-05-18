@@ -42,25 +42,16 @@ const postShiftSchema = z.object({
 
 type PostShiftValues = z.infer<typeof postShiftSchema>;
 
-interface RazorpayCheckoutOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  handler: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void;
-  theme: { color: string; };
-  modal?: { ondismiss?: () => void; };
-}
-
-interface RazorpayInstance {
-  open: () => void;
-}
-
+// ── Cashfree JS SDK types ──────────────────────────────
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
+    Cashfree?: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_blank" | "_self" }) => Promise<{
+        error?: { message: string };
+        redirect?: boolean;
+        paymentDetails?: { paymentMessage: string };
+      }>;
+    };
   }
 }
 
@@ -125,11 +116,11 @@ export function PostShiftForm() {
   const platformFee = Math.round(Number(payValue) * 0.20);
   const totalPayable = Number(payValue) + platformFee;
 
-  async function loadRazorpayCheckout() {
-    if (window.Razorpay) return true;
+  async function loadCashfreeSDK() {
+    if (window.Cashfree) return true;
     return new Promise<boolean>((resolve) => {
       const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
@@ -142,6 +133,7 @@ export function PostShiftForm() {
     setIsSubmitting(true);
 
     try {
+      // ── Step 1: Create the shift record ─────────────────
       const shiftResponse = await fetch("/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -155,58 +147,63 @@ export function PostShiftForm() {
         return;
       }
 
-      const orderResponse = await fetch("/api/payments/razorpay/order", {
+      // ── Step 2: Create a Cashfree payment order ──────────
+      // Amount is computed SERVER-SIDE from the DB — never sent from client
+      const orderResponse = await fetch("/api/payments/cashfree/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shiftId: shiftResult.id })
       });
 
       const orderResult = (await orderResponse.json()) as {
-        orderId?: string; amount?: number; currency?: string; error?: string;
+        paymentSessionId?: string;
+        orderId?: string;
+        amount?: number;
+        error?: string;
       };
 
-      if (!orderResponse.ok || !orderResult.orderId || !orderResult.amount) {
-        setFormError(orderResult.error ?? "Unable to create Razorpay order.");
+      if (!orderResponse.ok || !orderResult.paymentSessionId) {
+        setFormError(orderResult.error ?? "Unable to create payment order.");
         return;
       }
 
-      const checkoutLoaded = await loadRazorpayCheckout();
-      const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      // ── Step 3: Load and open Cashfree checkout ──────────
+      const sdkLoaded = await loadCashfreeSDK();
+      const cfMode = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
 
-      if (!checkoutLoaded || !window.Razorpay || !key) {
-        setNotice("Shift saved as pending payment. Complete Razorpay setup to activate checkout.");
+      if (!sdkLoaded || !window.Cashfree) {
+        setNotice("Shift saved as pending payment. Please contact support to complete payment.");
         return;
       }
 
+      const cashfree = window.Cashfree({ mode: cfMode });
       const shiftIdForPayment = shiftResult.id;
 
-      const checkout = new window.Razorpay({
-        key,
-        amount: orderResult.amount,
-        currency: orderResult.currency ?? "INR",
-        name: "Medrova",
-        description: `Locum shift payment (${values.professionalType})`,
-        order_id: orderResult.orderId,
-        handler: async (response) => {
-          await fetch(`/api/shifts/${shiftIdForPayment}/activate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-            })
-          });
-          setConfirmedShift(values);
-        },
-        modal: {
-          ondismiss: () => {
-            setNotice("Payment cancelled. Your shift is saved as draft — you can pay later from My Shifts.");
-          }
-        },
-        theme: { color: "#1E40AF" }
+      const result = await cashfree.checkout({
+        paymentSessionId: orderResult.paymentSessionId,
+        redirectTarget: "_modal",
       });
 
-      checkout.open();
+      if (result.error) {
+        setNotice(`Payment cancelled: ${result.error.message}`);
+        return;
+      }
+
+      // ── Step 4: Activate shift (client-side backup) ──────
+      // The Cashfree webhook is the primary activator — this is a backup
+      // in case the webhook is delayed
+      await fetch(`/api/shifts/${shiftIdForPayment}/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentId: orderResult.orderId ?? "cf_payment",
+          orderId: orderResult.orderId ?? "",
+        })
+      });
+
+      // ── Step 5: Show success confirmation screen ─────────
+      setConfirmedShift(values);
+
     } finally {
       setIsSubmitting(false);
     }

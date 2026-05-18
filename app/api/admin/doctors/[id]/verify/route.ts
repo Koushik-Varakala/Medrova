@@ -6,6 +6,7 @@ import {
   parseJsonWithSchema,
   validationError
 } from "@/lib/api-utils";
+import { sendEmail, verificationApprovedEmailHtml } from "@/lib/email";
 
 interface AdminDoctorVerifyRouteContext {
   params: {
@@ -51,6 +52,25 @@ export async function POST(
 
     if (error || !data) {
       return jsonError("Professional not found.", 404);
+    }
+
+    // Send verification approved email
+    if (values.status === "verified") {
+      const professional = data as { email?: string; name?: string; role?: string };
+      const email = professional.email;
+      const name = professional.name ?? "Professional";
+      const role = professional.role ?? "Doctor";
+
+      if (email) {
+        await sendEmail({
+          to: email,
+          subject: "You're verified on Medrova! ✅ Start applying now.",
+          html: verificationApprovedEmailHtml({
+            professionalName: name,
+            role: role.charAt(0).toUpperCase() + role.slice(1),
+          }),
+        });
+      }
     }
 
     return NextResponse.json({ professional: data });
