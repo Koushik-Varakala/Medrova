@@ -18,7 +18,8 @@ import {
   Briefcase,
   FileText,
   AlertCircle,
-  X
+  X,
+  ChevronDown
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -241,7 +242,6 @@ export function ClinicOnboardingForm() {
         type: values.type,
         address: values.locationDisplayName,
         area: values.area ?? values.locationDisplayName,
-        city: values.city ?? "Hyderabad",
         phone: values.phone,
         contact_person: values.contactPerson,
         contact_phone: values.contactPhone,
@@ -548,10 +548,10 @@ export function ClinicOnboardingForm() {
                           </div>
                           <div className="text-sm">
                             <span className="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-                              I agree to the Medrova Terms of Service and Platform Usage Agreement.
+                              I agree to the Medrova Platform Usage Agreement and Terms of Service.
                             </span>
-                            <p className="text-slate-500 mt-1">
-                              By checking this box, I acknowledge that I am an authorized representative of this clinic and I accept the terms of the platform on its behalf, including the payment facilitation policies.
+                            <p className="text-slate-500 mt-1 text-xs">
+                              By checking this box, I confirm I am an authorised representative of this clinic and accept the terms on its behalf, including payment facilitation and liability clauses.
                             </p>
                             {errors.agreedToTerms && (
                               <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-red-500">
@@ -560,6 +560,55 @@ export function ClinicOnboardingForm() {
                             )}
                           </div>
                         </label>
+
+                        <details className="mt-4 group/terms border border-slate-200 rounded-xl overflow-hidden">
+                          <summary className="text-xs font-bold text-[#1E40AF] cursor-pointer p-3 bg-blue-50 hover:bg-blue-100 list-none flex justify-between items-center transition-colors">
+                            Read the full Platform Usage Agreement
+                            <ChevronDown className="h-4 w-4 transition-transform group-open/terms:rotate-180" />
+                          </summary>
+                          <div className="p-4 text-xs text-slate-600 h-64 overflow-y-auto bg-white space-y-4 leading-relaxed">
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm">MEDROVA PLATFORM USAGE AGREEMENT</p>
+                              <p className="text-slate-500 mt-1">This Agreement is entered into between Medrova (&quot;Platform&quot;, &quot;Company&quot;, &quot;We&quot;, &quot;Us&quot;, or &quot;Our&quot;) and the Healthcare Facility registering on the platform (&quot;Clinic&quot;, &quot;You&quot;, or &quot;Your&quot;). By completing onboarding, the Clinic agrees to be legally bound by this Agreement.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">1. Nature of Relationship</p>
+                              <p>Medrova operates solely as a technology-enabled marketplace connecting verified Clinics with verified healthcare professionals (&quot;Contractors&quot;) for temporary, locum, or permanent opportunities. Nothing in this Agreement creates an employment relationship between Medrova and the Clinic or between Medrova and the Contractors.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">2. Role of Medrova</p>
+                              <p>Medrova provides a digital platform for discovery, scheduling, and payment facilitation. Medrova does not provide medical or healthcare services, does not supervise clinical decisions, and does not determine patient care outcomes. All clinical services are rendered by the Contractor under their own professional responsibility.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">3. Payment Facilitation</p>
+                              <p>To confirm a booking, the Clinic shall remit the agreed shift fee to Medrova prior to the assignment. Medrova acts as a limited payment collection agent on behalf of the Contractor. The Clinic agrees that payment to Medrova constitutes valid payment to the Contractor. Medrova reserves the right to deduct applicable platform fees, taxes, or transaction charges prior to remittance.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">4. Clinic Responsibilities</p>
+                              <p>The Clinic warrants it holds all required facility registrations, licenses, and regulatory approvals to operate as a healthcare establishment. The Clinic remains fully responsible for patient care, facility operations, and providing a safe working environment for all Contractors engaged through the platform.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">5. Liability &amp; Indemnification</p>
+                              <p>Medrova acts solely as an intermediary technology platform and shall not be liable for any medical negligence, malpractice, clinical outcomes, or disputes between the Clinic and Contractors. The Clinic agrees to indemnify and hold harmless Medrova against any claims arising from the Clinic&apos;s operations or breach of this Agreement.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">6. Digital Acceptance</p>
+                              <p>Electronic acceptance via checkbox during onboarding has the same legal effect as a physical signature under applicable Indian laws, including the Information Technology Act, 2000.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between bg-slate-50 border-t border-slate-200 px-4 py-3">
+                            <span className="text-xs text-slate-500">For the official signed document, download below.</span>
+                            <a
+                              href="/MEDROVA%20INDEPENDENT%20CONTRACTOR%20%26%20PLATFORM%20USAGE%20AGREEMENT.pdf"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-bold text-[#1E40AF] hover:underline"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              Download Full PDF
+                            </a>
+                          </div>
+                        </details>
                       </div>
                     </div>
                   )}

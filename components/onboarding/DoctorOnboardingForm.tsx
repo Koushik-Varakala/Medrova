@@ -20,7 +20,8 @@ import {
   Briefcase,
   FileText,
   AlertCircle,
-  X
+  X,
+  ChevronDown
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
@@ -652,6 +653,80 @@ export function DoctorOnboardingForm() {
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Wallet className="h-5 w-5" /></div>
                           <span className="text-[10px] uppercase tracking-wider text-emerald-600 text-left sm:text-center flex-1 sm:flex-none">You receive 90%</span>
                         </div>
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-200 mt-8">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <div className="flex h-6 items-center mt-0.5">
+                            <input 
+                              type="checkbox" 
+                              {...register("agreedToTerms")}
+                              className="h-5 w-5 rounded border-slate-300 text-[#1E40AF] focus:ring-[#1E40AF] transition-all cursor-pointer"
+                            />
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                              I agree to the Medrova Terms of Service and Independent Contractor Agreement.
+                            </span>
+                            <p className="text-slate-500 mt-1">
+                              By checking this box, I acknowledge that I am an independent contractor, Medrova acts as a payment facilitator, and I hold the necessary qualifications to practice.
+                            </p>
+                            {errors.agreedToTerms && (
+                              <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-red-500">
+                                <AlertCircle className="h-4 w-4" />{errors.agreedToTerms.message}
+                              </p>
+                            )}
+                          </div>
+                        </label>
+                        
+                        <details className="mt-4 group/terms border border-slate-200 rounded-xl overflow-hidden">
+                          <summary className="text-xs font-bold text-[#1E40AF] cursor-pointer p-3 bg-blue-50 hover:bg-blue-100 list-none flex justify-between items-center transition-colors">
+                            Read the full Independent Contractor Agreement
+                            <ChevronDown className="h-4 w-4 transition-transform group-open/terms:rotate-180" />
+                          </summary>
+                          <div className="p-4 text-xs text-slate-600 h-64 overflow-y-auto bg-white space-y-4 leading-relaxed">
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm">MEDROVA INDEPENDENT CONTRACTOR &amp; PLATFORM USAGE AGREEMENT</p>
+                              <p className="text-slate-500 mt-1">This Agreement is entered into between Medrova (&quot;Platform&quot;, &quot;Company&quot;, &quot;We&quot;, &quot;Us&quot;, or &quot;Our&quot;) and the Healthcare Professional registering on the platform (&quot;Contractor&quot;, &quot;You&quot;, or &quot;Your&quot;). By completing onboarding and accepting shifts, the Contractor agrees to be legally bound by this Agreement.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">1. Nature of Relationship</p>
+                              <p>Medrova operates solely as a technology-enabled marketplace and aggregator. The Contractor shall act as an independent contractor at all times. Nothing in this Agreement creates an employer-employee relationship, partnership, agency, or fiduciary relationship between Medrova and the Contractor. The Contractor shall not be entitled to any employment-related benefits from Medrova, including provident fund, gratuity, paid leave, insurance, or bonuses.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">2. Role of Medrova</p>
+                              <p>Medrova provides a digital platform for discovery, scheduling, and payment facilitation. Medrova does not provide medical or healthcare services, does not supervise or control the Contractor&apos;s clinical judgment or medical practice, and does not determine treatment methods or patient care decisions. All professional and clinical services are rendered solely by the Contractor under their own professional responsibility.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">3. Payment Collection &amp; Escrow Authorization</p>
+                              <p>The Contractor hereby appoints and authorises Medrova to act as its limited payment collection agent to collect shift fees from Clinics on behalf of the Contractor. Upon successful completion of the shift, Medrova shall remit the applicable payment to the Contractor&apos;s designated bank account, typically within 24 to 48 business hours. The Contractor agrees that payment made by a Clinic to Medrova shall be deemed equivalent to payment made directly to the Contractor. Medrova reserves the right to deduct applicable platform fees, commissions, taxes, or transaction charges prior to remittance.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">4. Contractor Responsibilities &amp; Compliance</p>
+                              <p>The Contractor represents and warrants that they possess a valid, active, and unrestricted license or registration to practice their profession in India; all information submitted during onboarding is accurate and authentic; they shall perform all services in accordance with applicable medical standards and ethics; and they are solely responsible for payment of taxes, professional indemnity insurance, and regulatory compliance applicable to their services.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">5. Liability &amp; Indemnification</p>
+                              <p>Medrova acts solely as an intermediary technology platform and shall not be liable for any medical negligence, malpractice, misconduct, clinical outcomes, or disputes between the Contractor and a Clinic. The Contractor agrees to indemnify, defend, and hold harmless Medrova, its directors, employees, affiliates, and partners against any claims arising from the Contractor&apos;s professional conduct, breach of this Agreement, or violation of applicable laws.</p>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-slate-800">6. Digital Acceptance &amp; Execution</p>
+                              <p>Electronic acceptance via checkbox during onboarding has the same legal effect as a physical signature under applicable Indian laws, including the Information Technology Act, 2000.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between bg-slate-50 border-t border-slate-200 px-4 py-3">
+                            <span className="text-xs text-slate-500">For the official signed document, download below.</span>
+                            <a
+                              href="/MEDROVA%20INDEPENDENT%20CONTRACTOR%20%26%20PLATFORM%20USAGE%20AGREEMENT.pdf"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-bold text-[#1E40AF] hover:underline"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                              Download Full PDF
+                            </a>
+                          </div>
+                        </details>
                       </div>
                     </div>
                   )}
