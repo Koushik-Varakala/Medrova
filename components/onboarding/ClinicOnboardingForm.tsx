@@ -255,6 +255,22 @@ export function ClinicOnboardingForm() {
         return;
       }
 
+      // Fire registration emails (clinic confirmation + admin alert)
+      // Use fetch — runs client-side but hits our server route which has env vars
+      fetch("/api/clinic/notify-registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clinicName: values.name,
+          clinicType: values.type,
+          contactPerson: values.contactPerson,
+          contactPhone: values.contactPhone,
+          area: values.area ?? values.locationDisplayName ?? "Hyderabad",
+          specialties: values.specialtiesNeeded,
+          clinicEmail: user.email ?? "",
+        }),
+      }).catch(() => {}); // silently ignore — never block the user
+
       setIsComplete(true);
     } finally {
       setIsSubmitting(false);

@@ -273,6 +273,96 @@ export function adminPayoutAlertEmailHtml(opts: {
 }
 
 // ─────────────────────────────────────────────────────────
+// Clinic Onboarding — Confirmation to Clinic
+// ─────────────────────────────────────────────────────────
+export function clinicOnboardingConfirmationEmailHtml(opts: {
+  clinicName: string;
+  contactPerson: string;
+}): string {
+  const content = `
+    ${badge("Registration Received", COLORS.blue, COLORS.blueLight)}
+    <h1 style="margin:16px 0;font-size:26px;font-weight:800;color:${COLORS.navy};">We've received your clinic registration 🏥</h1>
+    <p style="font-size:15px;color:${COLORS.slate700};line-height:1.6;">Hi ${opts.contactPerson}, thank you for registering <strong>${opts.clinicName}</strong> on Medrova. Our team will review your documents and verify your clinic within <strong>24–48 hours</strong>.</p>
+    ${infoCard([
+      ["Clinic Name", opts.clinicName],
+      ["Status", "Under Review"],
+      ["Next Step", "Our team will email you once verified"],
+    ])}
+    ${alertBox("During verification, our team checks your clinic registration certificate. Make sure the uploaded document is clear and legible to avoid delays.", COLORS.amber, COLORS.amberLight)}
+    <p style="font-size:14px;color:${COLORS.slate700};">If you have any questions, reply to this email or reach us at <a href="mailto:koushik@medrova.in" style="color:${COLORS.blue};">koushik@medrova.in</a>.</p>
+  `;
+  return wrapInLayout(content);
+}
+
+// ─────────────────────────────────────────────────────────
+// Clinic Onboarding — Alert to Admin
+// ─────────────────────────────────────────────────────────
+export function adminNewClinicAlertEmailHtml(opts: {
+  clinicName: string;
+  clinicType: string;
+  contactPerson: string;
+  contactPhone: string;
+  area: string;
+  specialties: string[];
+  adminDashboardUrl?: string;
+}): string {
+  const content = `
+    ${badge("New Registration", COLORS.amber, COLORS.amberLight)}
+    <h1 style="margin:16px 0;font-size:26px;font-weight:800;color:${COLORS.navy};">New Clinic Registered — Action Required</h1>
+    <p style="font-size:15px;color:${COLORS.slate700};line-height:1.6;">A new clinic has submitted their registration on Medrova. Please review their documents and verify or reject their profile.</p>
+    ${infoCard([
+      ["Clinic Name", opts.clinicName],
+      ["Type", opts.clinicType],
+      ["Contact Person", opts.contactPerson],
+      ["Contact Phone", opts.contactPhone],
+      ["Area", opts.area],
+      ["Specialties Needed", opts.specialties.join(", ") || "—"],
+    ])}
+    ${ctaButton("Review in Admin Dashboard", opts.adminDashboardUrl ?? "https://medrova.in/dashboard/admin/clinics")}
+  `;
+  return wrapInLayout(content);
+}
+
+// ─────────────────────────────────────────────────────────
+// Clinic Verification — Status Update to Clinic
+// ─────────────────────────────────────────────────────────
+export function clinicVerificationStatusEmailHtml(opts: {
+  clinicName: string;
+  contactPerson: string;
+  status: "verified" | "rejected";
+  note?: string;
+  dashboardUrl?: string;
+}): string {
+  const isApproved = opts.status === "verified";
+  const content = `
+    ${isApproved
+      ? badge("Verified ✓", COLORS.emerald, COLORS.emeraldLight)
+      : badge("Requires Attention", COLORS.amber, COLORS.amberLight)
+    }
+    <h1 style="margin:16px 0;font-size:26px;font-weight:800;color:${COLORS.navy};">
+      ${isApproved ? "Your clinic is now verified! 🎉" : "Your clinic verification needs attention"}
+    </h1>
+    <p style="font-size:15px;color:${COLORS.slate700};line-height:1.6;">Hi ${opts.contactPerson},</p>
+    ${isApproved
+      ? `<p style="font-size:15px;color:${COLORS.slate700};line-height:1.6;">Our team has reviewed and approved <strong>${opts.clinicName}</strong>. You can now post shifts and jobs and start hiring verified healthcare professionals through Medrova.</p>
+         <ul style="font-size:14px;color:${COLORS.slate700};line-height:2;">
+           <li>Post locum shifts and receive instant applications</li>
+           <li>Post permanent job openings</li>
+           <li>Browse and shortlist verified doctors, nurses &amp; technicians</li>
+         </ul>`
+      : `<p style="font-size:15px;color:${COLORS.slate700};line-height:1.6;">We were unable to verify <strong>${opts.clinicName}</strong> at this time. Please review the feedback below and resubmit your documents.</p>`
+    }
+    ${opts.note ? alertBox(`<strong>Note from our team:</strong> ${opts.note}`, isApproved ? COLORS.emerald : COLORS.amber, isApproved ? COLORS.emeraldLight : COLORS.amberLight) : ""}
+    ${ctaButton(
+      isApproved ? "Go to My Dashboard" : "Update My Profile",
+      opts.dashboardUrl ?? (isApproved ? "https://medrova.in/dashboard/clinic" : "https://medrova.in/onboarding/clinic")
+    )}
+    <p style="font-size:13px;color:${COLORS.slate500};">Questions? Email us at <a href="mailto:koushik@medrova.in" style="color:${COLORS.blue};">koushik@medrova.in</a></p>
+  `;
+  return wrapInLayout(content);
+}
+
+// ─────────────────────────────────────────────────────────
 // Core Send Function (uses Resend REST API)
 // ─────────────────────────────────────────────────────────
 interface SendEmailOptions {
