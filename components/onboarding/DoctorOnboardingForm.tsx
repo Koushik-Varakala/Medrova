@@ -54,7 +54,10 @@ const doctorSchema = z.object({
   availableDays: z.array(z.string()).min(1, "Select at least one day"),
   shiftPreference: z.enum(["locum", "permanent", "both"]),
   expectedPay: z.coerce.number().min(1000, "Enter expected pay per shift"),
-  upiId: z.string().min(3, "Enter a valid UPI ID")
+  upiId: z.string().min(3, "Enter a valid UPI ID"),
+  agreedToTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms of Service and Independent Contractor Agreement." })
+  })
 });
 
 type DoctorOnboardingValues = z.infer<typeof doctorSchema>;
@@ -65,7 +68,7 @@ const stepFields: DoctorField[][] = [
   ["specialty", "experience", "mciNumber", "employmentStatus"],
   [],
   ["availableDays", "shiftPreference", "expectedPay"],
-  ["upiId"]
+  ["upiId", "agreedToTerms"]
 ];
 
 const stepsData = [

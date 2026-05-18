@@ -47,7 +47,7 @@ export function LandingFooter() {
               <li className="flex items-center gap-2 text-slate-500">
                 <MapPin className="h-4 w-4" /> Hyderabad, Telangana, India
               </li>
-              <li className="text-slate-500">hello@medrova.in</li>
+              <li className="text-slate-500">koushik@medrova.in</li>
               <li className="text-slate-500">+91 77990 01102</li>
             </ul>
           </div>

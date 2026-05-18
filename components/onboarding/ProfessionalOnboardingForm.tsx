@@ -31,6 +31,9 @@ const professionalSchema = z.object({
   shiftPreference: z.enum(["locum", "permanent", "both"]),
   expectedPay: z.coerce.number().min(500, "Minimum expected pay is ₹500"),
   upiId: z.string().min(3, "Enter a valid UPI ID"),
+  agreedToTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms of Service and Independent Contractor Agreement." })
+  })
 });
 
 type ProfessionalValues = z.infer<typeof professionalSchema>;
@@ -141,7 +144,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
     2: ["specialty", "experience", "registrationNumber", "employmentStatus"],
     3: [],
     4: ["availableDays", "shiftPreference", "expectedPay"],
-    5: ["upiId"],
+    5: ["upiId", "agreedToTerms"],
   };
 
   async function goNext() {
@@ -459,6 +462,31 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                           </span>
                         ))}
                       </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-slate-200 mt-6">
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <div className="flex h-6 items-center mt-0.5">
+                          <input 
+                            type="checkbox" 
+                            {...register("agreedToTerms")}
+                            className={cn("h-5 w-5 rounded border-slate-300 transition-all cursor-pointer focus:ring-2", colors.text, colors.ring)}
+                          />
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                            I agree to the Medrova Terms of Service and Independent Contractor Agreement.
+                          </span>
+                          <p className="text-slate-500 mt-1 text-xs">
+                            By checking this box, I acknowledge that I am an independent contractor, Medrova acts as a payment facilitator, and I hold the necessary qualifications to practice.
+                          </p>
+                          {errors.agreedToTerms && (
+                            <p className="mt-2 flex items-center gap-1.5 text-xs font-bold text-red-500">
+                              <AlertCircle className="h-4 w-4" />{errors.agreedToTerms.message}
+                            </p>
+                          )}
+                        </div>
+                      </label>
                     </div>
                   </div>
                 </motion.div>

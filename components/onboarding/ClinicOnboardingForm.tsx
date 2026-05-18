@@ -44,7 +44,10 @@ const clinicSchema = z.object({
   contactPerson: z.string().min(2, "Enter contact person"),
   designation: z.string().min(2, "Enter designation"),
   contactPhone: z.string().min(10, "Enter contact phone"),
-  specialtiesNeeded: z.array(z.string()).min(1, "Select at least one specialty")
+  specialtiesNeeded: z.array(z.string()).min(1, "Select at least one specialty"),
+  agreedToTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the Terms of Service and Independent Contractor Agreement." })
+  })
 });
 
 type ClinicOnboardingValues = z.infer<typeof clinicSchema>;
@@ -54,7 +57,7 @@ const stepFields: ClinicField[][] = [
   ["name", "type", "phone", "locationDisplayName"],
   ["contactPerson", "designation", "contactPhone"],
   [],
-  ["specialtiesNeeded"]
+  ["specialtiesNeeded", "agreedToTerms"]
 ];
 
 const stepsData = [
@@ -532,6 +535,31 @@ export function ClinicOnboardingForm() {
                           })}
                         </div>
                         {errors.specialtiesNeeded && <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-red-500"><AlertCircle className="h-4 w-4" />{errors.specialtiesNeeded.message}</p>}
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-200 mt-8">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <div className="flex h-6 items-center mt-0.5">
+                            <input 
+                              type="checkbox" 
+                              {...register("agreedToTerms")}
+                              className="h-5 w-5 rounded border-slate-300 text-[#1E40AF] focus:ring-[#1E40AF] transition-all cursor-pointer"
+                            />
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
+                              I agree to the Medrova Terms of Service and Platform Usage Agreement.
+                            </span>
+                            <p className="text-slate-500 mt-1">
+                              By checking this box, I acknowledge that I am an authorized representative of this clinic and I accept the terms of the platform on its behalf, including the payment facilitation policies.
+                            </p>
+                            {errors.agreedToTerms && (
+                              <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-red-500">
+                                <AlertCircle className="h-4 w-4" />{errors.agreedToTerms.message}
+                              </p>
+                            )}
+                          </div>
+                        </label>
                       </div>
                     </div>
                   )}
