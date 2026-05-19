@@ -35,19 +35,28 @@ export async function POST(
 
     const values = await parseJsonWithSchema(request, verifyClinicSchema);
 
-    // Update the clinic status
+    // Update verification_status only (always safe)
     const { data, error } = await auth.service
       .from("clinics")
-      .update({
-        verification_status: values.status,
-        ...(values.note ? { verification_note: values.note } : {}),
-      })
+      .update({ verification_status: values.status })
       .eq("id", params.id)
       .select("name, contact_person, user_id")
       .single();
 
     if (error || !data) {
-      return jsonError(error?.message ?? "Clinic not found.", 404);
+      return jsonError(error?.message ?? "Clinic not found.", error ? 400 : 404);
+    }
+
+    // Update verification_note separately — column may not exist in older schemas
+    if (values.note) {
+      try {
+        await auth.service
+          .from("clinics")
+          .update({ verification_note: values.note })
+          .eq("id", params.id);
+      } catch {
+        // silently ignore if column doesn't exist yet
+      }
     }
 
     // Send verification status email if status is actionable

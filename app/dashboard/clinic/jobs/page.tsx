@@ -7,7 +7,7 @@ import { DashboardShell } from "@/components/shared/DashboardShell";
 import { clinicNavigation } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { mapJobRow, toDbRecord } from "@/lib/mappers";
-import { getNumberValue, getStringValue } from "@/lib/utils";
+import { getOptionalStringValue, getStringValue, getNumberValue } from "@/lib/utils";
 import type { Application, Job } from "@/types";
 
 export default function ClinicJobsPage() {
@@ -30,107 +30,51 @@ export default function ClinicJobsPage() {
 
       const clinicId = (clinicRow as { id: string }).id;
 
+      // Fetch jobs (clinic owns these — anon key is fine)
       const { data: jobRows } = await supabase
         .from("jobs").select("*").eq("clinic_id", clinicId).order("created_at", { ascending: false });
 
       const mappedJobs: Job[] = (jobRows ?? []).map((job) => mapJobRow(toDbRecord(job)));
 
-      const jobIds = mappedJobs.map((j) => j.id);
-      let mappedApplications: Application[] = [];
-      if (jobIds.length > 0) {
-        const { data: appRows } = await supabase
-          .from("applications")
-          .select("*")
-          .in("job_id", jobIds)
-          .order("created_at", { ascending: false });
+      // Fetch ALL applications via service-role API (avoids RLS on professional tables)
+      const appsRes = await fetch("/api/clinic/applications");
+      const appsJson = (await appsRes.json()) as { applications?: Record<string, unknown>[] };
+      const rawApps = appsJson.applications ?? [];
 
-        const apps = appRows ?? [];
-        const doctorIds = apps.map((application) => getStringValue(toDbRecord(application), "doctor_id")).filter(Boolean);
-        
-        let doctorsMap: Record<string, Record<string, unknown>> = {};
-        if (doctorIds.length > 0) {
-          const { data: docRows } = await supabase
-            .from("doctors")
-            .select("*")
-            .in("id", doctorIds);
-            
-          (docRows ?? []).forEach((doctorRow) => {
-            const doctor = toDbRecord(doctorRow);
-            const id = getStringValue(doctor, "id");
-            if (id) doctorsMap[id] = doctor;
-          });
-        }
-
-        mappedApplications = apps.map((row) => {
-          const r = toDbRecord(row);
-          const docId = getStringValue(r, "doctor_id");
-          const rawDoc = docId ? doctorsMap[docId] : null;
-          
-          const doctorObj = rawDoc ? {
-            id: getStringValue(rawDoc, "id"),
-            name: getStringValue(rawDoc, "name"),
-            specialty: getStringValue(rawDoc, "specialty"),
-            experience: getNumberValue(rawDoc, "experience"),
-            phone: getStringValue(rawDoc, "phone"),
-            email: getStringValue(rawDoc, "email"),
-            mciNumber: getStringValue(rawDoc, "mci_number"),
-            city: getStringValue(rawDoc, "city"),
-            area: getStringValue(rawDoc, "area"),
-            employmentStatus: getStringValue(rawDoc, "employment_status"),
-            cvUrl: getStringValue(rawDoc, "cv_url") || undefined
+      // Filter to only job applications and map to the Application type
+      const jobApplications: Application[] = rawApps
+        .filter(a => getOptionalStringValue(toDbRecord(a), "job_id"))
+        .map(a => {
+          const r = toDbRecord(a);
+          const doc = toDbRecord(r.doctors);
+          const doctorObj = getStringValue(doc, "id") ? {
+            id: getStringValue(doc, "id"),
+            name: getStringValue(doc, "name"),
+            specialty: getStringValue(doc, "specialty"),
+            experience: getNumberValue(doc, "experience"),
+            phone: getStringValue(doc, "phone"),
+            email: getStringValue(doc, "email"),
+            mciNumber: getStringValue(doc, "mci_number"),
+            city: getStringValue(doc, "city"),
+            area: getStringValue(doc, "area"),
+            employmentStatus: getStringValue(doc, "employment_status"),
+            cvUrl: getOptionalStringValue(doc, "cv_url") || undefined,
           } : undefined;
 
           return {
             id: getStringValue(r, "id"),
-            doctorId: docId,
+            doctorId: getStringValue(r, "doctor_id") || getStringValue(r, "professional_id"),
             shiftId: undefined,
-            jobId: getStringValue(r, "job_id") || undefined,
+            jobId: getOptionalStringValue(r, "job_id") || undefined,
             status: getStringValue(r, "status") as Application["status"],
             createdAt: getStringValue(r, "created_at"),
             doctor: doctorObj as Application["doctor"],
           };
         });
 
-        const { data: professionalAppRows } = await supabase
-          .from("professional_applications")
-          .select("*, professional:healthcare_professionals(*)")
-          .in("job_id", jobIds)
-          .order("created_at", { ascending: false });
-
-        const professionalApplications = (professionalAppRows ?? []).map((row) => {
-          const r = toDbRecord(row);
-          const professional = toDbRecord(r.professional);
-          const professionalObj = getStringValue(professional, "id") ? {
-            id: getStringValue(professional, "id"),
-            name: getStringValue(professional, "name"),
-            specialty: getStringValue(professional, "specialty"),
-            experience: getNumberValue(professional, "experience"),
-            phone: getStringValue(professional, "phone"),
-            email: getStringValue(professional, "email"),
-            mciNumber: getStringValue(professional, "registration_number"),
-            city: getStringValue(professional, "city"),
-            area: getStringValue(professional, "area"),
-            employmentStatus: getStringValue(professional, "employment_status"),
-            cvUrl: getStringValue(professional, "cv_url") || undefined
-          } : undefined;
-
-          return {
-            id: getStringValue(r, "id"),
-            doctorId: getStringValue(r, "professional_id"),
-            shiftId: undefined,
-            jobId: getStringValue(r, "job_id") || undefined,
-            status: getStringValue(r, "status") as Application["status"],
-            createdAt: getStringValue(r, "created_at"),
-            doctor: professionalObj as Application["doctor"]
-          };
-        });
-
-        mappedApplications = [...mappedApplications, ...professionalApplications];
-      }
-
       if (!isMounted) return;
       setJobs(mappedJobs);
-      setApplications(mappedApplications);
+      setApplications(jobApplications);
       setIsLoading(false);
     }
     load();
