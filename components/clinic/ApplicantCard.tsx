@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Mail, MapPin, Phone, ShieldCheck, User, CheckCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Mail, MapPin, Phone, ShieldCheck, User, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Application } from "@/types";
@@ -144,6 +144,22 @@ export function ApplicantCard({ application, isShiftConfirmed }: ApplicantCardPr
                   <p className="font-medium capitalize text-[#0F172A]">{doctor.employmentStatus?.replace("_", " ")}</p>
                 </div>
               </div>
+
+              {/* CV DOWNLOAD */}
+              {doctor.cvUrl && (
+                <div className="mt-5 border-t border-[#E2E8F0] pt-4">
+                  <a
+                    href={doctor.cvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-[#1E40AF] transition-all hover:bg-blue-100 hover:shadow-sm"
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Full CV / Resume
+                  </a>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

@@ -36,6 +36,7 @@ export interface Doctor {
   mciCertUrl?: string;
   degreeCertUrl?: string;
   govIdUrl?: string;
+  cvUrl?: string;
   createdAt: string;
 }
 

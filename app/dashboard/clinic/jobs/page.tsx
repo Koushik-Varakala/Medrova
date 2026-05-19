@@ -70,6 +70,14 @@ export default function ClinicJobsPage() {
             id: getStringValue(rawDoc, "id"),
             name: getStringValue(rawDoc, "name"),
             specialty: getStringValue(rawDoc, "specialty"),
+            experience: getNumberValue(rawDoc, "experience"),
+            phone: getStringValue(rawDoc, "phone"),
+            email: getStringValue(rawDoc, "email"),
+            mciNumber: getStringValue(rawDoc, "mci_number"),
+            city: getStringValue(rawDoc, "city"),
+            area: getStringValue(rawDoc, "area"),
+            employmentStatus: getStringValue(rawDoc, "employment_status"),
+            cvUrl: getStringValue(rawDoc, "cv_url") || undefined
           } : undefined;
 
           return {
@@ -102,7 +110,8 @@ export default function ClinicJobsPage() {
             mciNumber: getStringValue(professional, "registration_number"),
             city: getStringValue(professional, "city"),
             area: getStringValue(professional, "area"),
-            employmentStatus: getStringValue(professional, "employment_status")
+            employmentStatus: getStringValue(professional, "employment_status"),
+            cvUrl: getStringValue(professional, "cv_url") || undefined
           } : undefined;
 
           return {

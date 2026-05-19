@@ -83,7 +83,8 @@ export async function GET(request: Request) {
           mci_number: getStringValue(professional, "registration_number"),
           city: getStringValue(professional, "city"),
           area: getStringValue(professional, "area"),
-          employment_status: getStringValue(professional, "employment_status")
+          employment_status: getStringValue(professional, "employment_status"),
+          cv_url: getOptionalStringValue(professional, "cv_url")
         }
       };
     });

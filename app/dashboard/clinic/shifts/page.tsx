@@ -61,7 +61,8 @@ export default function ClinicShiftsPage() {
               mciNumber: getStringValue(rawDoc, "mci_number"),
               city: getStringValue(rawDoc, "city"),
               area: getStringValue(rawDoc, "area"),
-              employmentStatus: getStringValue(rawDoc, "employment_status")
+              employmentStatus: getStringValue(rawDoc, "employment_status"),
+              cvUrl: getStringValue(rawDoc, "cv_url") || undefined
             } : undefined;
 
             return {

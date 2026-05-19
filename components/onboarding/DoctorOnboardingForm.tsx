@@ -116,6 +116,7 @@ export function DoctorOnboardingForm() {
   const [mciCert, setMciCert] = useState<File | null>(null);
   const [degreeCert, setDegreeCert] = useState<File | null>(null);
   const [govId, setGovId] = useState<File | null>(null);
+  const [cv, setCv] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
@@ -254,11 +255,14 @@ export function DoctorOnboardingForm() {
         setUploadProgress(p => Math.min(p + 10, 90));
       }, 300);
 
-      const [mciCertUrl, degreeCertUrl, govIdUrl] = await Promise.all([
+      const uploadTasks: Promise<string | null>[] = [
         uploadDocument(supabase, mciCert, `doctors/${user.id}/mci`),
         uploadDocument(supabase, degreeCert, `doctors/${user.id}/degree`),
-        uploadDocument(supabase, govId, `doctors/${user.id}/gov-id`)
-      ]);
+        uploadDocument(supabase, govId, `doctors/${user.id}/gov-id`),
+        cv ? uploadDocument(supabase, cv, `doctors/${user.id}/cv`) : Promise.resolve(null)
+      ];
+
+      const [mciCertUrl, degreeCertUrl, govIdUrl, cvUrl] = await Promise.all(uploadTasks);
 
       clearInterval(progressInterval);
       setUploadProgress(100);
@@ -281,7 +285,8 @@ export function DoctorOnboardingForm() {
         verification_status: "pending",
         mci_cert_url: mciCertUrl,
         degree_cert_url: degreeCertUrl,
-        gov_id_url: govIdUrl
+        gov_id_url: govIdUrl,
+        ...(cvUrl ? { cv_url: cvUrl } : {})
       });
 
       if (error) {
@@ -557,6 +562,12 @@ export function DoctorOnboardingForm() {
                       <FileUploadZone file={mciCert} onChange={setMciCert} title="MCI/NMC Certificate" />
                       <FileUploadZone file={degreeCert} onChange={setDegreeCert} title="Medical Degree Certificate" />
                       <FileUploadZone file={govId} onChange={setGovId} title="Government ID (Aadhaar/PAN)" />
+                      <div className="relative">
+                        <FileUploadZone file={cv} onChange={setCv} title="Curriculum Vitae (CV / Resume) — PDF" accept="application/pdf" />
+                        <span className="absolute right-3 top-3 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          Optional
+                        </span>
+                      </div>
                     </div>
                   )}
 
@@ -874,11 +885,13 @@ function FloatingSelect({ label, error, registration, options, icon, filled }: F
 function FileUploadZone({
   file,
   title,
-  onChange
+  onChange,
+  accept = ".pdf,.jpg,.jpeg,.png"
 }: {
   file: File | null;
   title: string;
   onChange: (file: File | null) => void;
+  accept?: string;
 }) {
   return (
     <div className={cn(
@@ -886,7 +899,7 @@ function FileUploadZone({
       file ? "border-emerald-500 bg-emerald-50" : "border-slate-300 bg-slate-50 hover:border-[#1E40AF] hover:bg-blue-50/50"
     )}>
       <input
-        accept=".pdf,.jpg,.jpeg,.png"
+        accept={accept}
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
         type="file"

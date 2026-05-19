@@ -74,6 +74,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
   const [primaryCertFile, setPrimaryCertFile] = useState<File | null>(null);
   const [degreeCertFile, setDegreeCertFile] = useState<File | null>(null);
   const [govIdFile, setGovIdFile] = useState<File | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
 
   const {
     register,
@@ -165,10 +166,11 @@ export function ProfessionalOnboardingForm({ role }: Props) {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) { setFormError("Session expired. Please sign in again."); return; }
 
-      const [primaryCertUrl, degreeCertUrl, govIdUrl] = await Promise.all([
+      const [primaryCertUrl, degreeCertUrl, govIdUrl, cvUrl] = await Promise.all([
         primaryCertFile ? uploadDocument(supabase, primaryCertFile, `professionals/${user.id}/primary_cert`).catch(() => null) : Promise.resolve(null),
         degreeCertFile ? uploadDocument(supabase, degreeCertFile, `professionals/${user.id}/degree_cert`).catch(() => null) : Promise.resolve(null),
         govIdFile ? uploadDocument(supabase, govIdFile, `professionals/${user.id}/gov_id`).catch(() => null) : Promise.resolve(null),
+        cvFile ? uploadDocument(supabase, cvFile, `professionals/${user.id}/cv`).catch(() => null) : Promise.resolve(null),
       ]);
 
       const { error: insertError } = await supabase.from("healthcare_professionals").upsert({
@@ -193,6 +195,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
         primary_cert_url: primaryCertUrl,
         degree_cert_url: degreeCertUrl,
         gov_id_url: govIdUrl,
+        ...(cvUrl ? { cv_url: cvUrl } : {}),
       });
 
       if (insertError) { setFormError(insertError.message); return; }
@@ -358,10 +361,11 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                   </div>
                   <div className="space-y-4">
                     {[
-                      { label: config.primaryCertLabel, setter: setPrimaryCertFile, file: primaryCertFile, required: true },
-                      { label: "Degree / Qualification Certificate", setter: setDegreeCertFile, file: degreeCertFile, required: false },
-                      { label: "Government ID (Aadhaar / PAN)", setter: setGovIdFile, file: govIdFile, required: false },
-                    ].map(({ label, setter, file, required }) => (
+                      { label: config.primaryCertLabel, setter: setPrimaryCertFile, file: primaryCertFile, required: true, accept: ".pdf,.jpg,.jpeg,.png" },
+                      { label: "Degree / Qualification Certificate", setter: setDegreeCertFile, file: degreeCertFile, required: false, accept: ".pdf,.jpg,.jpeg,.png" },
+                      { label: "Government ID (Aadhaar / PAN)", setter: setGovIdFile, file: govIdFile, required: false, accept: ".pdf,.jpg,.jpeg,.png" },
+                      { label: "CV / Resume (Optional)", setter: setCvFile, file: cvFile, required: false, accept: "application/pdf" },
+                    ].map(({ label, setter, file, required, accept }) => (
                       <div key={label}>
                         <label className="mb-1.5 block text-sm font-medium text-slate-700">
                           {label} {required && <span className="text-red-500">*</span>}
@@ -369,7 +373,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                         <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-dashed border-slate-200 bg-white px-4 py-3.5 transition hover:border-blue-400 hover:bg-blue-50/30">
                           <span className="text-sm text-slate-500">{file ? file.name : "Click to upload"}</span>
                           <Upload className="h-4 w-4 text-slate-400" />
-                          <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => setter(e.target.files?.[0] ?? null)} />
+                          <input type="file" accept={accept} className="hidden" onChange={(e) => setter(e.target.files?.[0] ?? null)} />
                         </label>
                       </div>
                     ))}
