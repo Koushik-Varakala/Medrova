@@ -111,6 +111,7 @@ export interface Application {
   job?: Job;
   status: ApplicationStatus;
   createdAt: string;
+  sourceTable?: "applications" | "professional_applications";
 }
 
 export interface ClinicPayment {

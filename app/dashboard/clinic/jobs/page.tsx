@@ -68,6 +68,7 @@ export default function ClinicJobsPage() {
             jobId: getOptionalStringValue(r, "job_id") || undefined,
             status: getStringValue(r, "status") as Application["status"],
             createdAt: getStringValue(r, "created_at"),
+            sourceTable: (getStringValue(r, "source_table") || "professional_applications") as Application["sourceTable"],
             doctor: doctorObj as Application["doctor"],
           };
         });
