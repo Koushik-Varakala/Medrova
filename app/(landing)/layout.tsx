@@ -1,4 +1,5 @@
 import { createSupabaseServiceClient } from "@/lib/supabase-server";
+import { Analytics } from "@vercel/analytics/next"
 
 export default async function LandingLayout({
   children,
@@ -6,11 +7,11 @@ export default async function LandingLayout({
   children: React.ReactNode;
 }) {
   const supabase = createSupabaseServiceClient();
-  
+
   if (!supabase) {
     return <>{children}</>;
   }
-  
+
   // Fetch active jobs/shifts to generate JSON-LD Structured Data
   const { data: shifts } = await supabase
     .from('shifts')
