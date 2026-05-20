@@ -56,7 +56,8 @@ export function LandingFooter() {
         <div className="border-t border-slate-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col gap-1 text-center md:text-left">
             <p className="text-slate-400 text-sm">© {new Date().getFullYear()} Medrova. All rights reserved.</p>
-            <p className="text-slate-400 text-xs">Operated by <strong className="text-slate-500">Varakala Koushik Kumar</strong> · Sole Proprietor · Hyderabad, Telangana, India</p>
+            <p className="text-slate-400 text-xs">Operated by <strong className="text-slate-500">Varakala Koushik Kumar</strong> · Founder & CEO · Hyderabad, Telangana, India</p>
+            <p className="text-slate-400 text-xs">Operated by <strong className="text-slate-500">Banoth Shiva Kumar</strong> · Co-Founder · Hyderabad, Telangana, India</p>
           </div>
           <div className="flex flex-col gap-1 text-center md:text-right">
             <p className="text-slate-400 text-sm font-medium">Made with ❤️ in Hyderabad</p>

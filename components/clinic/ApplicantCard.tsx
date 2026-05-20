@@ -144,6 +144,18 @@ export function ApplicantCard({ application, isShiftConfirmed, onAccept, onRejec
         </div>
       )}
 
+      {/* LOCKED CONTACT — not yet confirmed */}
+      {!isConfirmed && application.status !== "confirmed" && (
+        <div className="border-t border-slate-100 bg-slate-50 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Contact details revealed after payment
+          </div>
+        </div>
+      )}
+
       {/* SHIFT CONFIRMED BANNER — UNLOCKED DETAILS */}
       {isConfirmed && (
         <div className="border-t border-emerald-100 bg-emerald-50 p-4">

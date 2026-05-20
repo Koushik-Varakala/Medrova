@@ -72,6 +72,7 @@ export async function GET(request: Request) {
     function mapDoctorApp(application: Record<string, unknown>, sourceTable: string) {
       const appRecord = toDbRecord(application);
       const doctor = toDbRecord(appRecord.doctors);
+      const isConfirmed = getStringValue(appRecord, "status") === "confirmed";
       return {
         ...appRecord,
         source_table: sourceTable,
@@ -80,13 +81,14 @@ export async function GET(request: Request) {
           name: getStringValue(doctor, "name"),
           specialty: getStringValue(doctor, "specialty"),
           experience: getNumberValue(doctor, "experience"),
-          phone: getStringValue(doctor, "phone"),
-          email: getStringValue(doctor, "email"),
+          // ── Contact hidden until clinic pays to confirm ──
+          phone: isConfirmed ? getStringValue(doctor, "phone") : null,
+          email: isConfirmed ? getStringValue(doctor, "email") : null,
           mci_number: getStringValue(doctor, "mci_number"),
           city: getStringValue(doctor, "city"),
           area: getStringValue(doctor, "area"),
           employment_status: getStringValue(doctor, "employment_status"),
-          cv_url: getOptionalStringValue(doctor, "cv_url"),
+          cv_url: isConfirmed ? getOptionalStringValue(doctor, "cv_url") : null,
         }
       };
     }
@@ -94,6 +96,7 @@ export async function GET(request: Request) {
     function mapProfessionalApp(application: Record<string, unknown>, sourceTable: string) {
       const appRecord = toDbRecord(application);
       const professional = toDbRecord(appRecord.professional);
+      const isConfirmed = getStringValue(appRecord, "status") === "confirmed";
       return {
         id: getStringValue(appRecord, "id"),
         professional_id: getStringValue(appRecord, "professional_id"),
@@ -107,13 +110,14 @@ export async function GET(request: Request) {
           name: getStringValue(professional, "name"),
           specialty: getStringValue(professional, "specialty"),
           experience: getNumberValue(professional, "experience"),
-          phone: getStringValue(professional, "phone"),
-          email: getStringValue(professional, "email"),
+          // ── Contact hidden until clinic pays to confirm ──
+          phone: isConfirmed ? getStringValue(professional, "phone") : null,
+          email: isConfirmed ? getStringValue(professional, "email") : null,
           mci_number: getStringValue(professional, "registration_number"),
           city: getStringValue(professional, "city"),
           area: getStringValue(professional, "area"),
           employment_status: getStringValue(professional, "employment_status"),
-          cv_url: getOptionalStringValue(professional, "cv_url"),
+          cv_url: isConfirmed ? getOptionalStringValue(professional, "cv_url") : null,
         }
       };
     }

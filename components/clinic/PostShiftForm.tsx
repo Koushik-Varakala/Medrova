@@ -42,19 +42,6 @@ const postShiftSchema = z.object({
 
 type PostShiftValues = z.infer<typeof postShiftSchema>;
 
-// ── Cashfree JS SDK types ──────────────────────────────
-declare global {
-  interface Window {
-    Cashfree?: (config: { mode: "sandbox" | "production" }) => {
-      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_blank" | "_self" }) => Promise<{
-        error?: { message: string };
-        redirect?: boolean;
-        paymentDetails?: { paymentMessage: string };
-      }>;
-    };
-  }
-}
-
 export function PostShiftForm() {
   const [notice, setNotice] = useState("");
   const [formError, setFormError] = useState("");
@@ -113,19 +100,6 @@ export function PostShiftForm() {
     setValue("specialty", "", { shouldValidate: false });
   }, [professionalType, setValue]);
 
-  const platformFee = Math.round(Number(payValue) * 0.20);
-  const totalPayable = Number(payValue) + platformFee;
-
-  async function loadCashfreeSDK() {
-    if (window.Cashfree) return true;
-    return new Promise<boolean>((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  }
 
   async function onSubmit(values: PostShiftValues) {
     setNotice("");
@@ -133,7 +107,6 @@ export function PostShiftForm() {
     setIsSubmitting(true);
 
     try {
-      // ── Step 1: Create the shift record ─────────────────
       const shiftResponse = await fetch("/api/shifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,67 +120,14 @@ export function PostShiftForm() {
         return;
       }
 
-      // ── Step 2: Create a Cashfree payment order ──────────
-      // Amount is computed SERVER-SIDE from the DB — never sent from client
-      const orderResponse = await fetch("/api/payments/cashfree/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shiftId: shiftResult.id })
-      });
-
-      const orderResult = (await orderResponse.json()) as {
-        paymentSessionId?: string;
-        orderId?: string;
-        amount?: number;
-        error?: string;
-      };
-
-      if (!orderResponse.ok || !orderResult.paymentSessionId) {
-        setFormError(orderResult.error ?? "Unable to create payment order.");
-        return;
-      }
-
-      // ── Step 3: Load and open Cashfree checkout ──────────
-      const sdkLoaded = await loadCashfreeSDK();
-      const cfMode = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
-
-      if (!sdkLoaded || !window.Cashfree) {
-        setNotice("Shift saved as pending payment. Please contact support to complete payment.");
-        return;
-      }
-
-      const cashfree = window.Cashfree({ mode: cfMode });
-      const shiftIdForPayment = shiftResult.id;
-
-      const result = await cashfree.checkout({
-        paymentSessionId: orderResult.paymentSessionId,
-        redirectTarget: "_modal",
-      });
-
-      if (result.error) {
-        setNotice(`Payment cancelled: ${result.error.message}`);
-        return;
-      }
-
-      // ── Step 4: Activate shift (client-side backup) ──────
-      // The Cashfree webhook is the primary activator — this is a backup
-      // in case the webhook is delayed
-      await fetch(`/api/shifts/${shiftIdForPayment}/activate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentId: orderResult.orderId ?? "cf_payment",
-          orderId: orderResult.orderId ?? "",
-        })
-      });
-
-      // ── Step 5: Show success confirmation screen ─────────
+      // Shift is live immediately — payment happens when clinic confirms a professional
       setConfirmedShift(values);
 
     } finally {
       setIsSubmitting(false);
     }
   }
+
 
   const currentSpecialties = professionalType 
     ? professionalRoleConfig[professionalType].specialties 
@@ -437,15 +357,10 @@ export function PostShiftForm() {
           <div className="flex flex-col justify-center rounded-xl bg-slate-50 p-5">
             <div className="flex items-center justify-between text-sm font-medium text-slate-600">
               <span className="capitalize">{professionalType} receives:</span>
-              <span className="font-bold text-slate-900">{formatCurrencyInr(Number(payValue) || 0)}</span>
+              <span className="font-bold text-emerald-700">{formatCurrencyInr(Number(payValue) || 0)}</span>
             </div>
-            <div className="mt-2 flex items-center justify-between text-sm font-medium text-slate-600">
-              <span>Platform fee (20%):</span>
-              <span className="font-bold text-slate-900">{formatCurrencyInr(platformFee)}</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 text-lg font-bold text-[#0F172A]">
-              <span>Total you pay:</span>
-              <span className="text-emerald-600">{formatCurrencyInr(totalPayable)}</span>
+            <div className="mt-3 text-xs text-slate-400 font-medium">
+              Platform fee is collected when you confirm a professional.
             </div>
           </div>
         </div>
@@ -538,7 +453,7 @@ export function PostShiftForm() {
           ) : (
             <CalendarPlus className="h-6 w-6" />
           )}
-          {isSubmitting ? "Processing..." : `Save & Pay ${formatCurrencyInr(totalPayable)}`}
+          {isSubmitting ? "Posting Shift..." : "Post Shift for Free"}
         </button>
       </div>
     </form>

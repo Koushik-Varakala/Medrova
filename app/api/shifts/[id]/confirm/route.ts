@@ -15,7 +15,9 @@ interface ShiftConfirmRouteContext {
 }
 
 const confirmShiftSchema = z.object({
-  applicationId: z.string().uuid()
+  applicationId: z.string().uuid(),
+  orderId: z.string().min(1),
+  sourceTable: z.enum(["applications", "professional_applications"]).optional()
 });
 
 export async function POST(request: Request, { params }: ShiftConfirmRouteContext) {
@@ -27,6 +29,25 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
     }
 
     const values = await parseJsonWithSchema(request, confirmShiftSchema);
+
+    // ── Security Gate 0: Verify payment was completed ──────
+    const { data: paymentRecord, error: paymentLookupErr } = await auth.service
+      .from("clinic_payments")
+      .select("id, status")
+      .eq("shift_id", params.id)
+      .maybeSingle();
+
+    if (paymentLookupErr) {
+      return jsonError("Unable to verify payment status.", 500);
+    }
+
+    if (!paymentRecord || (paymentRecord as { status: string }).status !== "completed") {
+      return jsonError(
+        "Payment is required before confirming a professional. Please complete payment first.",
+        402
+      );
+    }
+
     const { data: clinicData, error: clinicError } = await auth.service
       .from("clinics")
       .select("id, name")

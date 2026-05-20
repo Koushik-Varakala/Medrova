@@ -1,24 +1,36 @@
 "use client";
 
-import { Check, X, MapPin, Calendar, Clock, Loader2, Zap, Users } from "lucide-react";
+import { Check, X, MapPin, Calendar, Clock, Loader2, Zap, Users, CreditCard } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Application, Shift } from "@/types";
 import { ApplicantCard } from "@/components/clinic/ApplicantCard";
 import { cn, formatCurrencyInr, formatDate, formatTime } from "@/lib/utils";
 
+// Cashfree JS SDK type (loaded at runtime)
+declare global {
+  interface Window {
+    Cashfree?: (config: { mode: "sandbox" | "production" }) => {
+      checkout: (opts: { paymentSessionId: string; redirectTarget: "_modal" | "_blank" | "_self" }) => Promise<{
+        error?: { message: string };
+        redirect?: boolean;
+        paymentDetails?: { paymentMessage: string };
+      }>;
+    };
+  }
+}
+
 interface ClinicShiftManagerProps {
   shifts: Shift[];
   applications: Application[];
 }
 
-type TabType = "all" | "active" | "pending_payment" | "confirmed" | "completed";
+type TabType = "all" | "active" | "confirmed" | "completed";
 
 export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerProps) {
   const [localShifts, setLocalShifts] = useState<Shift[]>(shifts);
   const [localApps, setLocalApps] = useState<Application[]>(applications);
   
-  // Update local state when props change
   useEffect(() => {
     setLocalShifts(shifts);
     setLocalApps(applications);
@@ -37,35 +49,95 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
   const selectedShift = localShifts.find((shift) => shift.id === selectedShiftId) || filteredShifts[0];
   const shiftApplications = localApps.filter((application) => application.shiftId === selectedShift?.id);
 
-  // Auto-select first shift if current selected is filtered out
   if (selectedShift && selectedShift.id !== selectedShiftId) {
     setSelectedShiftId(selectedShift.id);
   }
 
-  async function confirmApplicant(applicationId: string) {
+  async function loadCashfreeSDK() {
+    if (window.Cashfree) return true;
+    return new Promise<boolean>((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  }
+
+  async function confirmApplicant(applicationId: string, sourceTable: "applications" | "professional_applications") {
     if (!selectedShift) return;
-    
+
     setIsProcessing(true);
-    setNotice("");
-    
+    setNotice("Creating payment order...");
+
     try {
-      const response = await fetch(`/api/shifts/${selectedShift.id}/confirm`, {
+      // ── Step 1: Create Cashfree payment order ─────────────
+      const orderResponse = await fetch("/api/payments/cashfree/confirm-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId })
+        body: JSON.stringify({
+          shiftId: selectedShift.id,
+          applicationId,
+          sourceTable,
+        })
       });
 
-      if (!response.ok) {
-        const result = (await response.json()) as { error?: string };
-        setNotice(result.error ?? "Unable to confirm applicant.");
+      const orderResult = (await orderResponse.json()) as {
+        paymentSessionId?: string;
+        orderId?: string;
+        amount?: number;
+        error?: string;
+      };
+
+      if (!orderResponse.ok || !orderResult.paymentSessionId) {
+        setNotice(`❌ ${orderResult.error ?? "Unable to create payment order."}`);
         return;
       }
 
-      // Optimistic update
+      // ── Step 2: Open Cashfree checkout modal ───────────────
+      const sdkLoaded = await loadCashfreeSDK();
+      const cfMode = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
+
+      if (!sdkLoaded || !window.Cashfree) {
+        setNotice("❌ Payment SDK failed to load. Please refresh and try again.");
+        return;
+      }
+
+      setNotice("Processing payment...");
+      const cashfree = window.Cashfree({ mode: cfMode });
+      const result = await cashfree.checkout({
+        paymentSessionId: orderResult.paymentSessionId,
+        redirectTarget: "_modal",
+      });
+
+      if (result.error) {
+        setNotice(`Payment cancelled: ${result.error.message}`);
+        return;
+      }
+
+      // ── Step 3: Payment successful — confirm the professional
+      setNotice("Payment received! Confirming professional...");
+      const confirmResponse = await fetch(`/api/shifts/${selectedShift.id}/confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          applicationId,
+          orderId: orderResult.orderId ?? "",
+          sourceTable,
+        })
+      });
+
+      if (!confirmResponse.ok) {
+        const res = (await confirmResponse.json()) as { error?: string };
+        setNotice(`❌ ${res.error ?? "Unable to confirm professional."}`);
+        return;
+      }
+
+      // Optimistic UI update
       setLocalApps(prev => prev.map(app => app.id === applicationId ? { ...app, status: "confirmed" } : app));
       setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: "confirmed" } : s));
+      setNotice("✅ Professional confirmed! Contact details are now visible.");
 
-      setNotice("✅ Applicant confirmed! Contact details are now unlocked.");
     } finally {
       setIsProcessing(false);
     }
@@ -137,7 +209,6 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
   const tabs: { label: string; value: TabType }[] = [
     { label: "All", value: "all" },
     { label: "Active", value: "active" },
-    { label: "Pending Payment", value: "pending_payment" },
     { label: "Confirmed", value: "confirmed" },
     { label: "Completed", value: "completed" },
   ];
@@ -289,7 +360,7 @@ function ApplicantsPanel({
   selectedShift: Shift | undefined,
   notice: string,
   isProcessing: boolean,
-  confirmApplicant: (id: string) => void,
+  confirmApplicant: (id: string, sourceTable: "applications" | "professional_applications") => void,
   completeShift: (id: string) => void,
   cancelShift: () => void,
   setNotice: (n: string) => void
@@ -303,7 +374,7 @@ function ApplicantsPanel({
             {applications.length}
           </span>
         </div>
-        {selectedShift && (selectedShift.status === 'active' || selectedShift.status === 'confirmed' || selectedShift.status === 'pending_payment') && (
+        {selectedShift && (selectedShift.status === 'active' || selectedShift.status === 'confirmed') && (
           <button
             onClick={cancelShift}
             disabled={isProcessing}
@@ -338,19 +409,19 @@ function ApplicantsPanel({
                 <div className="mt-3 flex gap-3">
                   <button
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1E40AF] py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#1D4ED8]"
-                    onClick={(e) => { e.stopPropagation(); confirmApplicant(application.id); }}
+                    onClick={(e) => { e.stopPropagation(); confirmApplicant(application.id, (application.sourceTable ?? "applications") as "applications" | "professional_applications"); }}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    Confirm Professional
+                    {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                    Confirm &amp; Pay
                   </button>
                   <button
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white py-2.5 text-sm font-bold text-[#0F172A] hover:bg-slate-50"
-                    onClick={(e) => { e.stopPropagation(); setNotice("Applicant rejected locally. (UI simulated)"); }}
+                    onClick={(e) => { e.stopPropagation(); setNotice("Applicant skipped."); }}
                     disabled={isProcessing}
                   >
                     <X className="h-4 w-4" />
-                    Reject
+                    Skip
                   </button>
                 </div>
               )}

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  type ClinicLookupRow,
   getAuthedServiceClient,
   jsonError,
   parseJsonWithSchema,
@@ -98,7 +97,7 @@ export async function POST(request: Request) {
     const values = await parseJsonWithSchema(request, createShiftSchema);
     const { data: clinicData, error: clinicError } = await auth.service
       .from("clinics")
-      .select("id, verification_status")
+      .select("id")
       .eq("user_id", auth.user.id)
       .maybeSingle();
 
@@ -113,11 +112,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const clinic = clinicData as ClinicLookupRow;
-
-    if (clinic.verification_status !== "verified") {
-      return jsonError("Clinic verification is required before posting shifts.", 403);
-    }
+    const clinic = clinicData as { id: string };
 
     const { data, error } = await auth.service
       .from("shifts")
@@ -132,7 +127,7 @@ export async function POST(request: Request) {
         area: values.area,
         notes: values.notes,
         is_urgent: values.isUrgent,
-        status: "pending_payment"
+        status: "active"
       })
       .select("id")
       .single();
