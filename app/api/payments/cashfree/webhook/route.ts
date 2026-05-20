@@ -109,26 +109,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true, skipped: "already_processed" });
     }
 
-    // ── Activate the shift ──────────────────────────────────
-    const { error: shiftError } = await service
-      .from("shifts")
-      .update({
-        status: "active",
-        razorpay_payment_id: String(cfPaymentId), // Storing cashfree payment ID here
-      })
-      .eq("id", payment.shift_id)
-      .eq("status", "pending_payment"); // Double-check it's still pending
-
-    if (shiftError) {
-      return jsonError(shiftError.message, 500);
-    }
-
-    // ── Update payment record as completed ───────────────────
+    // ── Mark payment as completed (enables confirm gate) ───
+    // Shifts are already 'active' in the new model — the webhook
+    // just unlocks the ability to confirm a professional.
     const { error: paymentUpdateError } = await service
       .from("clinic_payments")
-      .update({
-        status: "completed",
-      })
+      .update({ status: "completed" })
       .eq("id", payment.id);
 
     if (paymentUpdateError) {
@@ -139,7 +125,7 @@ export async function POST(request: Request) {
     try {
       const { data: shiftRow } = await service
         .from("shifts")
-        .select("specialty, date, start_time, end_time, pay, location_display_name, area, clinic:clinics(name, email)")
+        .select("specialty, date, start_time, end_time, pay, location_display_name, area, clinic:clinics(name, user_id)")
         .eq("id", payment.shift_id)
         .single();
 
@@ -151,22 +137,27 @@ export async function POST(request: Request) {
         pay: number;
         location_display_name?: string;
         area?: string;
-        clinic: { name: string; email: string } | null;
+        clinic: { name: string; user_id: string } | null;
       } | null;
 
-      if (shift?.clinic?.email) {
-        await sendEmail({
-          to: shift.clinic.email,
-          subject: "Your Medrova shift is live! 🚀",
-          html: shiftLiveEmailHtml({
-            clinicName: shift.clinic.name,
-            specialty: shift.specialty,
-            date: new Date(shift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
-            time: `${shift.start_time} – ${shift.end_time}`,
-            location: shift.location_display_name ?? shift.area ?? "Not specified",
-            pay: shift.pay,
-          }),
-        });
+      if (shift?.clinic?.user_id) {
+        // Fetch auth email via admin API
+        const { data: userRecord } = await service.auth.admin.getUserById(shift.clinic.user_id);
+        const clinicEmail = userRecord?.user?.email;
+        if (clinicEmail) {
+          await sendEmail({
+            to: clinicEmail,
+            subject: "Your Medrova shift is live! 🚀",
+            html: shiftLiveEmailHtml({
+              clinicName: shift.clinic.name,
+              specialty: shift.specialty,
+              date: new Date(shift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
+              time: `${shift.start_time} – ${shift.end_time}`,
+              location: shift.location_display_name ?? shift.area ?? "Not specified",
+              pay: shift.pay,
+            }),
+          });
+        }
       }
     } catch (emailErr) {
       // Never fail the webhook response because of an email error
