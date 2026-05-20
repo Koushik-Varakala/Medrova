@@ -39,7 +39,7 @@ export async function POST(
     // ── Security Gate 1: Verify clinic session ──────────────
     const { data: clinicData } = await auth.service
       .from("clinics")
-      .select("id, name, email")
+      .select("id, name")
       .eq("user_id", auth.user.id)
       .maybeSingle();
 
@@ -47,7 +47,7 @@ export async function POST(
       return jsonError("Clinic profile not found.", 404);
     }
 
-    const clinic = clinicData as { id: string; name: string; email?: string };
+    const clinic = clinicData as { id: string; name: string };
 
     // ── Security Gate 2: Clinic owns this shift ─────────────
     const { data: shift, error: shiftFetchError } = await auth.service
@@ -102,13 +102,12 @@ export async function POST(
     await auth.service
       .from("clinic_payments")
       .update({
-        status: "paid",
-        razorpay_id: values.paymentId,
+        status: "completed",
       })
       .eq("shift_id", params.id);
 
     // ── Send "Shift is Live" email (only if webhook hasn't already) ─
-    const clinicEmail = clinic.email ?? auth.user.email;
+    const clinicEmail = auth.user.email;
     if (clinicEmail) {
       await sendEmail({
         to: clinicEmail,

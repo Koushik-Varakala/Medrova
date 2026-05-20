@@ -53,7 +53,7 @@ export async function DELETE(
       await auth.service.from("shifts").update({ confirmed_doctor_id: null }).eq("confirmed_doctor_id", params.id);
       // 2. Delete child records
       await auth.service.from("applications").delete().eq("doctor_id", params.id);
-      await auth.service.from("payments").delete().eq("doctor_id", params.id);
+      await auth.service.from("doctor_payouts").delete().eq("doctor_id", params.id);
       // 3. Delete the profile
       await auth.service.from("doctors").delete().eq("id", params.id);
     }

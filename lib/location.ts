@@ -33,7 +33,7 @@ export async function searchLocations(query: string): Promise<LocationResult[]> 
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-      { headers: { "Accept-Language": "en" } }
+      { headers: { "Accept-Language": "en", "User-Agent": "MedrovaApp/1.0 (contact@medrova.in)" } }
     );
 
     if (!response.ok) return [];
@@ -66,7 +66,7 @@ export async function reverseGeocode(
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-      { headers: { "Accept-Language": "en" } }
+      { headers: { "Accept-Language": "en", "User-Agent": "MedrovaApp/1.0 (contact@medrova.in)" } }
     );
 
     if (!response.ok) return null;

@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
-import { createSupabaseServiceClient } from "@/lib/supabase-server";
-import { createSupabaseBrowserClient } from "@/lib/supabase"; // For session check
+import { getAuthedServiceClient, jsonError, validationError } from "@/lib/api-utils";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const shiftId = params.id;
-    if (!shiftId) return NextResponse.json({ error: "Missing shift ID" }, { status: 400 });
+    if (!shiftId) {
+      return jsonError("Missing shift ID", 400);
+    }
 
-    // 1. Authenticate Request
-    const supabaseClient = createSupabaseBrowserClient();
-    if (!supabaseClient) return NextResponse.json({ error: "Auth client missing" }, { status: 500 });
+    // 1. Authenticate Request using secure server-side cookies
+    const auth = await getAuthedServiceClient();
+    if ("error" in auth) return auth.error;
 
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const service = createSupabaseServiceClient();
-    if (!service) return NextResponse.json({ error: "Service client missing" }, { status: 500 });
+    const { service, user } = auth;
 
     // 2. Fetch Shift & Clinic verification
     const { data: shift, error: shiftError } = await service
@@ -24,21 +24,28 @@ export async function POST(request: Request, { params }: { params: { id: string 
       .eq("id", shiftId)
       .single();
 
-    if (shiftError || !shift) return NextResponse.json({ error: "Shift not found" }, { status: 404 });
+    if (shiftError || !shift) {
+      return jsonError("Shift not found", 404);
+    }
 
     // Verify Clinic Ownership
     const { data: clinic } = await service
       .from("clinics")
       .select("id")
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .single();
 
     if (!clinic || clinic.id !== shift.clinic_id) {
-      return NextResponse.json({ error: "Unauthorized to cancel this shift" }, { status: 403 });
+      return jsonError("Unauthorized to cancel this shift", 403);
     }
 
-    if (shift.status === 'completed' || shift.status === 'cancelled' || shift.status === 'cancelled_with_penalty' || shift.status === 'cancelled_full_refund') {
-      return NextResponse.json({ error: "Shift cannot be cancelled in its current state" }, { status: 400 });
+    if (
+      shift.status === "completed" ||
+      shift.status === "cancelled" ||
+      shift.status === "cancelled_with_penalty" ||
+      shift.status === "cancelled_full_refund"
+    ) {
+      return jsonError("Shift cannot be cancelled in its current state", 400);
     }
 
     // 3. Calculate 12-Hour Rule
@@ -49,12 +56,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const hoursUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-    let finalStatus = 'cancelled_full_refund';
+    let finalStatus = "cancelled_full_refund";
 
-    if (shift.status === 'confirmed' && hoursUntilStart < 12 && hoursUntilStart > 0) {
-      finalStatus = 'cancelled_with_penalty';
-    } else if (shift.status === 'active' || shift.status === 'pending_payment') {
-      finalStatus = 'cancelled';
+    if (shift.status === "confirmed" && hoursUntilStart < 12 && hoursUntilStart > 0) {
+      finalStatus = "cancelled_with_penalty";
+    } else if (shift.status === "active" || shift.status === "pending_payment") {
+      finalStatus = "cancelled";
     }
 
     // 4. Update Shift Status
@@ -65,22 +72,28 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     if (updateError) throw updateError;
 
-    // 5. Reject any pending or confirmed applications
+    // 5. Reject any pending or confirmed applications in both legacy and modern tables
     await service
       .from("applications")
-      .update({ status: 'rejected' }) // Could be a distinct 'cancelled' state in V2
+      .update({ status: "rejected" })
       .eq("shift_id", shiftId)
       .in("status", ["applied", "confirmed"]);
 
-    return NextResponse.json({ 
-      success: true, 
-      status: finalStatus,
-      message: finalStatus === 'cancelled_with_penalty' 
-        ? "Shift cancelled. 30% penalty applied due to < 12hr notice." 
-        : "Shift cancelled successfully. Full refund eligible."
-    });
+    await service
+      .from("professional_applications")
+      .update({ status: "rejected" })
+      .eq("shift_id", shiftId)
+      .in("status", ["applied", "confirmed"]);
 
+    return NextResponse.json({
+      success: true,
+      status: finalStatus,
+      message:
+        finalStatus === "cancelled_with_penalty"
+          ? "Shift cancelled. 30% penalty applied due to < 12hr notice."
+          : "Shift cancelled successfully. Full refund eligible.",
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return validationError(error);
   }
 }

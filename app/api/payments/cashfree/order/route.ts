@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     // ── Security Gate 1: Verify the clinic session ──────────
     const { data: clinicData, error: clinicError } = await auth.service
       .from("clinics")
-      .select("id, email, contact_phone, contact_person")
+      .select("id, contact_phone, contact_person")
       .eq("user_id", auth.user.id)
       .single();
 
@@ -39,7 +39,6 @@ export async function POST(request: Request) {
 
     const clinic = clinicData as {
       id: string;
-      email?: string;
       contact_phone?: string;
       contact_person?: string;
     };
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
     const order = await createCashfreeOrder({
       orderId: cashfreeOrderId,
       orderAmount: totalAmount,
-      customerEmail: clinic.email ?? auth.user.email ?? "noreply@medrova.in",
+      customerEmail: auth.user.email ?? "noreply@medrova.in",
       customerPhone: clinic.contact_phone ?? "9999999999",
       customerId: clinic.id,
       returnUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://medrova.vercel.app"}/dashboard/clinic?payment=done&shift=${shift.id}`,

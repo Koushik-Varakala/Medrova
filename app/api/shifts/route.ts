@@ -7,7 +7,7 @@ import {
   parseJsonWithSchema,
   validationError
 } from "@/lib/api-utils";
-import { createSupabaseServiceClient } from "@/lib/supabase-server";
+import { createSupabaseServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
 
 const createShiftSchema = z.object({
   professionalType: z.enum(["doctor", "nurse", "technician"]).default("doctor"),
@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     return jsonError("Supabase service role is not configured.", 500);
   }
 
+  const user = await getAuthenticatedUser();
   const url = new URL(request.url);
   const specialty = url.searchParams.get("specialty");
   const area = url.searchParams.get("area");
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
   const professionalType = url.searchParams.get("professionalType");
 
   const publicParam = url.searchParams.get("public");
-  const isPublic = publicParam === "true";
+  const isPublic = publicParam === "true" || !user;
 
   let query = service
     .from("shifts")

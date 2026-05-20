@@ -68,7 +68,6 @@ export async function POST(request: Request) {
       .from("clinic_payments")
       .update({
         status: "completed",
-        razorpay_id: paymentId
       })
       .eq("id", paymentRow.id);
 

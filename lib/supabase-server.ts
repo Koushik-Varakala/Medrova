@@ -75,6 +75,25 @@ export async function getAuthenticatedUser(): Promise<User | null> {
   return user;
 }
 
-export function isAdminUser(userId: string | undefined) {
-  return Boolean(userId && process.env.ADMIN_USER_ID && userId === process.env.ADMIN_USER_ID);
+export async function isAdminUser(userId: string | undefined): Promise<boolean> {
+  if (!userId) return false;
+
+  // Fast path: environment variable match
+  if (process.env.ADMIN_USER_ID && userId === process.env.ADMIN_USER_ID) {
+    return true;
+  }
+
+  // Fallback: database lookup in user_roles table
+  const service = createSupabaseServiceClient();
+  if (!service) return false;
+
+  const { data, error } = await service
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return true;
 }

@@ -21,8 +21,7 @@ const updateProfileSchema = z.object({
   upiId: z.string().min(3).optional(),
   primaryCertUrl: z.string().url().optional(),
   degreeCertUrl: z.string().url().optional(),
-  govIdUrl: z.string().url().optional(),
-  verificationStatus: z.string().optional()
+  govIdUrl: z.string().url().optional()
 });
 
 export async function GET() {
@@ -81,8 +80,7 @@ export async function PATCH(request: Request) {
       upi_id: values.upiId,
       primary_cert_url: values.primaryCertUrl,
       degree_cert_url: values.degreeCertUrl,
-      gov_id_url: values.govIdUrl,
-      verification_status: values.verificationStatus
+      gov_id_url: values.govIdUrl
     };
 
     Object.keys(updatePayload).forEach((key) => {

@@ -123,12 +123,11 @@ export async function POST(request: Request) {
       return jsonError(shiftError.message, 500);
     }
 
-    // ── Update payment record as paid ───────────────────────
+    // ── Update payment record as completed ───────────────────
     const { error: paymentUpdateError } = await service
       .from("clinic_payments")
       .update({
-        status: "paid",
-        razorpay_id: String(cfPaymentId),
+        status: "completed",
       })
       .eq("id", payment.id);
 

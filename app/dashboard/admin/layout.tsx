@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthenticatedUser();
 
-  if (!isAdminUser(user?.id)) {
+  if (!(await isAdminUser(user?.id))) {
     redirect("/sign-in");
   }
 

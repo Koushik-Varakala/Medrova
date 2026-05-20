@@ -50,6 +50,7 @@ export async function GET() {
     return NextResponse.json({
       clinicPayments: clinicPayments ?? [],
       doctorPayouts: doctorPayouts ?? [],
+      professionalPayouts: safePayouts,
       summary: {
         totalRevenue,
         totalPayouts,

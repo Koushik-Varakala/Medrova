@@ -28,7 +28,7 @@ export async function getAdminServiceClient() {
     return result;
   }
 
-  if (!isAdminUser(result.user.id)) {
+  if (!(await isAdminUser(result.user.id))) {
     return { error: jsonError("Admin access required.", 403) };
   }
 
