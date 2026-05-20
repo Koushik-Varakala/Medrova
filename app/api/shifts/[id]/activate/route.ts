@@ -52,7 +52,7 @@ export async function POST(
     // ── Security Gate 2: Clinic owns this shift ─────────────
     const { data: shift, error: shiftFetchError } = await auth.service
       .from("shifts")
-      .select("id, clinic_id, status, specialty, date, start_time, end_time, pay, location_display_name, area")
+      .select("id, clinic_id, status, specialty, date, start_time, end_time, pay, area")
       .eq("id", params.id)
       .eq("clinic_id", clinic.id)  // ← ownership guard
       .maybeSingle();
@@ -70,7 +70,6 @@ export async function POST(
       start_time: string;
       end_time: string;
       pay: number;
-      location_display_name?: string;
       area?: string;
     };
 
@@ -117,7 +116,7 @@ export async function POST(
           specialty: shiftRow.specialty,
           date: new Date(shiftRow.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
           time: `${shiftRow.start_time} – ${shiftRow.end_time}`,
-          location: shiftRow.location_display_name ?? shiftRow.area ?? "Not specified",
+          location: shiftRow.area ?? "Not specified",
           pay: shiftRow.pay,
         }),
       });

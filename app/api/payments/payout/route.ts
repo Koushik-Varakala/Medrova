@@ -72,8 +72,8 @@ export async function POST(request: Request) {
     }
 
     const doctor = doctorData as DoctorPayoutLookupRow;
-    const doctorAmount = Math.floor(shift.pay * 0.9);
-    const platformFee = shift.pay - doctorAmount;
+    const doctorAmount = shift.pay;
+    const platformFee = 0;
 
     const { data: payoutData, error: payoutError } = await auth.service
       .from("doctor_payouts")

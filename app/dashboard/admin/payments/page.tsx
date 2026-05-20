@@ -7,7 +7,7 @@ import { DashboardShell } from "@/components/shared/DashboardShell";
 import { adminNavigation } from "@/lib/constants";
 import { formatCurrencyInr, getStringValue, getNumberValue } from "@/lib/utils";
 import type { ClinicPayment, DoctorPayment } from "@/types";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 // Custom CountUp Component
@@ -44,46 +44,155 @@ export default function AdminPaymentsPage() {
   const [summary, setSummary] = useState({ totalRevenue: 0, totalPayouts: 0, platformFeesRetained: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadData = async (isMounted: boolean) => {
+    const res = await fetch("/api/admin/payments");
+    const json = (await res.json()) as {
+      clinicPayments?: Record<string, any>[];
+      doctorPayouts?: Record<string, any>[];
+      professionalPayouts?: Record<string, any>[];
+      summary?: { totalRevenue: number; totalPayouts: number; platformFeesRetained: number };
+    };
+
+    const mappedClinicPayments: ClinicPayment[] = (json.clinicPayments ?? []).map((p) => ({
+      id: getStringValue(p, "id"),
+      clinicId: getStringValue(p, "clinic_id"),
+      shiftId: getStringValue(p, "shift_id"),
+      amount: getNumberValue(p, "amount"),
+      razorpayId: getStringValue(p, "razorpay_id"),
+      status: getStringValue(p, "status") as ClinicPayment["status"],
+      createdAt: getStringValue(p, "created_at"),
+      clinic: p.clinic ? {
+        id: getStringValue(p.clinic, "id"),
+        name: getStringValue(p.clinic, "name"),
+        contactPerson: getStringValue(p.clinic, "contact_person"),
+        contactPhone: getStringValue(p.clinic, "contact_phone"),
+        phone: getStringValue(p.clinic, "phone")
+      } : undefined,
+      shift: p.shift ? {
+        id: getStringValue(p.shift, "id"),
+        specialty: getStringValue(p.shift, "specialty"),
+        date: getStringValue(p.shift, "date"),
+        startTime: getStringValue(p.shift, "start_time"),
+        endTime: getStringValue(p.shift, "end_time"),
+        pay: getNumberValue(p.shift, "pay"),
+        area: getStringValue(p.shift, "area")
+      } : undefined
+    }));
+
+    const mappedDoctorPayments: DoctorPayment[] = (json.doctorPayouts ?? []).map((p) => ({
+      id: getStringValue(p, "id"),
+      doctorId: getStringValue(p, "doctor_id"),
+      shiftId: getStringValue(p, "shift_id"),
+      amount: getNumberValue(p, "amount"),
+      upiId: getStringValue(p, "upi_id"),
+      status: getStringValue(p, "status") as DoctorPayment["status"],
+      paidAt: getStringValue(p, "paid_at") || undefined,
+      createdAt: getStringValue(p, "created_at"),
+      isProfessional: false,
+      doctor: p.doctor ? {
+        id: getStringValue(p.doctor, "id"),
+        name: getStringValue(p.doctor, "name"),
+        email: getStringValue(p.doctor, "email"),
+        phone: getStringValue(p.doctor, "phone"),
+        specialty: getStringValue(p.doctor, "specialty")
+      } : undefined,
+      shift: p.shift ? {
+        id: getStringValue(p.shift, "id"),
+        specialty: getStringValue(p.shift, "specialty"),
+        date: getStringValue(p.shift, "date"),
+        startTime: getStringValue(p.shift, "start_time"),
+        endTime: getStringValue(p.shift, "end_time"),
+        pay: getNumberValue(p.shift, "pay"),
+        area: getStringValue(p.shift, "area"),
+        clinic: p.shift.clinic ? {
+          id: getStringValue(p.shift.clinic, "id"),
+          name: getStringValue(p.shift.clinic, "name"),
+          contactPerson: getStringValue(p.shift.clinic, "contact_person"),
+          contactPhone: getStringValue(p.shift.clinic, "contact_phone"),
+          phone: getStringValue(p.shift.clinic, "phone")
+        } : undefined
+      } : undefined
+    }));
+
+    const mappedProfessionalPayments: DoctorPayment[] = (json.professionalPayouts ?? []).map((p) => ({
+      id: getStringValue(p, "id"),
+      doctorId: getStringValue(p, "professional_id"),
+      shiftId: getStringValue(p, "shift_id"),
+      amount: getNumberValue(p, "amount"),
+      upiId: getStringValue(p, "upi_id"),
+      status: getStringValue(p, "status") as DoctorPayment["status"],
+      paidAt: getStringValue(p, "paid_at") || undefined,
+      createdAt: getStringValue(p, "created_at"),
+      isProfessional: true,
+      professional: p.professional ? {
+        id: getStringValue(p.professional, "id"),
+        name: getStringValue(p.professional, "name"),
+        email: getStringValue(p.professional, "email"),
+        phone: getStringValue(p.professional, "phone"),
+        role: getStringValue(p.professional, "role") as any,
+        specialty: getStringValue(p.professional, "specialty")
+      } : undefined,
+      shift: p.shift ? {
+        id: getStringValue(p.shift, "id"),
+        specialty: getStringValue(p.shift, "specialty"),
+        date: getStringValue(p.shift, "date"),
+        startTime: getStringValue(p.shift, "start_time"),
+        endTime: getStringValue(p.shift, "end_time"),
+        pay: getNumberValue(p.shift, "pay"),
+        area: getStringValue(p.shift, "area"),
+        clinic: p.shift.clinic ? {
+          id: getStringValue(p.shift.clinic, "id"),
+          name: getStringValue(p.shift.clinic, "name"),
+          contactPerson: getStringValue(p.shift.clinic, "contact_person"),
+          contactPhone: getStringValue(p.shift.clinic, "contact_phone"),
+          phone: getStringValue(p.shift.clinic, "phone")
+        } : undefined
+      } : undefined
+    }));
+
+    // Merge professional payouts and legacy doctor payouts, sort by created_at descending
+    const mergedPayouts = [...mappedProfessionalPayments, ...mappedDoctorPayments].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    if (!isMounted) return;
+    setClinicPayments(mappedClinicPayments);
+    setDoctorPayments(mergedPayouts);
+    if (json.summary) setSummary(json.summary);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     let isMounted = true;
-    async function load() {
-      const res = await fetch("/api/admin/payments");
-      const json = (await res.json()) as {
-        clinicPayments?: Record<string, unknown>[];
-        doctorPayouts?: Record<string, unknown>[];
-        summary?: { totalRevenue: number; totalPayouts: number; platformFeesRetained: number };
-      };
-
-      const mappedClinicPayments: ClinicPayment[] = (json.clinicPayments ?? []).map((p) => ({
-        id: getStringValue(p, "id"),
-        clinicId: getStringValue(p, "clinic_id"),
-        shiftId: getStringValue(p, "shift_id"),
-        amount: getNumberValue(p, "amount"),
-        razorpayId: getStringValue(p, "razorpay_id"),
-        status: getStringValue(p, "status") as ClinicPayment["status"],
-        createdAt: getStringValue(p, "created_at"),
-      }));
-
-      const mappedDoctorPayments: DoctorPayment[] = (json.doctorPayouts ?? []).map((p) => ({
-        id: getStringValue(p, "id"),
-        doctorId: getStringValue(p, "doctor_id"),
-        shiftId: getStringValue(p, "shift_id"),
-        amount: getNumberValue(p, "amount"),
-        upiId: getStringValue(p, "upi_id"),
-        status: getStringValue(p, "status") as DoctorPayment["status"],
-        paidAt: getStringValue(p, "paid_at") || undefined,
-        createdAt: getStringValue(p, "created_at"),
-      }));
-
-      if (!isMounted) return;
-      setClinicPayments(mappedClinicPayments);
-      setDoctorPayments(mappedDoctorPayments);
-      if (json.summary) setSummary(json.summary);
-      setIsLoading(false);
-    }
-    load();
+    loadData(isMounted);
     return () => { isMounted = false; };
   }, []);
+
+  const handlePayoutStatusUpdate = (payoutId: string, newStatus: "completed" | "failed" | "pending", paidAt?: string) => {
+    // Update doctorPayments state immediately
+    const updated = doctorPayments.map((p) => {
+      if (p.id === payoutId) {
+        return { ...p, status: newStatus, paidAt };
+      }
+      return p;
+    });
+    setDoctorPayments(updated);
+
+    // Recompute total payouts & platform fee retention
+    const totalPayouts = updated
+      .filter((p) => p.status === "completed")
+      .reduce((total, p) => total + p.amount, 0);
+
+    const totalRevenue = clinicPayments
+      .filter((p) => p.status === "completed")
+      .reduce((total, p) => total + p.amount, 0);
+
+    setSummary({
+      totalRevenue,
+      totalPayouts,
+      platformFeesRetained: totalRevenue - totalPayouts
+    });
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -194,7 +303,11 @@ export default function AdminPaymentsPage() {
             </motion.div>
           </section>
 
-          <AdminPaymentLog clinicPayments={clinicPayments} doctorPayments={doctorPayments} />
+          <AdminPaymentLog 
+            clinicPayments={clinicPayments} 
+            doctorPayments={doctorPayments}
+            onPayoutStatusUpdate={handlePayoutStatusUpdate}
+          />
         </motion.div>
       )}
     </DashboardShell>

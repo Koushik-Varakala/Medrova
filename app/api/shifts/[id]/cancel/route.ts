@@ -45,24 +45,21 @@ export async function POST(
       shift.status === "cancelled_with_penalty" ||
       shift.status === "cancelled_full_refund"
     ) {
-      return jsonError("Shift cannot be cancelled in its current state", 400);
+      return jsonError("Shift cannot be cancelled in its current state.", 400);
     }
 
-    // 3. Calculate 12-Hour Rule
-    // Shift start time parsing
-    const shiftDateTimeString = `${shift.date}T${shift.start_time}:00`;
-    const shiftStart = new Date(shiftDateTimeString);
-    const now = new Date();
-
-    const hoursUntilStart = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    let finalStatus = "cancelled_full_refund";
-
-    if (shift.status === "confirmed" && hoursUntilStart < 12 && hoursUntilStart > 0) {
-      finalStatus = "cancelled_with_penalty";
-    } else if (shift.status === "active" || shift.status === "pending_payment") {
-      finalStatus = "cancelled";
+    // ── Block cancellation after confirmation ───────────────
+    // Once a professional has been confirmed (clinic paid, professional notified),
+    // the shift cannot be cancelled. Contact support if there is an emergency.
+    if (shift.status === "confirmed") {
+      return jsonError(
+        "This shift cannot be cancelled because a professional has already been confirmed. Please contact the professional directly to reschedule.",
+        403
+      );
     }
+
+    // Only active shifts can be cancelled freely
+    const finalStatus = "cancelled";
 
     // 4. Update Shift Status
     const { error: updateError } = await service
@@ -88,10 +85,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       status: finalStatus,
-      message:
-        finalStatus === "cancelled_with_penalty"
-          ? "Shift cancelled. 30% penalty applied due to < 12hr notice."
-          : "Shift cancelled successfully. Full refund eligible.",
+      message: "Shift cancelled successfully.",
     });
   } catch (error: any) {
     return validationError(error);

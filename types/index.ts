@@ -122,6 +122,22 @@ export interface ClinicPayment {
   razorpayId: string;
   status: PaymentStatus;
   createdAt: string;
+  clinic?: {
+    id: string;
+    name: string;
+    contactPerson: string;
+    contactPhone: string;
+    phone: string;
+  };
+  shift?: {
+    id: string;
+    specialty: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    pay: number;
+    area: string;
+  };
 }
 
 export interface DoctorPayment {
@@ -133,6 +149,38 @@ export interface DoctorPayment {
   status: PaymentStatus;
   paidAt?: string;
   createdAt: string;
+  isProfessional?: boolean;
+  doctor?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    specialty: string;
+  };
+  professional?: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    specialty: string;
+  };
+  shift?: {
+    id: string;
+    specialty: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    pay: number;
+    area: string;
+    clinic?: {
+      id: string;
+      name: string;
+      contactPerson: string;
+      contactPhone: string;
+      phone: string;
+    };
+  };
 }
 
 // Unified Healthcare Professional Types

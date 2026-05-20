@@ -16,8 +16,11 @@ export async function POST(
     const auth = await getAuthedServiceClient();
 
     if ("error" in auth) {
+      console.error("[complete] Auth failed");
       return auth.error;
     }
+
+    console.log("[complete] shift_id:", params.id, "user:", auth.user.id);
 
     const { data: clinicData, error: clinicError } = await auth.service
       .from("clinics")
@@ -26,47 +29,64 @@ export async function POST(
       .single();
 
     if (clinicError || !clinicData) {
-      return jsonError(clinicError?.message ?? "Clinic profile not found.", 404);
+      console.error("[complete] Clinic not found for user:", auth.user.id, clinicError?.message);
+      return jsonError(clinicError?.message ?? "Clinic profile not found.", 403);
     }
 
     const clinic = clinicData as { id: string; name: string };
+    console.log("[complete] clinic:", clinic.id);
     
-    // First find the shift and update to completed
-    const { data: shiftData, error: shiftError } = await auth.service
+    // First fetch the shift to give clear errors
+    const { data: shiftCheck, error: shiftCheckErr } = await auth.service
       .from("shifts")
-      .update({ status: "completed" })
+      .select("id, status, clinic_id, pay, confirmed_professional_id, confirmed_doctor_id, specialty, date, start_time, end_time, area")
       .eq("id", params.id)
-      .eq("clinic_id", clinic.id)
-      .eq("status", "confirmed")
-      .select("id, pay, confirmed_professional_id, professional_type, confirmed_doctor_id, specialty, date, start_time, end_time, location_display_name, area")
-      .single();
+      .maybeSingle();
 
-    if (shiftError || !shiftData) {
-      return jsonError(shiftError?.message ?? "Confirmed shift not found.", 404);
+
+    if (shiftCheckErr || !shiftCheck) {
+      console.error("[complete] Shift not found:", params.id, shiftCheckErr?.message);
+      return jsonError("Shift not found.", 404);
     }
 
-    const shift = shiftData as {
-      id: string;
-      pay: number;
-      confirmed_doctor_id: string | null;
-      confirmed_professional_id: string | null;
-      specialty: string;
-      date: string;
-      start_time: string;
-      end_time: string;
-      location_display_name?: string;
-      area?: string;
-    };
+    const shiftCheck2 = shiftCheck as { id: string; status: string; clinic_id: string; pay: number; confirmed_professional_id: string | null; confirmed_doctor_id: string | null; specialty: string; date: string; start_time: string; end_time: string; area?: string };
 
-    const confirmedDoctorId = typeof shift.confirmed_doctor_id === "string" ? shift.confirmed_doctor_id : null;
-    const confirmedProfessionalId = typeof shift.confirmed_professional_id === "string" ? shift.confirmed_professional_id : null;
+    console.log("[complete] shift status:", shiftCheck2.status, "shift clinic_id:", shiftCheck2.clinic_id, "req clinic_id:", clinic.id);
+
+    if (shiftCheck2.clinic_id !== clinic.id) {
+      return jsonError("You are not authorised to complete this shift.", 403);
+    }
+
+    if (shiftCheck2.status !== "confirmed") {
+      return jsonError(
+        shiftCheck2.status === "completed"
+          ? "This shift has already been marked as completed."
+          : `Only confirmed shifts can be marked as complete. Current status: ${shiftCheck2.status}`,
+        400
+      );
+    }
+
+    // Now mark it completed
+    const { error: updateError } = await auth.service
+      .from("shifts")
+      .update({ status: "completed" })
+      .eq("id", params.id);
+
+    if (updateError) {
+      return jsonError(updateError.message, 500);
+    }
+
+    const shiftData = shiftCheck2;
+
+    const confirmedDoctorId = typeof shiftData.confirmed_doctor_id === "string" ? shiftData.confirmed_doctor_id : null;
+    const confirmedProfessionalId = typeof shiftData.confirmed_professional_id === "string" ? shiftData.confirmed_professional_id : null;
 
     if (!confirmedDoctorId && !confirmedProfessionalId) {
       return jsonError("Shift has no confirmed professional attached.", 400);
     }
 
-    const shiftDate = new Date(shift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-    const location = shift.location_display_name ?? shift.area ?? "Not specified";
+    const shiftDate = new Date(shiftData.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    const location = shiftData.area ?? "Not specified";
     const adminEmail = process.env.ADMIN_EMAIL ?? "koushik@medrova.in";
     const payoutLive = process.env.RAZORPAY_PAYOUT_LIVE === "true";
 
@@ -75,7 +95,7 @@ export async function POST(
       await auth.service
         .from("applications")
         .update({ status: "completed" })
-        .eq("shift_id", shift.id)
+        .eq("shift_id", shiftData.id)
         .eq("doctor_id", confirmedDoctorId);
 
       const { data: doctorData } = await auth.service
@@ -88,18 +108,23 @@ export async function POST(
         ? (doctorData as { upi_id?: string; email?: string; name?: string })
         : null;
 
-      const doctorAmount = Math.floor(shift.pay * 0.80);
+      const doctorAmount = shiftData.pay;
 
-      await auth.service
+      const { error: payoutErr } = await auth.service
         .from("doctor_payouts")
         .insert({
           doctor_id: confirmedDoctorId,
-          shift_id: shift.id,
+          shift_id: shiftData.id,
           amount: doctorAmount,
           upi_id: doctor?.upi_id ?? "unknown",
-          status: payoutLive ? "pending" : "manual_pending",
-          paid_at: payoutLive ? null : new Date().toISOString()
+          status: "pending",
+          paid_at: null
         });
+
+      if (payoutErr) {
+        console.error("[complete] Failed to insert doctor payout:", payoutErr.message);
+        return jsonError(`Failed to register payout record: ${payoutErr.message}`, 500);
+      }
 
       // Send payout email to doctor
       if (doctor?.email && doctor?.name) {
@@ -112,7 +137,7 @@ export async function POST(
             amount: doctorAmount,
             upiId: doctor.upi_id ?? "Not on file",
             shiftDate,
-            specialty: shift.specialty,
+            specialty: shiftData.specialty,
           }),
         });
       }
@@ -126,10 +151,10 @@ export async function POST(
             professionalName: doctor?.name ?? "Unknown",
             upiId: doctor?.upi_id ?? "Not on file",
             amount: doctorAmount,
-            shiftId: shift.id,
+            shiftId: shiftData.id,
             clinicName: clinic.name,
             shiftDate,
-            specialty: shift.specialty,
+            specialty: shiftData.specialty,
           }),
         });
       }
@@ -140,7 +165,7 @@ export async function POST(
       await auth.service
         .from("professional_applications")
         .update({ status: "completed" })
-        .eq("shift_id", shift.id)
+        .eq("shift_id", shiftData.id)
         .eq("professional_id", confirmedProfessionalId);
 
       const { data: profData } = await auth.service
@@ -153,18 +178,23 @@ export async function POST(
         ? (profData as { upi_id?: string; email?: string; name?: string; role?: string })
         : null;
 
-      const professionalAmount = Math.floor(shift.pay * 0.80);
+      const professionalAmount = shiftData.pay;
 
-      await auth.service
+      const { error: payoutErr } = await auth.service
         .from("professional_payouts")
         .insert({
           professional_id: confirmedProfessionalId,
-          shift_id: shift.id,
+          shift_id: shiftData.id,
           amount: professionalAmount,
           upi_id: prof?.upi_id ?? "unknown",
-          status: payoutLive ? "pending" : "manual_pending",
-          paid_at: payoutLive ? null : new Date().toISOString()
+          status: "pending",
+          paid_at: null
         });
+
+      if (payoutErr) {
+        console.error("[complete] Failed to insert professional payout:", payoutErr.message);
+        return jsonError(`Failed to register payout record: ${payoutErr.message}`, 500);
+      }
 
       // Send payout email to professional
       if (prof?.email && prof?.name) {
@@ -177,7 +207,7 @@ export async function POST(
             amount: professionalAmount,
             upiId: prof.upi_id ?? "Not on file",
             shiftDate,
-            specialty: shift.specialty,
+            specialty: shiftData.specialty,
           }),
         });
       }
@@ -191,10 +221,10 @@ export async function POST(
             professionalName: prof?.name ?? "Unknown",
             upiId: prof?.upi_id ?? "Not on file",
             amount: professionalAmount,
-            shiftId: shift.id,
+            shiftId: shiftData.id,
             clinicName: clinic.name,
             shiftDate,
-            specialty: shift.specialty,
+            specialty: shiftData.specialty,
           }),
         });
       }

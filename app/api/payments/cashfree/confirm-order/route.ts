@@ -6,7 +6,7 @@ import {
   parseJsonWithSchema,
   validationError
 } from "@/lib/api-utils";
-import { createCashfreeOrder } from "@/lib/cashfree";
+import { createCashfreeOrder, getCashfreePaymentSession } from "@/lib/cashfree";
 
 const confirmOrderSchema = z.object({
   shiftId: z.string().uuid(),
@@ -71,21 +71,41 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Gate 3: Application exists and belongs to this shift
-    const { data: appData, error: appError } = await auth.service
+    // ── Gate 3: Application exists and belongs to this shift ─
+    // Try the specified sourceTable first, then fall back to the other one
+    const otherTable = values.sourceTable === "applications"
+      ? "professional_applications"
+      : "applications";
+
+    let appData: { id: string; shift_id: string; status: string } | null = null;
+
+    const { data: primaryApp } = await auth.service
       .from(values.sourceTable)
       .select("id, shift_id, status")
       .eq("id", values.applicationId)
       .eq("shift_id", values.shiftId)
-      .single();
+      .maybeSingle();
 
-    if (appError || !appData) {
+    if (primaryApp) {
+      appData = primaryApp as { id: string; shift_id: string; status: string };
+    } else {
+      // Fallback: check the other table
+      const { data: fallbackApp } = await auth.service
+        .from(otherTable)
+        .select("id, shift_id, status")
+        .eq("id", values.applicationId)
+        .eq("shift_id", values.shiftId)
+        .maybeSingle();
+      if (fallbackApp) {
+        appData = fallbackApp as { id: string; shift_id: string; status: string };
+      }
+    }
+
+    if (!appData) {
       return jsonError("Application not found for this shift.", 404);
     }
 
-    const app = appData as { id: string; shift_id: string; status: string };
-
-    if (app.status !== "applied") {
+    if (appData.status !== "applied") {
       return jsonError("This application is no longer pending.", 409);
     }
 
@@ -108,28 +128,65 @@ export async function POST(request: Request) {
     // Deterministic order ID: prevents duplicate Cashfree orders for same shift+application
     const cashfreeOrderId = `medrova_conf_${values.shiftId.replace(/-/g, "").slice(0, 20)}_${values.applicationId.replace(/-/g, "").slice(0, 8)}`;
 
-    const order = await createCashfreeOrder({
-      orderId: cashfreeOrderId,
-      orderAmount: totalAmount,
-      customerEmail: auth.user.email ?? "noreply@medrova.in",
-      customerPhone: clinic.contact_phone ?? "9999999999",
-      customerId: clinic.id,
-      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://medrova.vercel.app"}/dashboard/clinic/shifts?payment=done&shift=${shift.id}`,
-    });
+    // ── Create Cashfree order (or reuse existing if retrying) ─
+    let order: { paymentSessionId: string; orderId: string };
+
+    try {
+      order = await createCashfreeOrder({
+        orderId: cashfreeOrderId,
+        orderAmount: totalAmount,
+        customerEmail: auth.user.email ?? "noreply@medrova.in",
+        customerPhone: clinic.contact_phone ?? "9999999999",
+        customerId: clinic.id,
+        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/dashboard/clinic/shifts?payment=done&shift=${shift.id}`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+
+      // Cashfree 409: order already exists — fetch the existing session instead
+      if (msg.includes("409") || msg.includes("order_already_exists")) {
+        try {
+          order = await getCashfreePaymentSession(cashfreeOrderId);
+        } catch (fetchErr) {
+          const fetchMsg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          // Edge case: already paid — tell the frontend to proceed to confirm
+          if (fetchMsg === "ALREADY_PAID") {
+            return NextResponse.json({
+              alreadyPaid: true,
+              orderId: cashfreeOrderId,
+              message: "Payment already completed. Proceeding to confirm.",
+            });
+          }
+          throw fetchErr;
+        }
+      } else {
+        throw err;
+      }
+    }
 
     // ── Record pending payment in DB ───────────────────────
-    const { error: paymentError } = await auth.service
-      .from("clinic_payments")
-      .upsert({
-        clinic_id: clinic.id,
-        shift_id: shift.id,
-        amount: totalAmount,
-        razorpay_id: order.orderId,
-        status: "pending"
-      });
+    // Only upsert if no existing payment record — if one exists we already
+    // have it from Gate 4 and just need the session to reopen the modal.
+    if (!existingPayment) {
+      const { error: paymentError } = await auth.service
+        .from("clinic_payments")
+        .insert({
+          clinic_id: clinic.id,
+          shift_id: shift.id,
+          amount: totalAmount,
+          razorpay_id: order.orderId,
+          status: "pending"
+        });
 
-    if (paymentError) {
-      return jsonError(paymentError.message, 500);
+      if (paymentError) {
+        return jsonError(paymentError.message, 500);
+      }
+    } else {
+      // Update the order ID in case it changed (e.g. order expired and was recreated)
+      await auth.service
+        .from("clinic_payments")
+        .update({ razorpay_id: order.orderId, amount: totalAmount })
+        .eq("shift_id", shift.id);
     }
 
     return NextResponse.json({

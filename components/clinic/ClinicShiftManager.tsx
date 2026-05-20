@@ -86,11 +86,24 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
         paymentSessionId?: string;
         orderId?: string;
         amount?: number;
+        alreadyPaid?: boolean;
+        message?: string;
         error?: string;
       };
 
-      if (!orderResponse.ok || !orderResult.paymentSessionId) {
+      if (!orderResponse.ok) {
         setNotice(`❌ ${orderResult.error ?? "Unable to create payment order."}`);
+        return;
+      }
+
+      // Edge case: payment already completed for this order — skip the modal
+      if (orderResult.alreadyPaid && orderResult.orderId) {
+        await doConfirm(applicationId, orderResult.orderId, sourceTable);
+        return;
+      }
+
+      if (!orderResult.paymentSessionId) {
+        setNotice("❌ Unable to create payment order.");
         return;
       }
 
@@ -116,31 +129,37 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
       }
 
       // ── Step 3: Payment successful — confirm the professional
-      setNotice("Payment received! Confirming professional...");
-      const confirmResponse = await fetch(`/api/shifts/${selectedShift.id}/confirm`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          applicationId,
-          orderId: orderResult.orderId ?? "",
-          sourceTable,
-        })
-      });
-
-      if (!confirmResponse.ok) {
-        const res = (await confirmResponse.json()) as { error?: string };
-        setNotice(`❌ ${res.error ?? "Unable to confirm professional."}`);
-        return;
-      }
-
-      // Optimistic UI update
-      setLocalApps(prev => prev.map(app => app.id === applicationId ? { ...app, status: "confirmed" } : app));
-      setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: "confirmed" } : s));
-      setNotice("✅ Professional confirmed! Contact details are now visible.");
+      await doConfirm(applicationId, orderResult.orderId ?? "", sourceTable);
 
     } finally {
       setIsProcessing(false);
     }
+  }
+
+  async function doConfirm(
+    applicationId: string,
+    orderId: string,
+    sourceTable: "applications" | "professional_applications"
+  ) {
+    if (!selectedShift) return;
+
+    setNotice("Payment received! Confirming professional...");
+    const confirmResponse = await fetch(`/api/shifts/${selectedShift.id}/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ applicationId, orderId, sourceTable })
+    });
+
+    if (!confirmResponse.ok) {
+      const res = (await confirmResponse.json()) as { error?: string };
+      setNotice(`❌ ${res.error ?? "Unable to confirm professional."}`);
+      return;
+    }
+
+    // Optimistic UI update
+    setLocalApps(prev => prev.map(app => app.id === applicationId ? { ...app, status: "confirmed" } : app));
+    setLocalShifts(prev => prev.map(s => s.id === selectedShift.id ? { ...s, status: "confirmed" } : s));
+    setNotice("✅ Professional confirmed! Contact details are now visible.");
   }
 
   async function completeShift(applicationId: string) {
@@ -249,16 +268,19 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
               };
 
               return (
-                <motion.button
+                <motion.div
                   layout
+                  role="button"
+                  tabIndex={0}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 24 }}
                   key={shift.id}
                   onClick={() => setSelectedShiftId(shift.id)}
+                  onKeyDown={(e) => e.key === "Enter" && setSelectedShiftId(shift.id)}
                   className={cn(
-                    "block w-full text-left rounded-2xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md",
+                    "block w-full text-left rounded-2xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md cursor-pointer",
                     isSelected ? "border-[#1E40AF] ring-1 ring-[#1E40AF] bg-blue-50/50" : "border-[#E2E8F0]"
                   )}
                 >
@@ -315,8 +337,9 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
                       />
                     </div>
                   )}
-                </motion.button>
+                </motion.div>
               );
+
             })}
           </AnimatePresence>
 
@@ -374,7 +397,7 @@ function ApplicantsPanel({
             {applications.length}
           </span>
         </div>
-        {selectedShift && (selectedShift.status === 'active' || selectedShift.status === 'confirmed') && (
+        {selectedShift?.status === "active" && (
           <button
             onClick={cancelShift}
             disabled={isProcessing}
@@ -382,6 +405,14 @@ function ApplicantsPanel({
           >
             <X className="h-3 w-3" /> Cancel Shift
           </button>
+        )}
+        {selectedShift?.status === "confirmed" && (
+          <div className="flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-semibold text-purple-700">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Cannot cancel after confirmation
+          </div>
         )}
       </div>
 

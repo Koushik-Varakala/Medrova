@@ -13,12 +13,13 @@ for (const line of lines) {
 const supabase = createClient(url, key);
 
 async function run() {
-  const { data, error } = await supabase
-    .from("applications")
-    .select("*, doctor:doctors(*), shift:shifts(*, clinic:clinics(*)), job:jobs(*, clinic:clinics(*))")
-    .limit(1);
-  console.log("Error:", error);
-  console.log("Data:", JSON.stringify(data, null, 2));
+  const { data: roles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("*");
+  
+  console.log("=== User Roles ===");
+  console.log("Error:", rolesError);
+  console.log("Roles:", roles);
 }
 
 run();

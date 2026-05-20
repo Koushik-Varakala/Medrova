@@ -67,13 +67,15 @@ export default function ClinicShiftsPage() {
 
             return {
               id: getStringValue(r, "id"),
-              doctorId: getStringValue(r, "doctor_id"),
+              doctorId: getStringValue(r, "doctor_id") || getStringValue(r, "professional_id"),
               shiftId: getStringValue(r, "shift_id") || undefined,
               jobId: undefined,
               status: getStringValue(r, "status") as Application["status"],
               createdAt: getStringValue(r, "created_at"),
               doctor: doctorObj as Application["doctor"],
+              sourceTable: (getStringValue(r, "source_table") || "applications") as Application["sourceTable"],
             };
+
           });
         }
       }

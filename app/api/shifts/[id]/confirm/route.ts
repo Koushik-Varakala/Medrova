@@ -7,6 +7,7 @@ import {
   validationError
 } from "@/lib/api-utils";
 import { sendEmail, shiftConfirmedEmailHtml } from "@/lib/email";
+import { getCashfreeOrderStatus } from "@/lib/cashfree";
 
 interface ShiftConfirmRouteContext {
   params: {
@@ -41,11 +42,43 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
       return jsonError("Unable to verify payment status.", 500);
     }
 
-    if (!paymentRecord || (paymentRecord as { status: string }).status !== "completed") {
-      return jsonError(
-        "Payment is required before confirming a professional. Please complete payment first.",
-        402
-      );
+    const payment = paymentRecord as { id: string; status: string } | null;
+
+    if (!payment || payment.status !== "completed") {
+      // ── Webhook fallback: verify directly with Cashfree API ─
+      // The webhook can't reach localhost in dev, or may be delayed in prod.
+      // If Cashfree confirms the order is PAID, we self-heal and proceed.
+      if (values.orderId) {
+        try {
+          const orderStatus = await getCashfreeOrderStatus(values.orderId);
+
+          if (orderStatus.status === "PAID") {
+            // Mark as completed in DB (self-heal the missing webhook)
+            if (payment) {
+              await auth.service
+                .from("clinic_payments")
+                .update({ status: "completed" })
+                .eq("shift_id", params.id);
+            }
+            // Payment confirmed — proceed to confirmation below
+          } else {
+            return jsonError(
+              "Payment is required before confirming a professional. Please complete payment first.",
+              402
+            );
+          }
+        } catch {
+          return jsonError(
+            "Payment is required before confirming a professional. Please complete payment first.",
+            402
+          );
+        }
+      } else {
+        return jsonError(
+          "Payment is required before confirming a professional. Please complete payment first.",
+          402
+        );
+      }
     }
 
     const { data: clinicData, error: clinicError } = await auth.service
@@ -63,7 +96,7 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
     // Fetch the shift details for the email
     const { data: shiftDetails } = await auth.service
       .from("shifts")
-      .select("specialty, date, start_time, end_time, pay, location_display_name, area")
+      .select("specialty, date, start_time, end_time, pay, area")
       .eq("id", params.id)
       .maybeSingle();
 
@@ -73,13 +106,13 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
       start_time: string;
       end_time: string;
       pay: number;
-      location_display_name?: string;
       area?: string;
     } | null;
 
+
     const shiftDate = shift ? new Date(shift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "Date not available";
     const shiftTime = shift ? `${shift.start_time} – ${shift.end_time}` : "";
-    const shiftLocation = shift?.location_display_name ?? shift?.area ?? "Not specified";
+    const shiftLocation = shift?.area ?? "Not specified";
 
     // ── Try legacy doctor application first ────────────────
     const { data: applicationData } = await auth.service

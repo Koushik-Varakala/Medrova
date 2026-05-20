@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     try {
       const { data: shiftRow } = await service
         .from("shifts")
-        .select("specialty, date, start_time, end_time, pay, location_display_name, area, clinic:clinics(name, user_id)")
+        .select("specialty, date, start_time, end_time, pay, area, clinic:clinics(name, user_id)")
         .eq("id", payment.shift_id)
         .single();
 
@@ -135,7 +135,6 @@ export async function POST(request: Request) {
         start_time: string;
         end_time: string;
         pay: number;
-        location_display_name?: string;
         area?: string;
         clinic: { name: string; user_id: string } | null;
       } | null;
@@ -153,7 +152,7 @@ export async function POST(request: Request) {
               specialty: shift.specialty,
               date: new Date(shift.date).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" }),
               time: `${shift.start_time} – ${shift.end_time}`,
-              location: shift.location_display_name ?? shift.area ?? "Not specified",
+              location: shift.area ?? "Not specified",
               pay: shift.pay,
             }),
           });

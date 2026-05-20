@@ -11,7 +11,7 @@
 import crypto from "node:crypto";
 
 const CASHFREE_BASE_URL =
-  process.env.CASHFREE_ENV === "production"
+  process.env.NEXT_PUBLIC_CASHFREE_ENV === "production"
     ? "https://api.cashfree.com/pg"
     : "https://sandbox.cashfree.com/pg";
 
@@ -83,6 +83,42 @@ export async function createCashfreeOrder(
     order_id: string;
     payment_session_id: string;
   };
+
+  return {
+    cfOrderId: data.cf_order_id,
+    orderId: data.order_id,
+    paymentSessionId: data.payment_session_id,
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+// Fetch an existing order's payment session ID
+// Used when a 409 "order already exists" is returned by Cashfree,
+// so the clinic can re-open the same payment modal.
+// ─────────────────────────────────────────────────────────
+export async function getCashfreePaymentSession(
+  orderId: string
+): Promise<CashfreeOrderResult> {
+  const response = await fetch(`${CASHFREE_BASE_URL}/orders/${orderId}`, {
+    method: "GET",
+    headers: getCashfreeHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Cashfree order fetch failed: ${response.status}`);
+  }
+
+  const data = await response.json() as {
+    cf_order_id: string;
+    order_id: string;
+    payment_session_id: string;
+    order_status: string;
+  };
+
+  // If order is already PAID, throw so the caller can handle it
+  if (data.order_status === "PAID") {
+    throw new Error("ALREADY_PAID");
+  }
 
   return {
     cfOrderId: data.cf_order_id,
