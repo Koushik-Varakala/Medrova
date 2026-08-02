@@ -13,7 +13,7 @@ export function LandingFooter() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="grid gap-12 md:grid-cols-3 mb-12"
+          className="grid gap-12 md:grid-cols-4 mb-12"
         >
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
@@ -38,6 +38,15 @@ export function LandingFooter() {
               <li><Link href="/sign-up" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Join as Professional</Link></li>
               <li><Link href="/sign-up" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Register Your Clinic</Link></li>
               <li><Link href="/sign-in" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Sign In</Link></li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 className="font-bold text-[#0F172A] mb-4">Legal</h3>
+            <ul className="space-y-3">
+              <li><Link href="/legal/terms" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Terms &amp; Conditions</Link></li>
+              <li><Link href="/legal/refund" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Refund &amp; Cancellation</Link></li>
+              <li><Link href="/legal/shipping" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Shipping &amp; Delivery</Link></li>
             </ul>
           </div>
 
