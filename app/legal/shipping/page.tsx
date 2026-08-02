@@ -13,7 +13,7 @@ export default function ShippingPage() {
         
         <div className="prose prose-slate max-w-none space-y-6 text-slate-600">
           <p>
-            <em>Note: As Medrova is a digital Software-as-a-Service (SaaS) platform connecting healthcare professionals with facilities, our "shipping" and "delivery" typically refers to the provisioning of digital access, confirmation of shifts, or digital matches.</em>
+            <em>Note: As Medrova is a digital Software-as-a-Service (SaaS) platform connecting healthcare professionals with facilities, our &quot;shipping&quot; and &quot;delivery&quot; typically refers to the provisioning of digital access, confirmation of shifts, or digital matches.</em>
           </p>
           
           <p>
