@@ -12,7 +12,7 @@ export default function ClinicBillingPage() {
         <h1 className="text-3xl font-bold text-slate-900 mb-4">Medrova Credit Plans</h1>
         <p className="text-slate-600 max-w-2xl mx-auto">
           Medrova charges zero commission to doctors. Instead, hospitals use Prepaid Credits to confirm shifts. 
-          1 Credit unlocks the doctor's contact details and confirms them for your shift.
+          1 Credit unlocks the doctor&apos;s contact details and confirms them for your shift.
         </p>
       </div>
 
