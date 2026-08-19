@@ -148,14 +148,14 @@ export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashb
             </div>
           </Link>
 
-          <Link href="/dashboard/clinic/payments" className="min-w-[280px] shrink-0 snap-center sm:min-w-0">
+          <Link href="/dashboard/clinic/billing" className="min-w-[280px] shrink-0 snap-center sm:min-w-0">
             <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 shadow-sm ring-1 ring-emerald-100 transition-all hover:-translate-y-1 hover:shadow-md hover:ring-emerald-200">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-inner">
                 <Wallet className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-[#0F172A] group-hover:text-emerald-700 transition-colors">View Payments</h3>
-                <p className="mt-1 text-sm text-[#64748B]">Track staffing spend</p>
+                <h3 className="font-bold text-[#0F172A] group-hover:text-emerald-700 transition-colors">Billing & Credits</h3>
+                <p className="mt-1 text-sm text-[#64748B]">Purchase credits</p>
               </div>
               <ChevronRight className="absolute bottom-6 right-6 h-5 w-5 text-emerald-400 opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100" />
             </div>

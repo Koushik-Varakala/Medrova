@@ -67,70 +67,15 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
   async function confirmApplicant(applicationId: string, sourceTable: "applications" | "professional_applications") {
     if (!selectedShift) return;
 
+    if (!window.confirm("Confirming this professional will cost 1 Medrova Credit. Proceed?")) {
+      return;
+    }
+
     setIsProcessing(true);
-    setNotice("Creating payment order...");
+    setNotice("Confirming professional...");
 
     try {
-      // ── Step 1: Create Cashfree payment order ─────────────
-      const orderResponse = await fetch("/api/payments/cashfree/confirm-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shiftId: selectedShift.id,
-          applicationId,
-          sourceTable,
-        })
-      });
-
-      const orderResult = (await orderResponse.json()) as {
-        paymentSessionId?: string;
-        orderId?: string;
-        amount?: number;
-        alreadyPaid?: boolean;
-        message?: string;
-        error?: string;
-      };
-
-      if (!orderResponse.ok) {
-        setNotice(`❌ ${orderResult.error ?? "Unable to create payment order."}`);
-        return;
-      }
-
-      // Edge case: payment already completed for this order — skip the modal
-      if (orderResult.alreadyPaid && orderResult.orderId) {
-        await doConfirm(applicationId, orderResult.orderId, sourceTable);
-        return;
-      }
-
-      if (!orderResult.paymentSessionId) {
-        setNotice("❌ Unable to create payment order.");
-        return;
-      }
-
-      // ── Step 2: Open Cashfree checkout modal ───────────────
-      const sdkLoaded = await loadCashfreeSDK();
-      const cfMode = process.env.NEXT_PUBLIC_CASHFREE_ENV === "production" ? "production" : "sandbox";
-
-      if (!sdkLoaded || !window.Cashfree) {
-        setNotice("❌ Payment SDK failed to load. Please refresh and try again.");
-        return;
-      }
-
-      setNotice("Processing payment...");
-      const cashfree = window.Cashfree({ mode: cfMode });
-      const result = await cashfree.checkout({
-        paymentSessionId: orderResult.paymentSessionId,
-        redirectTarget: "_modal",
-      });
-
-      if (result.error) {
-        setNotice(`Payment cancelled: ${result.error.message}`);
-        return;
-      }
-
-      // ── Step 3: Payment successful — confirm the professional
-      await doConfirm(applicationId, orderResult.orderId ?? "", sourceTable);
-
+      await doConfirm(applicationId, sourceTable);
     } finally {
       setIsProcessing(false);
     }
@@ -138,16 +83,14 @@ export function ClinicShiftManager({ shifts, applications }: ClinicShiftManagerP
 
   async function doConfirm(
     applicationId: string,
-    orderId: string,
     sourceTable: "applications" | "professional_applications"
   ) {
     if (!selectedShift) return;
 
-    setNotice("Payment received! Confirming professional...");
     const confirmResponse = await fetch(`/api/shifts/${selectedShift.id}/confirm`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ applicationId, orderId, sourceTable })
+      body: JSON.stringify({ applicationId, sourceTable })
     });
 
     if (!confirmResponse.ok) {

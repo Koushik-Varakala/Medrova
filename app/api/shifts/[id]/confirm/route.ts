@@ -17,7 +17,6 @@ interface ShiftConfirmRouteContext {
 
 const confirmShiftSchema = z.object({
   applicationId: z.string().uuid(),
-  orderId: z.string().min(1),
   sourceTable: z.enum(["applications", "professional_applications"]).optional()
 });
 
@@ -31,59 +30,10 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
 
     const values = await parseJsonWithSchema(request, confirmShiftSchema);
 
-    // ── Security Gate 0: Verify payment was completed ──────
-    const { data: paymentRecord, error: paymentLookupErr } = await auth.service
-      .from("clinic_payments")
-      .select("id, status")
-      .eq("shift_id", params.id)
-      .maybeSingle();
-
-    if (paymentLookupErr) {
-      return jsonError("Unable to verify payment status.", 500);
-    }
-
-    const payment = paymentRecord as { id: string; status: string } | null;
-
-    if (!payment || payment.status !== "completed") {
-      // ── Webhook fallback: verify directly with Cashfree API ─
-      // The webhook can't reach localhost in dev, or may be delayed in prod.
-      // If Cashfree confirms the order is PAID, we self-heal and proceed.
-      if (values.orderId) {
-        try {
-          const orderStatus = await getCashfreeOrderStatus(values.orderId);
-
-          if (orderStatus.status === "PAID") {
-            // Mark as completed in DB (self-heal the missing webhook)
-            if (payment) {
-              await auth.service
-                .from("clinic_payments")
-                .update({ status: "completed" })
-                .eq("shift_id", params.id);
-            }
-            // Payment confirmed — proceed to confirmation below
-          } else {
-            return jsonError(
-              "Payment is required before confirming a professional. Please complete payment first.",
-              402
-            );
-          }
-        } catch {
-          return jsonError(
-            "Payment is required before confirming a professional. Please complete payment first.",
-            402
-          );
-        }
-      } else {
-        return jsonError(
-          "Payment is required before confirming a professional. Please complete payment first.",
-          402
-        );
-      }
-    }
-
+    // ── 1. Fetch Clinic Profile and Credit Balance ──────
     const { data: clinicData, error: clinicError } = await auth.service
       .from("clinics")
-      .select("id, name")
+      .select("id, name, credits")
       .eq("user_id", auth.user.id)
       .single();
 
@@ -91,7 +41,25 @@ export async function POST(request: Request, { params }: ShiftConfirmRouteContex
       return jsonError(clinicError?.message ?? "Clinic profile not found.", 404);
     }
 
-    const clinic = clinicData as { id: string; name: string };
+    const clinic = clinicData as { id: string; name: string; credits: number };
+
+    // ── 2. Security Gate: Check Credits ──────
+    if (clinic.credits < 1) {
+      return jsonError(
+        "Insufficient credits to confirm a professional. Please purchase more credits.",
+        402
+      );
+    }
+
+    // ── 3. Deduct 1 Credit ──────
+    const { error: creditDeductError } = await auth.service
+      .from("clinics")
+      .update({ credits: clinic.credits - 1 })
+      .eq("id", clinic.id);
+
+    if (creditDeductError) {
+      return jsonError("Failed to deduct credit. Please try again.", 500);
+    }
 
     // Fetch the shift details for the email
     const { data: shiftDetails } = await auth.service
