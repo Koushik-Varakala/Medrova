@@ -20,6 +20,7 @@ import {
 import { employmentStatuses, hyderabadAreas, specialties } from "@/lib/constants";
 import type { Doctor } from "@/types";
 import { cn } from "@/lib/utils";
+import { SpecialtyCombobox } from "@/components/shared/SpecialtyCombobox";
 
 interface DoctorProfileFormProps {
   doctor: Doctor;
@@ -32,6 +33,7 @@ export function DoctorProfileForm({ doctor }: DoctorProfileFormProps) {
 
   // Form state
   const [availableDays, setAvailableDays] = useState<string[]>(doctor.availableDays || []);
+  const [specialty, setSpecialty] = useState<string>(doctor.specialty || "");
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -120,7 +122,7 @@ export function DoctorProfileForm({ doctor }: DoctorProfileFormProps) {
             <div className="flex flex-col items-center sm:items-start gap-2">
               <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Dr. {doctor.name}</h2>
               <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                <span className="font-medium text-blue-100">{doctor.specialty}</span>
+                <span className="font-medium text-blue-100">{specialty}</span>
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-300"></span>
                 <span className="font-medium text-blue-100">{doctor.experience} yrs experience</span>
               </div>
@@ -171,7 +173,21 @@ export function DoctorProfileForm({ doctor }: DoctorProfileFormProps) {
               <h3 className="text-lg font-bold text-[#0F172A]">Professional Information</h3>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              <Select defaultValue={doctor.specialty} label="Primary Specialty" options={specialties} disabled={!isEditing} />
+              <div>
+                <label className="mb-2 block text-sm font-bold text-[#0F172A]">Primary Specialty</label>
+                {isEditing ? (
+                  <SpecialtyCombobox
+                    options={specialties as string[]}
+                    value={specialty}
+                    onChange={setSpecialty}
+                    placeholder="Select or type specialty..."
+                  />
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-[#0F172A]">
+                    {specialty || "Not specified"}
+                  </div>
+                )}
+              </div>
               <Input defaultValue={String(doctor.experience)} label="Years of Experience" type="number" disabled={!isEditing} />
               <Input defaultValue={doctor.mciNumber} label="MCI/NMC Registration Number" disabled={!isEditing} />
               <Select

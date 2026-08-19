@@ -408,7 +408,7 @@ function ApplicantsPanel({
                     disabled={isProcessing}
                   >
                     {isProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
-                    Mark Completed & Transfer Payment
+                    Mark Shift as Complete
                   </button>
                 </div>
               )}
@@ -416,7 +416,7 @@ function ApplicantsPanel({
               {application.status === "completed" && selectedShift?.status === "completed" && (
                 <div className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-100 py-3 text-sm font-bold text-emerald-700 border border-emerald-200">
                   <Check className="h-5 w-5" />
-                  Shift Completed & Paid
+                  Shift Completed ✓
                 </div>
               )}
             </div>

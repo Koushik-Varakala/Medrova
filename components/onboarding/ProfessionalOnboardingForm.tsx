@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowRight, ArrowLeft, Loader2, AlertCircle, CheckCircle2, User, Stethoscope, FileText, Calendar, IndianRupee, Upload, X, ChevronDown } from "lucide-react";
@@ -12,6 +12,7 @@ import { professionalRoleConfig, weekDays } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import LocationPicker from "@/components/shared/LocationPicker";
 import { uploadDocument } from "@/components/onboarding/upload";
+import { SpecialtyCombobox } from "@/components/shared/SpecialtyCombobox";
 import type { ProfessionalRole, LocationResult } from "@/types";
 
 // ─── Zod Schema ────────────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
     setValue,
     watch,
     trigger,
+    control,
     formState: { errors },
   } = useForm<ProfessionalValues>({
     resolver: zodResolver(professionalSchema),
@@ -321,10 +323,18 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                   <div className="space-y-4">
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-slate-700">Specialty</label>
-                      <select {...register("specialty")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10">
-                        <option value="">Select specialty</option>
-                        {config.specialties.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
+                      <Controller
+                        control={control}
+                        name="specialty"
+                        render={({ field }) => (
+                          <SpecialtyCombobox
+                            options={config.specialties as string[]}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select or type specialty..."
+                          />
+                        )}
+                      />
                       {errors.specialty && <p className="mt-1 text-xs text-red-500">{errors.specialty.message}</p>}
                     </div>
                     <div>
@@ -512,7 +522,7 @@ export function ProfessionalOnboardingForm({ role }: Props) {
                           </div>
                           <div>
                             <p className="font-semibold text-slate-800">3. Payment Collection &amp; Escrow Authorization</p>
-                            <p>The Contractor hereby appoints and authorises Medrova to act as its limited payment collection agent to collect shift fees from Clinics on behalf of the Contractor. Upon successful completion of the shift, Medrova shall remit the applicable payment to the Contractor&apos;s designated bank account, typically within 24 to 48 business hours. Medrova reserves the right to deduct applicable platform fees, commissions, taxes, or transaction charges prior to remittance.</p>
+                            <p>Payment for all locum and permanent shifts shall be settled directly between the Clinic and the Contractor at the end of the assignment. Medrova acts solely as a discovery and scheduling platform and does not collect, hold, or guarantee professional fees. Medrova does not deduct commissions from the Contractor&apos;s earnings.</p>
                           </div>
                           <div>
                             <p className="font-semibold text-slate-800">4. Contractor Responsibilities &amp; Compliance</p>

@@ -31,6 +31,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { uploadDocument } from "@/components/onboarding/upload";
 import LocationPicker from "@/components/shared/LocationPicker";
+import { SpecialtyMultiCombobox } from "@/components/shared/SpecialtyCombobox";
 import type { LocationResult } from "@/types";
 
 const clinicSchema = z.object({
@@ -529,27 +530,14 @@ export function ClinicOnboardingForm() {
                   {step === 3 && (
                     <div className="space-y-6">
                       <div>
-                        <h3 className="text-lg font-bold text-[#0F172A] mb-4">Select all specialties you commonly need for shifts and jobs:</h3>
-                        <div className="flex flex-wrap gap-3">
-                          {specialties.map((specialty) => {
-                            const isSelected = selectedSpecialties.includes(specialty);
-                            return (
-                              <button
-                                key={specialty}
-                                type="button"
-                                onClick={() => toggleSpecialty(specialty)}
-                                className={cn(
-                                  "rounded-full px-5 py-2.5 text-sm font-bold transition-all hover:scale-105 active:scale-95",
-                                  isSelected 
-                                    ? "bg-[#1E40AF] text-white shadow-md shadow-blue-900/20" 
-                                    : "border-2 border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-                                )}
-                              >
-                                {specialty}
-                              </button>
-                            );
-                          })}
-                        </div>
+                        <h3 className="text-lg font-bold text-[#0F172A] mb-2">Specialties you commonly need</h3>
+                        <p className="text-sm text-slate-500 mb-4">Search from common options or type your own custom specialty.</p>
+                        <SpecialtyMultiCombobox
+                          options={specialties}
+                          value={selectedSpecialties}
+                          onChange={(val) => setValue("specialtiesNeeded", val, { shouldValidate: true })}
+                          placeholder="Search or add specialty..."
+                        />
                         {errors.specialtiesNeeded && <p className="mt-3 flex items-center gap-1.5 text-sm font-bold text-red-500"><AlertCircle className="h-4 w-4" />{errors.specialtiesNeeded.message}</p>}
                       </div>
 
@@ -567,7 +555,7 @@ export function ClinicOnboardingForm() {
                               I agree to the Medrova Platform Usage Agreement and Terms of Service.
                             </span>
                             <p className="text-slate-500 mt-1 text-xs">
-                              By checking this box, I confirm I am an authorised representative of this clinic and accept the terms on its behalf, including payment facilitation and liability clauses.
+                              By checking this box, I confirm I am an authorised representative of this clinic and accept the terms on its behalf.
                             </p>
                             {errors.agreedToTerms && (
                               <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-red-500">
@@ -597,7 +585,7 @@ export function ClinicOnboardingForm() {
                             </div>
                             <div>
                               <p className="font-semibold text-slate-800">3. Payment Facilitation</p>
-                              <p>To confirm a booking, the Clinic shall remit the agreed shift fee to Medrova prior to the assignment. Medrova acts as a limited payment collection agent on behalf of the Contractor. The Clinic agrees that payment to Medrova constitutes valid payment to the Contractor. Medrova reserves the right to deduct applicable platform fees, taxes, or transaction charges prior to remittance.</p>
+                              <p>To confirm a booking, the Clinic shall utilise Medrova Credits. Payment of the professional&apos;s fee shall be settled directly between the Clinic and the Contractor at the end of the assignment. Medrova acts solely as a discovery and scheduling platform and does not collect, hold, or guarantee professional fees.</p>
                             </div>
                             <div>
                               <p className="font-semibold text-slate-800">4. Clinic Responsibilities</p>

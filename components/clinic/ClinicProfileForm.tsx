@@ -19,6 +19,7 @@ import {
 import { clinicTypes, hyderabadAreas, specialties } from "@/lib/constants";
 import type { Clinic } from "@/types";
 import { cn } from "@/lib/utils";
+import { SpecialtyMultiCombobox } from "@/components/shared/SpecialtyCombobox";
 
 interface ClinicProfileFormProps {
   clinic: Clinic;
@@ -28,6 +29,7 @@ export function ClinicProfileForm({ clinic }: ClinicProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState("");
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>(clinic.specialtiesNeeded || []);
 
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -149,14 +151,28 @@ export function ClinicProfileForm({ clinic }: ClinicProfileFormProps) {
               <h3 className="text-lg font-bold text-[#0F172A]">Specialties Required</h3>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              <SelectField
-                label="Primary Specialty Needed"
-                defaultValue={clinic.specialtiesNeeded[0] ?? ""}
-                options={specialties}
-                isEditing={isEditing}
-              />
-              <div className="flex items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-500">
-                <p>Need more specialties? Contact support to expand your hiring criteria.</p>
+              <div className="sm:col-span-2">
+                <label className="mb-2 block text-sm font-bold text-[#0F172A]">Specialties Needed</label>
+                {isEditing ? (
+                  <SpecialtyMultiCombobox
+                    options={specialties}
+                    value={selectedSpecialties}
+                    onChange={setSelectedSpecialties}
+                    placeholder="Search or add specialty..."
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSpecialties.length > 0 ? (
+                      selectedSpecialties.map((s) => (
+                        <span key={s} className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                          {s}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-slate-500">No specialties selected</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </motion.section>

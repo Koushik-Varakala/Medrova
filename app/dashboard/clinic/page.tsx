@@ -14,6 +14,7 @@ import type { Clinic, Shift, VerificationStatus } from "@/types";
 export default function ClinicDashboardPage() {
   const router = useRouter();
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [credits, setCredits] = useState<number>(0);
   const [recentShifts, setRecentShifts] = useState<Shift[]>([]);
   const [stats, setStats] = useState({ activeShifts: 0, filledShifts: 0, pendingApplications: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +65,8 @@ export default function ClinicDashboardPage() {
           regCertUrl: getStringValue(c, "reg_cert_url") || undefined,
           createdAt: getStringValue(c, "created_at"),
         };
+
+        if (isMounted) setCredits(getNumberValue(c, "credits") ?? 0);
 
         // Fetch shift stats for this clinic
         const { data: shiftsData } = await supabase
@@ -134,7 +137,7 @@ export default function ClinicDashboardPage() {
           {error}
         </p>
       ) : clinic ? (
-        <ClinicDashboardHome clinic={clinic} stats={stats} recentShifts={recentShifts} />
+        <ClinicDashboardHome clinic={clinic} stats={stats} recentShifts={recentShifts} credits={credits} />
       ) : null}
     </DashboardShell>
   );

@@ -84,7 +84,7 @@ export const clinicNavigation: Array<SidebarItem & BottomTabItem> = [
   { href: "/dashboard/clinic/post-job", label: "Post Job", icon: BriefcaseMedical },
   { href: "/dashboard/clinic/shifts", label: "Shifts", icon: ClipboardList },
   { href: "/dashboard/clinic/jobs", label: "Jobs", icon: BriefcaseMedical },
-  { href: "/dashboard/clinic/payments", label: "Payments", icon: CreditCard },
+  { href: "/dashboard/clinic/billing", label: "Credits", icon: CreditCard },
   { href: "/dashboard/clinic/profile", label: "Profile", icon: User }
 ];
 

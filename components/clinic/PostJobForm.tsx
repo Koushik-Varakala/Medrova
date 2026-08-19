@@ -10,6 +10,8 @@ import { professionalRoleConfig } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { ProfessionalRole, LocationResult } from "@/types";
 import LocationPicker from "@/components/shared/LocationPicker";
+import { SpecialtyCombobox } from "@/components/shared/SpecialtyCombobox";
+import { Controller } from "react-hook-form";
 
 const postJobSchema = z.object({
   professionalType: z.enum(["doctor", "nurse", "technician"]),
@@ -129,13 +131,22 @@ export function PostJobForm() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <Select 
-            label="Specialty Needed" 
-            options={currentSpecialties} 
-            registration={register("specialty")} 
-            error={errors.specialty?.message}
-            icon={<div className="h-2 w-2 rounded-full bg-blue-500"></div>}
-          />
+          <div>
+            <label className="mb-2 block text-sm font-bold text-[#0F172A]">Specialty Needed</label>
+            <Controller
+              control={control}
+              name="specialty"
+              render={({ field }) => (
+                <SpecialtyCombobox
+                  options={currentSpecialties as string[]}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select or type specialty..."
+                />
+              )}
+            />
+            {errors.specialty && <p className="mt-1 text-sm font-medium text-red-500">{errors.specialty.message}</p>}
+          </div>
           <Input 
             label="Minimum Experience (Years)" 
             type="number" 

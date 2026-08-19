@@ -136,7 +136,7 @@ export function shiftLiveEmailHtml(opts: {
       ["Location", opts.location],
       ["Professional Payout", `₹${opts.pay.toLocaleString("en-IN")}`],
     ])}
-    ${alertBox("Funds are held securely in escrow. The professional is paid only after you mark the shift as complete.", COLORS.emerald, COLORS.emeraldLight)}
+    ${alertBox("Professionals apply for free. Use 1 Medrova Credit to confirm a candidate. You pay the professional directly at the end of their shift.", COLORS.emerald, COLORS.emeraldLight)}
     ${ctaButton("View My Shifts", opts.dashboardUrl ?? "https://medrova.vercel.app/dashboard/clinic")}
   `;
   return wrapInLayout(content);
@@ -186,9 +186,9 @@ export function shiftConfirmedEmailHtml(opts: {
       ["Date", opts.date],
       ["Time", opts.time],
       ["Location", opts.location],
-      ["Your Payout", `₹${opts.pay.toLocaleString("en-IN")} (within 24 hours of completion)`],
+      ["Your Payout", `₹${opts.pay.toLocaleString("en-IN")} (Paid directly by clinic)`],
     ])}
-    ${alertBox("Payment is guaranteed and held in escrow by Medrova. You will receive it within 24 hours after the clinic marks the shift as complete.", COLORS.blue, COLORS.blueLight)}
+    ${alertBox("You will be paid 100% of your fee directly by the clinic at the end of your shift (Cash or UPI). Medrova takes ZERO commission.", COLORS.blue, COLORS.blueLight)}
     ${ctaButton("View My Shifts", opts.dashboardUrl ?? "https://medrova.vercel.app/dashboard/professional")}
   `;
   return wrapInLayout(content);

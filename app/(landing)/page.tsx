@@ -50,13 +50,13 @@ export default function LandingPage() {
       { title: "Create Your Profile", desc: "Sign up free. Upload your MCI certificate, degree, and government ID. Nurses upload nursing council registration. Technicians upload relevant certifications." },
       { title: "Get Verified", desc: "Our team manually reviews every credential before you can apply to shifts or jobs. This verification is what makes clinics trust you instantly." },
       { title: "Browse Shifts and Jobs", desc: "See locum shifts sorted by distance, pay, and urgency. Apply in one tap. Browse permanent job postings from verified clinics." },
-      { title: "Work and Get Paid", desc: "Complete the shift. Receive your full payment directly to your UPI ID within 24 hours. No chasing. No waiting. Guaranteed." }
+      { title: "Work and Get Paid", desc: "Complete the shift. The clinic pays you directly at the end of the shift to your UPI ID. Medrova takes zero commission from your earnings. Guaranteed." }
     ],
     clinics: [
       { title: "Register Your Clinic", desc: "Create a clinic account and upload your registration certificate. Free to register, free to post permanent jobs." },
-      { title: "Post a Shift or Job", desc: "For permanent jobs: post free, receive applications, hire off-platform. For locum shifts: set the specialty, date, time, and pay." },
-      { title: "Pay Upfront, Secure the Shift", desc: "When you confirm a professional, pay the shift fee via Razorpay. Funds are held in escrow. The professional has a 100% guarantee before they show up." },
-      { title: "Mark Complete, Trigger Payout", desc: "After the shift, mark it complete on your dashboard. Medrova releases payment to the professional within 24 hours. You retain the invoice." }
+      { title: "Post a Shift or Job", desc: "For permanent jobs: post free, receive applications, hire off-platform. For locum shifts: set the specialty, date, time, and pay. Posting is always free." },
+      { title: "Use 1 Credit to Confirm a Professional", desc: "When you find the right candidate, confirm them using a single Medrova Credit. Credits are purchased in bundles starting at ₹750. No hidden fees." },
+      { title: "Pay the Professional Directly", desc: "After the shift, pay the professional their full quoted salary directly — cash or UPI. Medrova takes zero commission on the professional's pay." }
     ]
   };
 
@@ -359,9 +359,9 @@ export default function LandingPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
               { title: "Strict Credential Verification", desc: "Every doctor, nurse, and technician is manually verified by our team — MCI numbers, nursing council registrations, degrees, and government IDs. If documents change, verification resets automatically.", icon: ShieldCheck, color: "text-blue-600" },
-              { title: "Escrow Payment Model", desc: "Clinics pay the full shift amount upfront via Razorpay before a shift goes live. The money is secured before the professional walks in the door. No more payment risk.", icon: Lock, color: "text-emerald-600" },
-              { title: "24-Hour Guaranteed Payout", desc: "Once a clinic marks a shift complete, Medrova initiates the UPI transfer within 24 hours. No delays, no negotiations, no exceptions.", icon: Zap, color: "text-amber-500" },
-              { title: "Transparent and Fair Pricing", desc: "Professionals always join and use Medrova for free and receive 100% of their quoted fee. Clinics pay the professional's fee plus a 20% Medrova platform charge on locum shifts only. Permanent job posting is always free.", icon: IndianRupee, color: "text-purple-600" },
+              { title: "Prepaid Credit System", desc: "Clinics purchase credits in advance and spend 1 credit to confirm a professional. This unlocks the professional's contact details and guarantees them the booking — no surprise fees.", icon: Lock, color: "text-emerald-600" },
+              { title: "Direct Payment Model", desc: "Professionals receive 100% of their quoted pay directly from the clinic — cash or UPI — at the end of the shift. Medrova charges zero commission on professional earnings.", icon: Zap, color: "text-amber-500" },
+              { title: "Transparent and Fair Pricing", desc: "Professionals join and use Medrova for free. Clinics pay a flat software credit fee — from ₹750 per confirmation. Permanent job posting is always free.", icon: IndianRupee, color: "text-purple-600" },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -433,12 +433,12 @@ export default function LandingPage() {
                 <Building2 className="h-8 w-8" />
               </div>
               <h3 className="mb-3 text-2xl font-bold text-[#0F172A]">I Run a Clinic or Hospital</h3>
-              <p className="mb-6 text-slate-600 leading-relaxed">Register free. Post permanent jobs at no cost. For locum shifts, pay upfront and get a verified professional within hours.</p>
+              <p className="mb-6 text-slate-600 leading-relaxed">Register free. Post permanent jobs at no cost. For locum shifts, use Medrova Credits to confirm the right professional — no escrow, no commission on pay.</p>
 
               <ul className="mb-8 space-y-3 text-sm text-slate-600 font-medium">
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Free permanent job posting</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Manually verified professionals only</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Locum shifts: professional fee + 20% Medrova fee</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-slate-400" /> Locum shifts: 1 Credit per confirmation (from ₹750)</li>
               </ul>
 
               <Link

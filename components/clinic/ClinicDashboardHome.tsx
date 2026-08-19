@@ -12,13 +12,15 @@ import {
   Wallet, 
   ChevronRight,
   Calendar,
-  MapPin
+  MapPin,
+  Zap
 } from "lucide-react";
 import type { Clinic, Shift } from "@/types";
 import { cn, formatDate } from "@/lib/utils";
 
 interface ClinicDashboardHomeProps {
   clinic: Clinic;
+  credits: number;
   stats: {
     activeShifts: number;
     filledShifts: number;
@@ -27,7 +29,7 @@ interface ClinicDashboardHomeProps {
   recentShifts: Shift[];
 }
 
-export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashboardHomeProps) {
+export function ClinicDashboardHome({ clinic, stats, recentShifts, credits }: ClinicDashboardHomeProps) {
   // Determine greeting based on time
   const hour = new Date().getHours();
   let greeting = "Good evening";
@@ -70,21 +72,27 @@ export function ClinicDashboardHome({ clinic, stats, recentShifts }: ClinicDashb
               </p>
             </div>
             
-            <div className={cn(
-              "flex items-center gap-2 rounded-full px-4 py-2 font-medium shadow-sm backdrop-blur-md",
-              clinic.verificationStatus === "verified" ? "bg-white/20 text-white" : "bg-amber-500/20 text-amber-50"
-            )}>
-              {clinic.verificationStatus === "verified" ? (
-                <>
-                  <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
-                  Verified
-                </>
-              ) : (
-                <>
-                  <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></div>
-                  Pending Verification
-                </>
-              )}
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex items-center gap-2 rounded-full px-4 py-2 font-medium shadow-sm backdrop-blur-md",
+                clinic.verificationStatus === "verified" ? "bg-white/20 text-white" : "bg-amber-500/20 text-amber-50"
+              )}>
+                {clinic.verificationStatus === "verified" ? (
+                  <>
+                    <div className="h-2 w-2 rounded-full bg-emerald-400"></div>
+                    Verified
+                  </>
+                ) : (
+                  <>
+                    <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></div>
+                    Pending Verification
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 rounded-full bg-yellow-400/20 border border-yellow-300/30 px-4 py-2 text-sm font-bold text-yellow-200 backdrop-blur-md">
+                <Zap className="h-4 w-4 text-yellow-300" />
+                {credits} Credit{credits !== 1 ? "s" : ""}
+              </div>
             </div>
           </div>
         </div>

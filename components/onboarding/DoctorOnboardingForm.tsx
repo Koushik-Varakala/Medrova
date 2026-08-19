@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { useForm, type UseFormRegisterReturn } from "react-hook-form";
+import { useForm, type UseFormRegisterReturn, Controller } from "react-hook-form";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -38,6 +38,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { uploadDocument } from "@/components/onboarding/upload";
 import LocationPicker from "@/components/shared/LocationPicker";
+import { SpecialtyCombobox } from "@/components/shared/SpecialtyCombobox";
 import type { LocationResult } from "@/types";
 
 const doctorSchema = z.object({
@@ -171,6 +172,7 @@ export function DoctorOnboardingForm() {
     setValue,
     watch,
     trigger,
+    control,
     formState: { errors }
   } = useForm<DoctorOnboardingValues>({
     resolver: zodResolver(doctorSchema),
@@ -532,14 +534,20 @@ export function DoctorOnboardingForm() {
                   {step === 1 && (
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="sm:col-span-2">
-                        <FloatingSelect 
-                          error={errors.specialty?.message} 
-                          label="Specialty" 
-                          icon={<Stethoscope />} 
-                          options={specialties} 
-                          registration={register("specialty")} 
-                          filled={!!formValues.specialty} 
+                        <label className="mb-1.5 block text-sm font-bold text-slate-700">Specialty</label>
+                        <Controller
+                          control={control}
+                          name="specialty"
+                          render={({ field }) => (
+                            <SpecialtyCombobox
+                              options={specialties}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select or type specialty..."
+                            />
+                          )}
                         />
+                        {errors.specialty && <p className="mt-1 text-xs font-medium text-red-500">{errors.specialty.message}</p>}
                       </div>
                       <FloatingField error={errors.experience?.message} label="Years of Experience" icon={<Clock />} type="number" registration={register("experience")} filled={!!formValues.experience} />
                       <FloatingSelect 
@@ -710,7 +718,7 @@ export function DoctorOnboardingForm() {
                             </div>
                             <div>
                               <p className="font-semibold text-slate-800">3. Payment Collection &amp; Escrow Authorization</p>
-                              <p>The Contractor hereby appoints and authorises Medrova to act as its limited payment collection agent to collect shift fees from Clinics on behalf of the Contractor. Upon successful completion of the shift, Medrova shall remit the applicable payment to the Contractor&apos;s designated bank account, typically within 24 to 48 business hours. The Contractor agrees that payment made by a Clinic to Medrova shall be deemed equivalent to payment made directly to the Contractor. Medrova reserves the right to deduct applicable platform fees, commissions, taxes, or transaction charges prior to remittance.</p>
+                              <p>Payment for all locum and permanent shifts shall be settled directly between the Clinic and the Contractor at the end of the assignment. Medrova acts solely as a discovery and scheduling platform and does not collect, hold, or guarantee professional fees. Medrova does not deduct commissions from the Contractor&apos;s earnings.</p>
                             </div>
                             <div>
                               <p className="font-semibold text-slate-800">4. Contractor Responsibilities &amp; Compliance</p>

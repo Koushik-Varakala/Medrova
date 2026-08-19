@@ -18,12 +18,13 @@ import {
   Sparkles
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { z } from "zod";
 import { hyderabadAreas, professionalRoleConfig } from "@/lib/constants";
 import { cn, formatCurrencyInr } from "@/lib/utils";
 import type { ProfessionalRole, LocationResult } from "@/types";
 import LocationPicker from "@/components/shared/LocationPicker";
+import { SpecialtyCombobox } from "@/components/shared/SpecialtyCombobox";
 
 const postShiftSchema = z.object({
   professionalType: z.enum(["doctor", "nurse", "technician"]),
@@ -133,10 +134,9 @@ export function PostShiftForm() {
     ? professionalRoleConfig[professionalType].specialties 
     : [];
 
-  // PAYMENT SUCCESS SCREEN
+  // SUCCESS SCREEN
   if (confirmedShift) {
     const pay = Number(confirmedShift.pay);
-    const platformFee = Math.round(pay * 0.20);
     return (
       <div className="mx-auto max-w-2xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Success Header */}
@@ -153,7 +153,7 @@ export function PostShiftForm() {
           <div className="bg-[#0F172A] px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-emerald-400" />
-              <span className="text-sm font-bold text-white tracking-widest uppercase">Shift Confirmation</span>
+              <span className="text-sm font-bold text-white tracking-widest uppercase">Shift Details</span>
             </div>
             <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">
               <Sparkles className="h-3.5 w-3.5" /> Live
@@ -189,6 +189,10 @@ export function PostShiftForm() {
                 <MapPin className="h-4 w-4 text-blue-500" /> {confirmedShift.locationDisplayName}
               </p>
             </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Professional Pay</p>
+              <p className="font-bold text-emerald-600 text-lg">₹{pay.toLocaleString("en-IN")}</p>
+            </div>
             {confirmedShift.isUrgent && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
                 <Zap className="h-5 w-5 text-amber-500" />
@@ -196,29 +200,17 @@ export function PostShiftForm() {
               </div>
             )}
           </div>
-
-          <div className="border-t border-slate-100 bg-slate-50 px-6 py-4 grid sm:grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Professional Earns</p>
-              <p className="text-xl font-black text-emerald-600">₹{pay.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Platform Fee (20%)</p>
-              <p className="text-xl font-black text-slate-700">₹{platformFee.toLocaleString("en-IN")}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Total Paid</p>
-              <p className="text-xl font-black text-[#1E40AF]">₹{(pay + platformFee).toLocaleString("en-IN")}</p>
-            </div>
-          </div>
         </div>
 
-        {/* Guarantee Banner */}
-        <div className="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
-          <p className="text-sm font-medium text-emerald-900">
-            <strong>Payment Held in Escrow.</strong> The professional is paid within 24 hours after you mark the shift as complete. 100% refunded if no one shows up.
-          </p>
+        {/* What Happens Next */}
+        <div className="mt-6 flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
+          <div>
+            <p className="text-sm font-bold text-blue-900 mb-1">What happens next?</p>
+            <p className="text-sm font-medium text-blue-800">
+              Verified professionals can now apply for this shift. When you find the right match, confirm them using <strong>1 Medrova Credit</strong>. You then pay them their full salary directly at the clinic — zero commission deducted.
+            </p>
+          </div>
         </div>
 
         {/* Actions */}
@@ -275,13 +267,22 @@ export function PostShiftForm() {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          <Select 
-            label="Specialty Needed" 
-            options={currentSpecialties} 
-            registration={register("specialty")} 
-            error={errors.specialty?.message} 
-            icon={<div className="h-2 w-2 rounded-full bg-blue-500"></div>}
-          />
+          <div>
+            <label className="mb-2 block text-sm font-bold text-[#0F172A]">Specialty Needed</label>
+            <Controller
+              control={control}
+              name="specialty"
+              render={({ field }) => (
+                <SpecialtyCombobox
+                  options={currentSpecialties as string[]}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select or type specialty..."
+                />
+              )}
+            />
+            {errors.specialty && <p className="mt-1 text-sm font-medium text-red-500">{errors.specialty.message}</p>}
+          </div>
           <div className="flex flex-col gap-1.5">
             <LocationPicker 
               label="Shift Location" 
@@ -360,7 +361,7 @@ export function PostShiftForm() {
               <span className="font-bold text-emerald-700">{formatCurrencyInr(Number(payValue) || 0)}</span>
             </div>
             <div className="mt-3 text-xs text-slate-400 font-medium">
-              Platform fee is collected when you confirm a professional.
+              You use 1 Credit when confirming a professional. No commission deducted from professional.
             </div>
           </div>
         </div>
@@ -368,7 +369,7 @@ export function PostShiftForm() {
         <div className="mt-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
           <p className="text-sm font-medium text-emerald-900">
-            Professional guaranteed payment within 24 hours of shift completion.
+            Professionals receive 100% of their quoted pay directly from you. Medrova takes zero commission.
           </p>
         </div>
       </section>
