@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Menu, X, Activity, LogOut, User as UserIcon, CalendarCheck, BriefcaseMedical, Building2, User
+  Menu, X, Activity, LogOut, User as UserIcon, CalendarCheck, BriefcaseMedical, Building2, User, Zap
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -236,6 +236,15 @@ export function LandingNavbar({ forceDark = false }: { forceDark?: boolean } = {
                       className="absolute left-0 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
                     >
                       <div className="p-2">
+                        <Link href="/quick-post" className="flex items-start gap-3 rounded-lg px-3 py-3 bg-amber-50/50 hover:bg-amber-50 border border-amber-200/50 transition-colors mb-1">
+                          <Zap className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                          <div>
+                            <div className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                              Quick Post <span className="text-[10px] bg-amber-200/70 text-amber-800 px-1.5 py-0.2 rounded font-bold">New</span>
+                            </div>
+                            <div className="text-xs text-amber-700/80">Paste WhatsApp text, no login</div>
+                          </div>
+                        </Link>
                         <Link href="/sign-up" className="flex items-start gap-3 rounded-lg px-3 py-3 hover:bg-blue-50 transition-colors">
                           <CalendarCheck className="h-5 w-5 text-[#1E40AF] mt-0.5" />
                           <div>
@@ -356,6 +365,12 @@ export function LandingNavbar({ forceDark = false }: { forceDark?: boolean } = {
 
                   <div className="border-b border-slate-100 pb-2">
                     <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">For Clinics</h4>
+                    <Link href="/quick-post" className="flex items-center justify-between text-amber-800 bg-amber-50 font-bold p-2.5 rounded-lg mb-1" onClick={() => setMobileMenuOpen(false)}>
+                      <span className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-amber-600" /> Quick Post (No Login)
+                      </span>
+                      <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold">Fast</span>
+                    </Link>
                     <Link href="/sign-up" className="block text-[#0F172A] font-medium p-2 hover:bg-slate-50 rounded-lg" onClick={() => setMobileMenuOpen(false)}>
                       Post a Shift
                     </Link>

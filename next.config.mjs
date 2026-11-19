@@ -8,6 +8,15 @@ const nextConfig = {
         hostname: "images.unsplash.com"
       }
     ]
+  },
+  async redirects() {
+    return [
+      {
+        source: "/signup",
+        destination: "/sign-up",
+        permanent: true
+      }
+    ];
   }
 };
 

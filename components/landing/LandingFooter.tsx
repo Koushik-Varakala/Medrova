@@ -33,6 +33,7 @@ export function LandingFooter() {
           <div>
             <h3 className="font-bold text-[#0F172A] mb-4">Quick Links</h3>
             <ul className="space-y-3">
+              <li><Link href="/quick-post" className="text-blue-600 font-semibold hover:text-[#1E40AF] transition-colors flex items-center gap-1">Quick Post Shift (No Login) ✨</Link></li>
               <li><Link href="/shifts" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Browse Shifts</Link></li>
               <li><Link href="/jobs" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Browse Jobs</Link></li>
               <li><Link href="/sign-up" className="text-slate-500 hover:text-[#1E40AF] transition-colors">Join as Professional</Link></li>

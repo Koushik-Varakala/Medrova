@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,12 +111,18 @@ function getOnboardingPath(role: SignUpRole): string {
   return `/onboarding/professional?role=${role}`;
 }
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role") as SignUpRole | null;
+  const initialRole: SignUpRole = (roleParam && ["doctor", "nurse", "technician", "clinic"].includes(roleParam))
+    ? roleParam
+    : "doctor";
+
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
-  const [confirmedRole, setConfirmedRole] = useState<SignUpRole>("doctor");
+  const [confirmedRole, setConfirmedRole] = useState<SignUpRole>(initialRole);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -128,8 +134,15 @@ export default function SignUpPage() {
     formState: { errors }
   } = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { role: "doctor" }
+    defaultValues: { role: initialRole }
   });
+
+  useEffect(() => {
+    if (roleParam && ["doctor", "nurse", "technician", "clinic"].includes(roleParam)) {
+      setValue("role", roleParam);
+      setConfirmedRole(roleParam);
+    }
+  }, [roleParam, setValue]);
 
   const selectedRole = watch("role");
 
@@ -479,5 +492,19 @@ export default function SignUpPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#1E40AF]" />
+        </div>
+      }
+    >
+      <SignUpContent />
+    </Suspense>
   );
 }

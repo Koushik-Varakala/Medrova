@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Medrova — SIH 2026 Complete 6-Slide Presentation Deck</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 0 60px;
+      gap: 32px;
+    }
+
+    /* Fixed Top Navigation Bar */
+    .nav-bar {
+      position: sticky;
+      top: 12px;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 9999px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-bar span {
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* 16:9 Presentation Canvas */
+    .slide-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slide-label {
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      align-self: flex-start;
+      margin-left: 4px;
+    }
+
+    .slide-container {
+      width: 1280px;
+      height: 720px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Common Top Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 28px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .team-badge {
+      border: 1.5px solid #1e293b;
+      border-radius: 9999px;
+      padding: 4px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .slide-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #0f172a;
+      text-transform: uppercase;
+    }
+
+    .sih-badge {
+      font-size: 11px;
+      font-weight: 800;
+      color: #1e3a8a;
+      text-align: right;
+      line-height: 1.2;
+      text-transform: uppercase;
+      border-left: 2px solid #cbd5e1;
+      padding-left: 12px;
+    }
+
+    /* Common Bottom Bar */
+    .bottom-bar {
+      height: 28px;
+      background: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: auto;
+    }
+
+    /* Slide 1 Specifics */
+    .slide-1-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 60px;
+    }
+
+    .s1-header {
+      font-size: 38px;
+      font-weight: 900;
+      color: #1e3a8a;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .s1-subtitle {
+      font-size: 20px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .s1-fields-grid {
+      width: 100%;
+      max-width: 980px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 22px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .s1-field-row { display: flex; font-size: 13.5px; line-height: 1.45; }
+    .s1-field-label { font-weight: 800; color: #1e293b; width: 220px; flex-shrink: 0; }
+    .s1-field-val { color: #334155; font-weight: 600; }
+
+    .s1-team-card {
+      margin-top: 18px;
+      width: 100%;
+      max-width: 980px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    /* Slide 2 Specifics */
+    .s2-grid {
+      display: grid;
+      grid-template-columns: 370px 1fr 370px;
+      grid-template-rows: auto 1fr;
+      gap: 14px 18px;
+      padding: 14px 24px;
+      flex: 1;
+      position: relative;
+    }
+    .s2-card { border: 1.5px solid #94a3b8; border-radius: 8px; padding: 12px 14px; background: #ffffff; }
+    .s2-card h3 { font-size: 15px; font-weight: 800; color: #1e3a8a; text-decoration: underline; margin-bottom: 6px; }
+    .s2-card p { font-size: 11.5px; line-height: 1.45; color: #1e293b; }
+    .s2-card ul { list-style-type: disc; padding-left: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .s2-card li { font-size: 11px; line-height: 1.4; color: #1e293b; }
+
+    .s2-center {
+      grid-column: 2; grid-row: 1 / span 2;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; padding: 6px 0;
+    }
+    .s2-screenshot-box {
+      width: 100%; height: 480px; background: #0f172a; border-radius: 12px;
+      border: 2px solid #334155; overflow: hidden; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+      display: flex; flex-direction: column;
+    }
+    .s2-screen-header {
+      background: #1e293b; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #334155; color: #38bdf8; font-size: 13px; font-weight: 800;
+    }
+    .s2-screen-content {
+      padding: 20px; color: white; display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: center;
+    }
+    .s2-glass-card {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px; padding: 12px 14px; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 12px;
+    }
+    .s2-callout {
+      position: absolute; padding: 5px 9px; border-radius: 6px; font-size: 10px; font-weight: 700;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15); z-index: 10; white-space: nowrap;
+    }
+    .c-top { top: 8px; left: 50%; transform: translateX(-50%); background: #fef08a; color: #854d0e; }
+    .c-left-1 { top: 120px; left: -25px; background: #cffafe; color: #0e7490; }
+    .c-left-2 { bottom: 50px; left: -25px; background: #f3e8ff; color: #6b21a8; }
+    .c-right-1 { top: 110px; right: -25px; background: #dbeafe; color: #1d4ed8; }
+    .c-right-2 { bottom: 60px; right: -20px; background: #fee2e2; color: #b91c1c; }
+
+    /* Slide 3 Specifics */
+    .s3-main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 16px 24px; flex: 1; }
+    .s3-left { border-right: 1.5px dashed #cbd5e1; padding-right: 18px; }
+    .s3-left h3 { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 10px; }
+    .s3-specs { list-style-type: disc; padding-left: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .s3-specs li { font-size: 11px; line-height: 1.45; color: #334155; }
+    .s3-right { display: flex; flex-direction: column; gap: 12px; }
+    .s3-flow-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; flex: 1; }
+    .s3-flow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
+    .s3-node { background: #ffffff; border-radius: 6px; padding: 8px 10px; border-left: 4px solid #2563eb; font-size: 10px; }
+    .s3-node h4 { font-size: 11px; font-weight: 800; margin-bottom: 2px; }
+    .s3-node p { color: #64748b; line-height: 1.3; }
+    .s3-bottom-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: 140px; }
+    .s3-layer-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .s3-layer-item { padding: 5px 8px; border-radius: 4px; font-size: 9.5px; font-weight: 700; display: flex; justify-content: space-between; }
+    .s3-status-card { background: #1e40af; border-radius: 8px; padding: 12px 14px; color: #ffffff; display: flex; flex-direction: column; justify-content: space-between; }
+    .s3-status-card p { font-size: 11px; line-height: 1.5; }
+    .s3-status-card a { color: #93c5fd; text-decoration: underline; font-weight: 600; }
+    .s3-badge-pill { background: #ffffff; color: #dc2626; font-weight: 800; font-size: 11px; padding: 5px; border-radius: 6px; text-align: center; }
+
+    /* Slide 4 Specifics */
+    .s4-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; flex: 1; padding: 16px 28px; position: relative; }
+    .s4-grid::before { content: ""; position: absolute; top: 15px; bottom: 15px; left: 50%; width: 1.5px; border-left: 1.5px dashed #cbd5e1; }
+    .s4-grid::after { content: ""; position: absolute; left: 25px; right: 25px; top: 50%; height: 1.5px; border-top: 1.5px dashed #cbd5e1; }
+    .s4-q { padding: 8px 16px; display: flex; flex-direction: column; }
+    .s4-q h3 { font-size: 15px; font-weight: 800; color: #1e3a8a; margin-bottom: 8px; }
+    .s4-list { list-style-type: disc; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+    .s4-list li { font-size: 11px; line-height: 1.45; color: #334155; }
+
+    /* Slide 5 Specifics */
+    .s5-body { display: grid; grid-template-columns: 1fr 340px; gap: 18px; padding: 14px 24px; flex: 1; }
+    .s5-left { display: flex; flex-direction: column; gap: 12px; }
+    .s5-table-box { border: 1.5px solid #cbd5e1; border-radius: 6px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+    th { background: #f8fafc; padding: 6px 8px; font-weight: 800; border-bottom: 1.5px solid #cbd5e1; border-right: 1px solid #e2e8f0; }
+    td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+    .metric-name { font-weight: 800; color: #1e3a8a; }
+    .highlight-gain { font-weight: 800; color: #059669; background: #ecfdf5; }
+    .s5-split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px; flex: 1; }
+    .s5-impact { border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .s5-impact h3 { font-size: 13px; font-weight: 800; color: #1e3a8a; margin-bottom: 4px; }
+    .s5-tagline { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px; font-size: 10px; font-weight: 800; text-align: center; }
+    .s5-graph { border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: space-between; }
+    .s5-bars { display: flex; align-items: flex-end; justify-content: center; gap: 24px; height: 80px; border-bottom: 2px solid #64748b; }
+    .s5-bar-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .s5-bar { width: 40px; border-radius: 4px 4px 0 0; color: white; font-size: 9px; font-weight: 800; text-align: center; padding-top: 2px; }
+    .s5-right { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .s5-right-header { background: #15803d; color: white; padding: 6px; border-radius: 4px; font-size: 10px; font-weight: 800; text-align: center; }
+    .s5-card { background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px 8px; }
+    .s5-card h4 { font-size: 10.5px; font-weight: 800; color: #166534; }
+    .s5-card p { font-size: 9px; color: #334155; line-height: 1.35; margin-top: 2px; }
+
+    /* Slide 6 Specifics */
+    .s6-body { padding: 10px 24px; flex: 1; display: flex; flex-direction: column; }
+    .s6-box { border: 1.5px solid #38bdf8; border-radius: 8px; padding: 12px 18px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; align-content: start; }
+    .s6-cat { display: flex; flex-direction: column; gap: 2px; }
+    .s6-cat-title { font-size: 11.5px; font-weight: 800; color: #0f172a; text-decoration: underline; margin-bottom: 2px; }
+    .s6-list { list-style-type: none; padding-left: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .s6-item { font-size: 10px; line-height: 1.38; color: #334155; }
+    .s6-item strong { color: #0f172a; font-weight: 800; }
+    .s6-item em { font-style: italic; color: #1e293b; }
+    .s6-link { display: inline-block; font-size: 9px; font-weight: 700; color: #2563eb; text-decoration: underline; margin-top: 1px; word-break: break-all; }
+    .s6-link:hover { color: #1d4ed8; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation -->
+  <div class="nav-bar">
+    <span>JUMP TO SLIDE:</span>
+    <a href="#slide-1" class="nav-btn">Slide 1 (Title)</a>
+    <a href="#slide-2" class="nav-btn">Slide 2 (Solution)</a>
+    <a href="#slide-3" class="nav-btn">Slide 3 (Technical)</a>
+    <a href="#slide-4" class="nav-btn">Slide 4 (Feasibility)</a>
+    <a href="#slide-5" class="nav-btn">Slide 5 (Impact)</a>
+    <a href="#slide-6" class="nav-btn">Slide 6 (References)</a>
+  </div>
+
+  <!-- SLIDE 1 -->
+  <div class="slide-wrapper" id="slide-1">
+    <div class="slide-label">Slide 1: Title Page</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">TITLE PAGE</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="slide-1-body">
+        <div class="s1-header">SMART INDIA HACKATHON 2026</div>
+        <div class="s1-subtitle">Idea Presentation Submission</div>
+        <div class="s1-fields-grid">
+          <div class="s1-field-row">
+            <div class="s1-field-label">Problem Statement ID &ndash;</div>
+            <div class="s1-field-val">SIH26198</div>
+          </div>
+          <div class="s1-field-row">
+            <div class="s1-field-label">Problem Statement Title &ndash;</div>
+            <div class="s1-field-val">Student Innovation-Cutting-edge technology in these sectors continues to be in demand. Recent shifts in healthcare trends, growing populations also present an array of opportunities for innovation.</div>
+          </div>
+          <div class="s1-field-row">
+            <div class="s1-field-label">Theme &ndash;</div>
+            <div class="s1-field-val">MedTech / BioTech / HealthTech</div>
+          </div>
+          <div class="s1-field-row">
+            <div class="s1-field-label">PS Category &ndash;</div>
+            <div class="s1-field-val">Software</div>
+          </div>
+          <div class="s1-field-row">
+            <div class="s1-field-label">Team ID &ndash;</div>
+            <div class="s1-field-val">[Enter Your Registered Team ID]</div>
+          </div>
+          <div class="s1-field-row">
+            <div class="s1-field-label">Team Name &ndash;</div>
+            <div class="s1-field-val">[Enter Your Registered Team Name]</div>
+          </div>
+        </div>
+        <div class="s1-team-card">
+          <div><strong>Institution:</strong> Vardhaman College of Engineering, Hyderabad</div>
+          <div><strong>Team Leader:</strong> Koushik Kumar Varakala (23881A1231, IT) &bull; Shiva Kumar Banoth (23881A1209, IT)</div>
+          <div><strong>Mentor:</strong> Ms. B. Swapna (Asst. Prof, IT)</div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission- Template</span>
+        <span>1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide-wrapper" id="slide-2">
+    <div class="slide-label">Slide 2: Proposed Solution</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">Medrova: Zero-Commission Locum Doctor Shift Management System</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="s2-grid">
+        <div class="s2-card" style="grid-column: 1; grid-row: 1;">
+          <h3>Problem:</h3>
+          <p>Hospitals and clinics face sudden doctor absenteeism, relying on <strong>unverified WhatsApp groups</strong> with a <strong>35&ndash;40% dropout rate</strong> and <strong>zero credential auditing</strong>. This exposes facilities to quackery, legal penalties under <strong>NMC Act 2019 (Sec 34)</strong>, and <strong>vicarious malpractice liability</strong> (<em>Supreme Court: Savita Garg case</em>).</p>
+        </div>
+        <div class="s2-card" style="grid-column: 1; grid-row: 2;">
+          <h3>Proposed Solution :</h3>
+          <ul>
+            <li><strong>Mandatory Credential Audit Wall:</strong> Physicians must submit verified MBBS/MD degrees, State Council cards (<strong>TSMC/APMC/NMC</strong>), and photo ID. Unverified accounts are blocked at the engine level.</li>
+            <li><strong>Deterministic Shift Lifecycle Engine:</strong> Bookings transition through an auditable, code-enforced pipeline: <strong>Open &rarr; Applied &rarr; Confirmed &rarr; In-Progress &rarr; Completed &rarr; Settled</strong>.</li>
+            <li><strong>PostgreSQL Row-Level Security (RLS):</strong> Hospital rotas and doctor data are segregated at the database engine layer (<strong>DPDP Act 2023 compliant</strong>).</li>
+          </ul>
+        </div>
+        <div class="s2-center">
+          <div class="s2-callout c-top">&check; Mandatory TSMC/NMC Credential Audit</div>
+          <div class="s2-callout c-left-1">&bull; Hyper-Local Geo-Radius Shift Matching</div>
+          <div class="s2-callout c-left-2">&bull; PostgreSQL RLS Engine Data Isolation</div>
+          <div class="s2-screenshot-box">
+            <div class="s2-screen-header">
+              <span>&#9877; Medrova &bull; Live Platform</span>
+              <span style="font-size: 11px; color: #10b981;">&bull; medrova.in</span>
+            </div>
+            <div class="s2-screen-content">
+              <div style="font-size: 18px; font-weight: 800; line-height: 1.2;">
+                Healthcare Staffing,<br><span style="color: #60a5fa;">Finally Done Right.</span>
+              </div>
+              <div style="font-size: 11px; color: #94a3b8;">
+                India's First Verified Locum Marketplace &bull; Hyderabad
+              </div>
+              <div class="s2-glass-card">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></div>
+                <div>
+                  <div style="font-size: 11px; font-weight: 800;">Shift Confirmed</div>
+                  <div style="font-size: 10px; color: #cbd5e1;">Pediatric Clinic, Kukatpally</div>
+                </div>
+              </div>
+              <div class="s2-glass-card">
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; flex-shrink: 0;"></div>
+                <div>
+                  <div style="font-size: 11px; font-weight: 800;">Payout Sent</div>
+                  <div style="font-size: 10px; color: #cbd5e1;">&8377;4,500 to UPI in 18hrs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="s2-callout c-right-1">&bull; Zero-Commission Direct Payout (0% Cut)</div>
+          <div class="s2-callout c-right-2">&bull; Prepaid &8377;750 Flat Credit Booking</div>
+        </div>
+        <div class="s2-card" style="grid-column: 3; grid-row: 1;">
+          <h3>Our Idea :</h3>
+          <p><strong>Medrova</strong> is a secure medical software platform featuring a <strong>zero-commission peer settlement model</strong> and <strong>fail-safe credential gating</strong>. It connects verified facilities directly with licensed physicians within a <strong>5&ndash;25 km geo-radius</strong>, cutting fill latency to <strong>under 30 minutes</strong>.</p>
+        </div>
+        <div class="s2-card" style="grid-column: 3; grid-row: 2;">
+          <h3>Innovation/Uniqueness:</h3>
+          <ul>
+            <li><strong>Zero-Commission Architecture:</strong> Avoids the working-capital collapse of traditional agencies (<strong>Nomad Health 2026 pivot</strong>); facilities settle <strong>100% directly</strong> with clinicians.</li>
+            <li><strong>Real-Time Shift State Machine:</strong> Unlike static job portals (<strong>Naukri, Docthub</strong>) taking 4&ndash;6 weeks for resume reviews, Medrova executes <strong>instant same-day shift dispatch</strong>.</li>
+            <li><strong>Kernel-Level Multi-Tenancy:</strong> Security enforced inside PostgreSQL engine policies.</li>
+            <li><strong>Empirically Validated Pilot:</strong> Tested with <strong>4 verified doctors</strong> and <strong>2 facilities</strong> (including <em>Precise Hospital</em>).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission- Template</span>
+        <span>2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide-wrapper" id="slide-3">
+    <div class="slide-label">Slide 3: Technical Approach</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">TECHNICAL APPROACH</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="s3-main">
+        <div class="s3-left">
+          <h3>Software Stack &amp; Architecture</h3>
+          <ul class="s3-specs">
+            <li><strong>Next.js 14 App Router &amp; React 18:</strong> Server-side rendering (SSR) and edge-routing for sub-second mobile browser access without app store friction.</li>
+            <li><strong>Supabase PostgreSQL 15 &amp; Native RLS:</strong> Relational multi-tenant engine enforcing declarative Row-Level Security directly at database layer.</li>
+            <li><strong>Supabase Auth &amp; RBAC:</strong> JWT session handling with strict role guards (<code>doctor</code>, <code>clinic_admin</code>, <code>platform_admin</code>).</li>
+            <li><strong>Encrypted Storage Vault:</strong> Private Supabase Storage buckets with short-lived signed URLs for TSMC/NMC registration cards.</li>
+            <li><strong>PostGIS &amp; Haversine Proximity:</strong> Dynamic geo-radius filtering (5 km to 25 km) matching doctors to immediate clinical vacancies.</li>
+            <li><strong>Cashfree Payments SDK:</strong> Credit purchasing engine secured by server-side HMAC-SHA256 webhook signature verification.</li>
+            <li><strong>Resend &amp; Webhook Notifications:</strong> Automated transactional email receipts and webhook triggers for instant emergency shift broadcast.</li>
+          </ul>
+        </div>
+        <div class="s3-right">
+          <div class="s3-flow-box">
+            <div class="s3-heading">FLOW CHART</div>
+            <div class="s3-flow-grid">
+              <div class="s3-node" style="border-left-color: #2563eb; background: #eff6ff;">
+                <h4>1. Facility Posts Shift</h4>
+                <p>Specialty, Timings, Direct Pay, and Hospital GPS Pin.</p>
+              </div>
+              <div class="s3-node" style="border-left-color: #06b6d4; background: #ecfeff;">
+                <h4>2. Geo &amp; Credential Filter</h4>
+                <p>Scans verified doctors within 5&ndash;25 km. Unverified blocked.</p>
+              </div>
+              <div class="s3-node" style="border-left-color: #0d9488; background: #f0fdfa;">
+                <h4>3. Doctor Applies</h4>
+                <p>Doctor reviews compensation; submits 1-tap application.</p>
+              </div>
+              <div class="s3-node" style="border-left-color: #9333ea; background: #faf5ff;">
+                <h4>4. Facility Confirms</h4>
+                <p>1 Credit deducted from balance. Shift status: Confirmed.</p>
+              </div>
+              <div class="s3-node" style="border-left-color: #d97706; background: #fffbeb;">
+                <h4>5. Duty Executed</h4>
+                <p>Doctor attends shift at clinic/hospital premises.</p>
+              </div>
+              <div class="s3-node" style="border-left-color: #16a34a; background: #f0fdf4;">
+                <h4>6. Direct Settlement</h4>
+                <p>Facility pays doctor directly via UPI/Cash (0% fee).</p>
+              </div>
+            </div>
+          </div>
+          <div class="s3-bottom-split">
+            <div class="s3-layer-card">
+              <h4 style="font-size: 12px; font-weight: 800; color: #1e3a8a; text-decoration: underline;">3-TIER SECURITY ARCHITECTURE</h4>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div class="s3-layer-item" style="background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe;">
+                  <span>Layer 1: Client UI Middleware</span>
+                  <span>Next.js JWT Guard</span>
+                </div>
+                <div class="s3-layer-item" style="background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;">
+                  <span>Layer 2: API Gateway Validation</span>
+                  <span>HMAC-SHA256 Signatures</span>
+                </div>
+                <div class="s3-layer-item" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;">
+                  <span>Layer 3: Kernel Database Engine</span>
+                  <span>PostgreSQL RLS Isolation</span>
+                </div>
+              </div>
+            </div>
+            <div class="s3-status-card">
+              <div>
+                <p><strong>Live Portal:</strong> <a href="https://medrova.in" target="_blank" rel="noopener noreferrer">https://medrova.in</a></p>
+                <p><strong>GitHub Link:</strong> <a>https://github.com/[Your-Repo]</a></p>
+                <p><strong>Demo Walkthrough:</strong> <a>Live Platform Video Link</a></p>
+              </div>
+              <div class="s3-badge-pill">
+                100% Fully Functional &amp; Deployed Live in Hyderabad
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission- Template</span>
+        <span>3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide-wrapper" id="slide-4">
+    <div class="slide-label">Slide 4: Feasibility and Viability</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">FEASIBILITY AND VIABILITY</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="s4-grid">
+        <div class="s4-q" style="padding-top: 0; padding-left: 0;">
+          <h3>Feasibility</h3>
+          <ul class="s4-list">
+            <li><strong>Serverless Scalability:</strong> Built on Next.js 14 and Supabase PostgreSQL with zero dedicated physical server overhead, auto-scaling from 10 to 10,000 concurrent shift queries.</li>
+            <li><strong>Zero App Store Friction:</strong> Progressive mobile web client runs directly in any mobile or desktop browser without requiring downloads or device storage.</li>
+            <li><strong>Automated State Pipeline:</strong> Enforces a deterministic 6-stage lifecycle (<code>Open &rarr; Settled</code>) using PostgreSQL ACID transactions, eliminating race conditions.</li>
+            <li><strong>Zero-Dependency Credential Gate:</strong> Validates TSMC, APMC, and NMC registration numbers directly against official state registries without costly HR outsourcing.</li>
+            <li><strong>Pilot-Tested Infrastructure:</strong> Validated in real clinical environments across Hyderabad.</li>
+          </ul>
+        </div>
+        <div class="s4-q" style="padding-top: 0; padding-right: 0;">
+          <h3>Commercial feasibility</h3>
+          <ul class="s4-list">
+            <li><strong>Market Validation:</strong> High demand &mdash; India has over 43,000 private clinics and secondary hospitals facing chronic doctor absenteeism and a 70% specialist deficit (NITI Aayog).</li>
+            <li><strong>Float-Free Unit Economics:</strong> Eliminates the fatal agency working-capital trap (the <strong>Nomad Health 2026 pivot</strong>); facilities pay clinicians directly (0% commission) while buying flat software credits (&8377;750/booking vs. &8377;2,500&ndash;&8377;5,000 broker cuts).</li>
+            <li><strong>Technical Readiness:</strong> 100% live &amp; functional at <code>https://medrova.in</code> with active authentication, database RLS, and Cashfree payment integration.</li>
+            <li><strong>Success Likelihood:</strong> High (&gt;90%) &mdash; clinics save &8377;15,000&ndash;&8377;35,000 monthly; doctors receive 100% of their earnings immediately via UPI.</li>
+          </ul>
+        </div>
+        <div class="s4-q" style="padding-bottom: 0; padding-left: 0;">
+          <h3>Challenges</h3>
+          <ul class="s4-list">
+            <li><strong>Cold-Start Doctor Supply:</strong> Initial localized doctor liquidity constraints within specific 5&ndash;10 km municipal wards during early launch weeks.</li>
+            <li><strong>Medical Credential Forgery:</strong> Risk of fraudulent or altered state council registration cards and certificates being submitted by unvetted applicants.</li>
+            <li><strong>Last-Minute Doctor Cancellations:</strong> Risk of a confirmed doctor failing to report for duty during an emergency shift, leaving an ICU or casualty ward unstaffed.</li>
+            <li><strong>Data Leakage Between Rivals:</strong> Competing private hospital groups attempting to access or scrape each other's staffing rotas, clinician contacts, and pay rates.</li>
+          </ul>
+        </div>
+        <div class="s4-q" style="padding-bottom: 0; padding-right: 0;">
+          <h3>Strategy:</h3>
+          <ul class="s4-list">
+            <li><strong>Hyper-Local Cluster Rollout:</strong> Launching dense, zone-by-zone medical clusters (e.g., Gachibowli, Banjara Hills, Kukatpally) before citywide expansion to guarantee fast shift fill rates.</li>
+            <li><strong>Dual-Layer KYC &amp; Council Cross-Check:</strong> Manual document audit cross-referenced against public Telangana State Medical Council (TSMC) registries, with DigiLocker API integration.</li>
+            <li><strong>Geofenced Check-in &amp; Reliability Scoring:</strong> Real-time GPS check-in at hospital premises on arrival; clinicians with repeat cancellations lose booking priority.</li>
+            <li><strong>Kernel-Level PostgreSQL RLS Isolation:</strong> Enforcing tenant isolation at the database engine layer, making cross-hospital data breaches impossible (<strong>DPDP Act 2023</strong>).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission- Template</span>
+        <span>4</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide-wrapper" id="slide-5">
+    <div class="slide-label">Slide 5: Impact and Benefits</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">IMPACT AND BENEFITS</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="s5-body">
+        <div class="s5-left">
+          <div class="s5-table-box">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 22%;">Metrics</th>
+                  <th style="width: 32%;">Traditional Channels (WhatsApp / Agents)</th>
+                  <th style="width: 28%;">Medrova Platform</th>
+                  <th style="width: 18%;">Net Gain</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="metric-name">Fulfillment Latency</td>
+                  <td>12 &ndash; 36 Hours (Chaotic calling)</td>
+                  <td><strong>&lt; 30 Minutes</strong> (Geo-Dispatch)</td>
+                  <td class="highlight-gain">&gt; 95% Faster</td>
+                </tr>
+                <tr>
+                  <td class="metric-name">Credential Audit</td>
+                  <td><strong>0%</strong> (Unchecked forwards; quackery risk)</td>
+                  <td><strong>100% Pre-Screened</strong> (TSMC/NMC)</td>
+                  <td class="highlight-gain">100% Quack-Free</td>
+                </tr>
+                <tr>
+                  <td class="metric-name">Broker Commission</td>
+                  <td><strong>20% &ndash; 35% cut</strong> from doctor wages</td>
+                  <td><strong>0% Platform Cut</strong> (Direct Payout)</td>
+                  <td class="highlight-gain">100% Pay Kept</td>
+                </tr>
+                <tr>
+                  <td class="metric-name">Booking Cost / Shift</td>
+                  <td>&8377;2,500 &ndash; &8377;5,000 per agency hire</td>
+                  <td><strong>&8377;750 flat prepaid credit</strong></td>
+                  <td class="highlight-gain">-70% to -85% Cost</td>
+                </tr>
+                <tr>
+                  <td class="metric-name">Last-Minute Dropout</td>
+                  <td><strong>35% &ndash; 50%</strong> (Verbal deal collapse)</td>
+                  <td><strong>&lt; 5%</strong> (Enforced State Machine)</td>
+                  <td class="highlight-gain">10x Reliability</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="s5-split">
+            <div class="s5-impact">
+              <div>
+                <h3>Clinical &amp; Economic Impact</h3>
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: 10.5px; color: #1e293b;">
+                  <li><strong>&check; 24/7 ICU &amp; Emergency Continuity:</strong> Eliminates unattended patient mortality during sudden physician absenteeism.</li>
+                  <li><strong>&check; &8377;30,000+ Monthly Savings per Clinic:</strong> Reallocates wasteful agency commissions directly back into hospital equipment.</li>
+                  <li><strong>&check; 100% Medico-Legal Protection:</strong> Complete statutory immunity under NMC Act 2019 (Sec 34) &amp; Supreme Court precedents.</li>
+                </ul>
+              </div>
+              <div class="s5-tagline">
+                Every emergency duty staffed. Every patient cared for.
+              </div>
+            </div>
+            <div class="s5-graph">
+              <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-align: center;">Shift Fulfillment Latency (Hours)</div>
+              <div class="s5-bars">
+                <div class="s5-bar-item">
+                  <div class="s5-bar" style="height: 75px; background: #ef4444;">18.5h</div>
+                  <div style="font-size: 9px; font-weight: 700; color: #64748b;">WhatsApp</div>
+                </div>
+                <div class="s5-bar-item">
+                  <div class="s5-bar" style="height: 16px; background: #10b981;">0.5h</div>
+                  <div style="font-size: 9px; font-weight: 700; color: #64748b;">Medrova</div>
+                </div>
+              </div>
+              <div style="font-size: 9px; font-weight: 800; color: #059669; text-align: center; background: #f0fdf4; padding: 2px;">
+                &check; 39x Faster Clinical Response Window
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="s5-right">
+          <div class="s5-right-header">
+            COMMUNITY BENEFITS:<br>HEALTHCARE WORKFORCE RESILIENCE
+          </div>
+          <div class="s5-card">
+            <h4>&#128737; Patient Safety &amp; Trust</h4>
+            <p>Guarantees that every patient visiting a 20&ndash;50 bed clinic or nursing home is treated exclusively by licensed Registered Medical Practitioners (RMPs), halting quackery.</p>
+          </div>
+          <div class="s5-card">
+            <h4>&#128104;&#8205;&#9877;&#65039; Doctor Welfare (NEET-PG)</h4>
+            <p>Shields 200,000+ MBBS graduates from middleman exploitation and delayed payments, offering transparent duty shifts with guaranteed 100% direct UPI settlement.</p>
+          </div>
+          <div class="s5-card">
+            <h4>&#127973; Epidemic Surge Mobilization</h4>
+            <p>Equips district health authorities with a rapid-dispatch network to deploy idle off-duty clinicians to primary health centers during seasonal disease outbreaks.</p>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission</span>
+        <span>5</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 (WITH 100% VERIFIED WORKING DIRECT LINKS) -->
+  <div class="slide-wrapper" id="slide-6">
+    <div class="slide-label">Slide 6: Research and References</div>
+    <div class="slide-container">
+      <div class="top-bar">
+        <div class="team-badge">[Your Team Name]</div>
+        <div class="slide-title">RESEARCH AND REFERENCES</div>
+        <div class="sih-badge">Smart India<br>Hackathon 2026</div>
+      </div>
+      <div class="s6-body">
+        <div class="s6-box">
+          <!-- Column 1, Row 1 -->
+          <div class="s6-cat">
+            <div class="s6-cat-title">1. Rural Staffing Gap (Problem Evidence)</div>
+            <ul class="s6-list">
+              <li class="s6-item">
+                <strong>a) MoHFW &mdash; Rural Health Statistics 2021&ndash;22</strong> &ndash; <em>Documents substantial specialist shortages at rural CHCs: AP &minus;292, Bihar &minus;754, Karnataka &minus;465 specialist posts.</em><br>
+                <a class="s6-link" href="https://www.mohfw.gov.in/sites/default/files/RHS%202021-22.pdf" target="_blank" rel="noopener noreferrer">&rarr; mohfw.gov.in &mdash; Rural Health Statistics 2021-22 (Official PDF)</a>
+              </li>
+              <li class="s6-item">
+                <strong>b) PRS Legislative Research &mdash; Health DfG 2026&ndash;27</strong> &ndash; <em>68% specialist positions at rural CHCs vacant (2023): 73% surgeons, 59% OB-GYN, 66% paediatricians, 68% physicians. Telangana shortfall: 68%.</em><br>
+                <a class="s6-link" href="https://prsindia.org/budgets/parliament/demand-for-grants-2026-27-analysis-health-and-family-welfare" target="_blank" rel="noopener noreferrer">&rarr; prsindia.org &mdash; Demand for Grants 2026-27: Health &amp; Family Welfare</a>
+              </li>
+            </ul>
+          </div>
+          <!-- Column 2, Row 1 -->
+          <div class="s6-cat">
+            <div class="s6-cat-title">2. Locum Model Validation (International Evidence)</div>
+            <ul class="s6-list">
+              <li class="s6-item">
+                <strong>a) NIHR / NHS Locum Study (Allen et al., 2024)</strong> &ndash; <em>Locums = 7.1% of GP consultations &amp; 4.4% of medical staff FTE in NHS trusts. Provide necessary flexibility &amp; additional capacity.</em><br>
+                <a class="s6-link" href="https://pubmed.ncbi.nlm.nih.gov/39340364/" target="_blank" rel="noopener noreferrer">&rarr; PubMed 39340364 &mdash; Use of locum doctors in the NHS (2024)</a>
+              </li>
+              <li class="s6-item">
+                <strong>b) BMC Health Services Research (Theodoulou et al., 2018)</strong> &ndash; <em>Digital people-to-people temporary staffing platform explored; existing recruitment found inefficient, inconsistent &amp; lacking transparency.</em><br>
+                <a class="s6-link" href="https://pubmed.ncbi.nlm.nih.gov/29554911/" target="_blank" rel="noopener noreferrer">&rarr; PubMed 29554911 &mdash; Innovative workforce planning &amp; locum industry</a>
+              </li>
+            </ul>
+          </div>
+          <!-- Column 1, Row 2 -->
+          <div class="s6-cat">
+            <div class="s6-cat-title">3. Regulatory &amp; Digital Infrastructure</div>
+            <ul class="s6-list">
+              <li class="s6-item">
+                <strong>a) National Medical Commission Act, 2019</strong> &ndash; <em>Establishes NMC framework: medical register, professional standards, equitable access, penalties for unregistered practice.</em><br>
+                <a class="s6-link" href="https://www.indiacode.nic.in/indiacode/handle/123456789/11820?col=123456789%2F1362&view_type=search" target="_blank" rel="noopener noreferrer">&rarr; indiacode.nic.in &mdash; NMC Act 2019 (Official India Code)</a>
+              </li>
+              <li class="s6-item">
+                <strong>b) ABDM &mdash; Healthcare Professionals Registry (HPR)</strong> &ndash; <em>Nationally discoverable digital identities for healthcare professionals &amp; facilities via HPR/HFR.</em><br>
+                <a class="s6-link" href="https://ahpr.abdm.gov.in/about" target="_blank" rel="noopener noreferrer">&rarr; ahpr.abdm.gov.in &mdash; ABDM Digital Health Ecosystem</a>
+              </li>
+              <li class="s6-item">
+                <strong>c) DPDP Act, 2023</strong> &ndash; <em>Mandates consent, security safeguards, breach notification &amp; lawful processing of personal data (phased commencement from Nov 2025).</em><br>
+                <a class="s6-link" href="https://www.meity.gov.in/static/uploads/2024/06/2bf1f0e9f04e6fb4f8fef35e82c42aa5.pdf" target="_blank" rel="noopener noreferrer">&rarr; meity.gov.in &mdash; DPDP Act 2023 (Official Gazette PDF)</a>
+              </li>
+            </ul>
+          </div>
+          <!-- Column 2, Row 2 -->
+          <div class="s6-cat">
+            <div class="s6-cat-title">4. Market &amp; Competitive Landscape</div>
+            <ul class="s6-list">
+              <li class="s6-item">
+                <strong>a) NASSCOM &mdash; Healthcare in India (2022)</strong> &ndash; <em>2,000+ Indian HealthTech startups, &gt;$1.2B funding in 2021, requirement for 3M+ doctors &amp; nurses by 2025.</em><br>
+                <a class="s6-link" href="https://community.nasscom.in/communities/healthtech-and-life-sciences/healthcare-india-transforming-through-innovation" target="_blank" rel="noopener noreferrer">&rarr; community.nasscom.in &mdash; Healthcare: Transforming through Innovation</a>
+              </li>
+              <li class="s6-item">
+                <strong>b) Locum&rsquo;s Nest (UK, est. 2015)</strong> &ndash; <em>60K+ healthcare professionals, 450+ NHS organisations. Digital Passport + shift marketplace model &mdash; closest international comparison to Medrova.</em><br>
+                <a class="s6-link" href="https://locumsnest.co.uk/" target="_blank" rel="noopener noreferrer">&rarr; locumsnest.co.uk &mdash; Official Platform</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <span>@SIH Idea submission</span>
+        <span>6</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

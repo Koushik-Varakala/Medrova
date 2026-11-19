@@ -2,6 +2,7 @@ export type ProfessionalRole = "doctor" | "nurse" | "technician";
 export type UserRole = ProfessionalRole | "clinic" | "admin";
 export type VerificationStatus = "pending" | "verified" | "rejected";
 export type ShiftStatus =
+  | "pending_review"
   | "pending_payment"
   | "active"
   | "confirmed"
@@ -42,7 +43,7 @@ export interface Doctor {
 
 export interface Clinic {
   id: string;
-  userId: string;
+  userId?: string | null;
   name: string;
   type: string;
   address: string;
@@ -54,6 +55,8 @@ export interface Clinic {
   verificationStatus: VerificationStatus;
   verificationNote?: string;
   regCertUrl?: string;
+  credits?: number;
+  isClaimed?: boolean;
   createdAt: string;
 }
 
@@ -77,6 +80,11 @@ export interface Shift {
   confirmedDoctorId?: string;
   professionalType?: ProfessionalRole;
   confirmedProfessionalId?: string;
+  magicToken?: string;
+  magicContactPhone?: string;
+  magicContactName?: string;
+  isWhatsappSource?: boolean;
+  rawWhatsappText?: string;
   createdAt: string;
 }
 

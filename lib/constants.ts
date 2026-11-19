@@ -10,7 +10,8 @@ import {
   LayoutDashboard,
   Stethoscope,
   User,
-  Users
+  Users,
+  Zap
 } from "lucide-react";
 import type { BottomTabItem } from "@/components/shared/BottomTabBar";
 import type { SidebarItem } from "@/components/shared/Sidebar";
@@ -90,6 +91,7 @@ export const clinicNavigation: Array<SidebarItem & BottomTabItem> = [
 
 export const adminNavigation: Array<SidebarItem & BottomTabItem> = [
   { href: "/dashboard/admin", label: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/admin/quick-posts", label: "Quick Posts", icon: Zap },
   { href: "/dashboard/admin/professionals", label: "Professionals", icon: Users },
   { href: "/dashboard/admin/clinics", label: "Clinics", icon: Building2 },
   { href: "/dashboard/admin/shifts", label: "Shifts", icon: CalendarCheck },
